@@ -39,17 +39,19 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.className} bg-[#07080b] text-zinc-100 antialiased min-h-screen relative overflow-x-hidden selection:bg-white/20`}>
         
-        {/* Atmospheric Background — ambient illumination for glass to react to */}
+        {/* Atmospheric Animated Background */}
         <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden bg-[#07080b]">
-          {/* Cool blue-grey illumination — top left */}
-          <div className="absolute -top-[30%] -left-[20%] w-[900px] h-[900px] rounded-full opacity-[0.05]"
-               style={{ background: 'radial-gradient(circle, rgba(140,160,200,1) 0%, transparent 70%)' }} />
-          {/* Neutral silver illumination — bottom right */}
-          <div className="absolute -bottom-[20%] -right-[15%] w-[800px] h-[800px] rounded-full opacity-[0.045]"
-               style={{ background: 'radial-gradient(circle, rgba(200,200,210,1) 0%, transparent 70%)' }} />
-          {/* Very subtle indigo wash — center */}
-          <div className="absolute top-[30%] left-[40%] w-[1000px] h-[600px] rounded-full opacity-[0.035]"
-               style={{ background: 'radial-gradient(ellipse, rgba(120,120,180,1) 0%, transparent 70%)' }} />
+          {/* Deep vibrant emerald orb — top left */}
+          <div className="absolute -top-[20%] -left-[10%] w-[800px] h-[800px] rounded-full opacity-[0.06] animate-orb"
+               style={{ background: 'radial-gradient(circle, rgba(16,185,129,1) 0%, transparent 60%)' }} />
+          
+          {/* Deep royal blue orb — bottom right */}
+          <div className="absolute -bottom-[20%] -right-[10%] w-[900px] h-[900px] rounded-full opacity-[0.05] animate-orb-slow"
+               style={{ background: 'radial-gradient(circle, rgba(59,130,246,1) 0%, transparent 60%)' }} />
+               
+          {/* Subtle violet wash — center shifting */}
+          <div className="absolute top-[20%] left-[20%] w-[1000px] h-[800px] rounded-full opacity-[0.04] animate-orb-slower"
+               style={{ background: 'radial-gradient(ellipse, rgba(139,92,246,1) 0%, transparent 70%)' }} />
         </div>
 
         <AttendanceProvider>

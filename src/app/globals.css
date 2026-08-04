@@ -63,6 +63,25 @@ body {
   to { opacity: 1; transform: translateX(0); }
 }
 
+@keyframes floatOrb {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(5%, 5%) scale(1.05); }
+  66% { transform: translate(-2%, 4%) scale(0.95); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+.animate-orb {
+  animation: floatOrb 20s ease-in-out infinite;
+}
+
+.animate-orb-slow {
+  animation: floatOrb 25s ease-in-out infinite reverse;
+}
+
+.animate-orb-slower {
+  animation: floatOrb 30s ease-in-out infinite;
+}
+
 .animate-fade-in-up {
   animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   opacity: 0;
