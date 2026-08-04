@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { AttendanceProvider } from '@/components/AttendanceProvider';
+import { TaskProvider } from '@/components/TaskProvider';
 import BottomNav from '@/components/BottomNav';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -55,10 +56,12 @@ export default function RootLayout({
         </div>
 
         <AttendanceProvider>
-          <main className="mx-auto px-4 pt-6 relative z-0">
-            {children}
-          </main>
-          <BottomNav />
+          <TaskProvider>
+            <main className="mx-auto px-4 pt-6 pb-28 relative z-0">
+              {children}
+            </main>
+            <BottomNav />
+          </TaskProvider>
         </AttendanceProvider>
       </body>
     </html>

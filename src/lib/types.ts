@@ -57,3 +57,22 @@ export interface OverallAttendance {
 }
 
 export type SortOrder = 'lowest' | 'highest' | 'code';
+
+export type TaskType = 'STUDY' | 'ASSIGNMENT' | 'PRACTICE' | 'REVISION' | 'PROJECT' | 'QUIZ_PREP' | 'OTHER';
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
+
+export interface Task {
+  id: string;
+  user_id?: string;
+  title: string;
+  subject_id: string | null;
+  type: TaskType;
+  due_at: string | null; // ISO string
+  priority: TaskPriority;
+  completed: boolean;
+  completed_at: string | null; // ISO string
+  deleted_at: string | null; // ISO string for tombstones
+  notes: string | null;
+  created_at: string; // ISO string
+  updated_at: string; // ISO string
+}
