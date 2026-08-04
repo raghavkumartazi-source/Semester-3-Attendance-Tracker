@@ -25,7 +25,7 @@ export const syncRepo = {
         hint: error.hint,
         code: error.code
       });
-      return [];
+      throw error;
     }
     return data || [];
   },
@@ -49,6 +49,7 @@ export const syncRepo = {
           hint: error.hint,
           code: error.code
         });
+        throw error;
       }
       return;
     }
@@ -61,7 +62,7 @@ export const syncRepo = {
         status: session.status,
         updated_at: new Date(session.updatedAt || Date.now()).toISOString(),
       }, {
-        onConflict: 'user_id, session_id'
+        onConflict: 'user_id,session_id'
       });
 
     if (error) {
@@ -71,6 +72,7 @@ export const syncRepo = {
         hint: error.hint,
         code: error.code
       });
+      throw error;
     }
   },
 
@@ -92,7 +94,7 @@ export const syncRepo = {
     const { error } = await supabase
       .from('attendance_records')
       .upsert(recordsToUpload, {
-        onConflict: 'user_id, session_id'
+        onConflict: 'user_id,session_id'
       });
 
     if (error) {
@@ -102,6 +104,7 @@ export const syncRepo = {
         hint: error.hint,
         code: error.code
       });
+      throw error;
     }
   }
 };
