@@ -14,13 +14,13 @@ export default function SubjectCard({ subject, attendance }: Props) {
 
   return (
     <Link href={`/subjects/${subject.code}`}>
-      <div className={`group glass-elevated rounded-[22px] p-5 transition-all duration-300 active:scale-[0.98] ${
+      <div className={`group glass-elevated rounded-[22px] p-5 transition-all duration-300 active:scale-[0.98] relative overflow-hidden ${
         level === 'SAFE' ? 'border-emerald-500/15 hover:border-emerald-500/30' :
         level === 'WARNING' ? 'border-amber-500/15 hover:border-amber-500/30' :
         level === 'DANGER' ? 'border-red-500/15 hover:border-red-500/30' :
         ''
       }`}>
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between relative z-10">
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold tracking-widest text-white/60 uppercase">
               {subject.code}
@@ -36,7 +36,7 @@ export default function SubjectCard({ subject, attendance }: Props) {
           </div>
         </div>
 
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-4 flex items-center justify-between relative z-10">
           <div className="flex items-center gap-3">
             <span className="text-xs text-white/60 font-medium">
               {totalConducted > 0 ? `${present}/${totalConducted} classes` : 'No classes yet'}
@@ -69,6 +69,21 @@ export default function SubjectCard({ subject, attendance }: Props) {
             )}
           </div>
         </div>
+
+        {/* Mini progress bar */}
+        {level !== 'NO_DATA' && percentage !== null && (
+          <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-white/[0.03]">
+            <div 
+              className={`h-full progress-bar-fill ${
+                level === 'SAFE' ? 'bg-emerald-500/70 shadow-[0_0_10px_rgba(16,185,129,0.5)]' :
+                level === 'WARNING' ? 'bg-amber-500/70 shadow-[0_0_10px_rgba(245,158,11,0.5)]' :
+                level === 'DANGER' ? 'bg-red-500/70 shadow-[0_0_10px_rgba(239,68,68,0.5)]' :
+                'bg-white/20'
+              }`}
+              style={{ width: `${percentage}%` }}
+            />
+          </div>
+        )}
       </div>
     </Link>
   );

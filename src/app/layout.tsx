@@ -9,9 +9,15 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'Semester III Attendance',
   description: 'Personal attendance tracker',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Attendance',
+  },
   icons: {
     icon: '/icon.svg',
-    apple: '/apple-icon.svg',
+    apple: '/icon-192x192.png',
   },
 };
 
