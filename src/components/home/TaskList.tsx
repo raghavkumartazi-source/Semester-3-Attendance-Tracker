@@ -8,8 +8,10 @@ import { SUBJECTS } from '@/lib/config';
 import { AddTaskSheet } from './AddTaskSheet';
 
 export function TaskList() {
-  const { tasks, updateTask } = useTasks();
+  const { tasks, updateTask, deleteTask } = useTasks();
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState<Task | undefined>(undefined);
+  const [taskToDelete, setTaskToDelete] = useState<Task | undefined>(undefined);
 
   const incompleteTasks = tasks.filter(t => !t.completed);
 
@@ -42,7 +44,10 @@ export function TaskList() {
           To Do
         </h2>
         <button 
-          onClick={() => setIsAddSheetOpen(true)}
+          onClick={() => {
+            setTaskToEdit(undefined);
+            setIsAddSheetOpen(true);
+          }}
           className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full uppercase tracking-wider active:scale-95 transition-transform"
         >
           + Add Task
@@ -56,23 +61,62 @@ export function TaskList() {
       ) : (
         <div className="space-y-2">
           {sortedTasks.map((task) => (
-            <TaskItem 
-              key={task.id} 
-              task={task} 
-              onComplete={() => updateTask(task.id, { completed: true, completed_at: new Date().toISOString() })} 
-            />
+              <TaskItem 
+                key={task.id} 
+                task={task} 
+                onComplete={() => updateTask(task.id, { completed: true, completed_at: new Date().toISOString() })} 
+                onEdit={() => {
+                  setTaskToEdit(task);
+                  setIsAddSheetOpen(true);
+                }}
+                onDelete={() => setTaskToDelete(task)}
+              />
           ))}
         </div>
       )}
 
       {isAddSheetOpen && (
-        <AddTaskSheet onClose={() => setIsAddSheetOpen(false)} />
+        <AddTaskSheet 
+          onClose={() => {
+            setIsAddSheetOpen(false);
+            setTaskToEdit(undefined);
+          }} 
+          taskToEdit={taskToEdit} 
+        />
+      )}
+
+      {taskToDelete && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center animate-fade-in-up" style={{ animationDuration: '0.2s' }}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setTaskToDelete(undefined)} />
+          <div className="relative w-full max-w-sm bg-[#0a0d14] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-2xl border border-white/10 slide-up">
+            <h3 className="text-lg font-bold text-white mb-2">Delete Task?</h3>
+            <p className="text-sm text-white/60 mb-6">Are you sure you want to delete &quot;{taskToDelete.title}&quot;?</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setTaskToDelete(undefined)}
+                className="flex-1 py-3 rounded-xl font-bold text-sm bg-white/5 text-white/70 hover:bg-white/10 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  deleteTask(taskToDelete.id);
+                  setTaskToDelete(undefined);
+                }}
+                className="flex-1 py-3 rounded-xl font-bold text-sm bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
 }
 
-function TaskItem({ task, onComplete }: { task: Task, onComplete: () => void }) {
+function TaskItem({ task, onComplete, onEdit, onDelete }: { task: Task, onComplete: () => void, onEdit: () => void, onDelete: () => void }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const isOverdue = timeUtils.isOverdue(task.due_at);
   const isToday = timeUtils.isToday(task.due_at);
   const isTomorrow = timeUtils.isTomorrow(task.due_at);
@@ -88,7 +132,7 @@ function TaskItem({ task, onComplete }: { task: Task, onComplete: () => void }) 
   }
 
   return (
-    <div className={`glass-elevated rounded-2xl p-3 flex items-start gap-3 transition-all duration-300 ${
+    <div className={`relative glass-elevated rounded-2xl p-3 flex items-start gap-3 transition-all duration-300 ${
       isOverdue ? 'border-red-500/20 bg-red-500/5' : ''
     }`}>
       <button 
@@ -100,8 +144,8 @@ function TaskItem({ task, onComplete }: { task: Task, onComplete: () => void }) 
         </svg>
       </button>
       
-      <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-bold text-zinc-100 truncate">{task.title}</h3>
+      <div className="flex-1 min-w-0 cursor-pointer" onClick={onEdit}>
+        <h3 className="text-sm font-bold text-zinc-100 truncate pr-6">{task.title}</h3>
         
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
           {subject && (
@@ -131,6 +175,48 @@ function TaskItem({ task, onComplete }: { task: Task, onComplete: () => void }) 
             </span>
           )}
         </div>
+      </div>
+
+      <div className="absolute top-3 right-3">
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            setMenuOpen(!menuOpen);
+          }}
+          className="p-1 text-white/30 hover:text-white/80 transition-colors rounded-lg hover:bg-white/5"
+        >
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+          </svg>
+        </button>
+
+        {menuOpen && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+            <div className="absolute right-0 top-full mt-1 w-32 bg-[#1a1d24] border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in-up" style={{ animationDuration: '0.15s' }}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuOpen(false);
+                  onEdit();
+                }}
+                className="w-full text-left px-4 py-2.5 text-sm font-medium text-white/80 hover:bg-white/5 transition-colors"
+              >
+                Edit
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuOpen(false);
+                  onDelete();
+                }}
+                className="w-full text-left px-4 py-2.5 text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

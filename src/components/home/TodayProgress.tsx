@@ -5,7 +5,7 @@ import { useAttendance } from '../AttendanceProvider';
 import { timeUtils } from '@/lib/timeUtils';
 
 export function TodayProgress() {
-  const { tasks } = useTasks();
+  const { tasks, updateTask } = useTasks();
   const { sessions } = useAttendance();
 
   const completedTasksToday = tasks.filter(t => t.completed && timeUtils.isToday(t.completed_at));
@@ -16,18 +16,19 @@ export function TodayProgress() {
   const presentSessions = todaySessions.filter(s => s.status === 'PRESENT');
   const absentSessions = todaySessions.filter(s => s.status === 'ABSENT');
 
-  const activityFeed = [
+  const activityFeed: Array<{id: string, text: string, time: number, type: 'task' | 'class', task?: any}> = [
     ...completedTasksToday.map(t => ({
       id: t.id,
       text: `Completed ${t.title}`,
       time: new Date(t.completed_at!).getTime(),
-      type: 'task'
+      type: 'task' as const,
+      task: t
     })),
     ...presentSessions.map(s => ({
       id: s.id,
       text: `Attended ${s.subjectCode}`,
       time: s.updatedAt || new Date().getTime(),
-      type: 'class'
+      type: 'class' as const
     }))
   ].sort((a, b) => b.time - a.time);
 
@@ -59,13 +60,22 @@ export function TodayProgress() {
         ) : (
           <div className="space-y-3 mb-4">
             {activityFeed.slice(0, 5).map(item => (
-              <div key={item.id} className="flex items-center gap-3">
+              <div 
+                key={item.id} 
+                className={`flex items-center gap-3 ${item.type === 'task' ? 'cursor-pointer hover:opacity-80 active:scale-[0.98] transition-all' : ''}`}
+                onClick={() => {
+                  if (item.type === 'task' && item.task) {
+                    updateTask(item.task.id, { completed: false, completed_at: null });
+                  }
+                }}
+                title={item.type === 'task' ? 'Tap to uncomplete' : undefined}
+              >
                 <span className="text-emerald-400 shrink-0">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </span>
-                <span className="text-sm font-medium text-zinc-200">{item.text}</span>
+                <span className="text-sm font-medium text-zinc-200 line-through decoration-emerald-500/30">{item.text}</span>
               </div>
             ))}
             {activityFeed.length > 5 && (
