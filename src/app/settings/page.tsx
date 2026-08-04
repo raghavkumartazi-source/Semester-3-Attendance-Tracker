@@ -2,9 +2,10 @@
 
 import { useState, useRef } from 'react';
 import { useAttendance } from '@/components/AttendanceProvider';
+import AuthScreen from '@/components/AuthScreen';
 
 export default function SettingsPage() {
-  const { resetAll, exportData, importData } = useAttendance();
+  const { resetAll, exportData, importData, user, syncStatus, lastSynced, signOut, syncNow } = useAttendance();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -35,14 +36,18 @@ export default function SettingsPage() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleReset = () => {
-    resetAll();
-    setShowResetConfirm(false);
-  };
-
   return (
-    <div className="max-w-lg mx-auto space-y-6 pb-24">
-      <h1 className="text-lg font-bold text-white">Settings</h1>
+    <div className="max-w-lg mx-auto space-y-6 pb-24 animate-fade-in-up">
+      <h1 className="text-lg font-bold text-white mb-2">Settings</h1>
+
+      {/* Authentication & Cloud Sync */}
+      <AuthScreen 
+        userEmail={user?.email} 
+        syncStatus={syncStatus} 
+        lastSynced={lastSynced}
+        onSignOut={signOut}
+        onSyncNow={syncNow}
+      />
 
       {/* Data Management */}
       <div className="space-y-3">
@@ -109,6 +114,11 @@ export default function SettingsPage() {
               <p className="text-sm font-bold text-red-400">Are you absolutely sure?</p>
               <p className="text-[11px] text-white/60 mt-1">
                 This will delete all sessions and attendance markings. Make sure you have exported a backup first.
+                {user && (
+                  <span className="block mt-2 font-semibold text-red-300">
+                    Warning: Cloud sync is active. This will also delete your cloud records.
+                  </span>
+                )}
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -119,7 +129,10 @@ export default function SettingsPage() {
                 Cancel
               </button>
               <button
-                onClick={handleReset}
+                onClick={() => {
+                  resetAll(true);
+                  setShowResetConfirm(false);
+                }}
                 className="flex-1 rounded-[14px] bg-red-500/20 border border-red-500/40 px-4 py-2.5 text-xs font-bold text-red-100 hover:bg-red-500/30 transition-all shadow-[0_0_15px_rgba(239,68,68,0.2)]"
               >
                 Yes, Reset All

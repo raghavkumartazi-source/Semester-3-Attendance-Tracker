@@ -33,6 +33,7 @@ export interface Session {
   classType: ClassType;
   status: AttendanceStatus;
   isExtra: boolean;
+  updatedAt?: number;
 }
 
 export interface SubjectAttendance {
