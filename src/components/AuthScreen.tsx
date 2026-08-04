@@ -6,12 +6,13 @@ import { supabase } from '@/lib/supabase';
 interface AuthScreenProps {
   userEmail?: string;
   syncStatus: 'Synced' | 'Syncing' | 'Offline' | 'Error';
+  syncError?: string;
   lastSynced?: Date;
   onSignOut: () => void;
   onSyncNow: () => void;
 }
 
-export default function AuthScreen({ userEmail, syncStatus, lastSynced, onSignOut, onSyncNow }: AuthScreenProps) {
+export default function AuthScreen({ userEmail, syncStatus, syncError, lastSynced, onSignOut, onSyncNow }: AuthScreenProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -66,14 +67,21 @@ export default function AuthScreen({ userEmail, syncStatus, lastSynced, onSignOu
             <h3 className="text-[11px] font-bold text-white/50 tracking-widest uppercase">Cloud Sync</h3>
             <p className="text-white font-medium mt-1">{userEmail}</p>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.05]">
-            <div className={`w-2 h-2 rounded-full ${
-              syncStatus === 'Synced' ? 'bg-emerald-400' :
-              syncStatus === 'Syncing' ? 'bg-amber-400 animate-pulse' :
-              syncStatus === 'Error' ? 'bg-red-400' :
-              'bg-white/20'
-            }`} />
-            <span className="text-[10px] font-bold text-white/70 uppercase tracking-wider">{syncStatus}</span>
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.05]">
+              <div className={`w-2 h-2 rounded-full ${
+                syncStatus === 'Synced' ? 'bg-emerald-400' :
+                syncStatus === 'Syncing' ? 'bg-amber-400 animate-pulse' :
+                syncStatus === 'Error' ? 'bg-red-400' :
+                'bg-white/20'
+              }`} />
+              <span className="text-[10px] font-bold text-white/70 uppercase tracking-wider">{syncStatus}</span>
+            </div>
+            {syncStatus === 'Error' && syncError && (
+              <span className="text-[9px] text-red-400 font-medium max-w-[120px] text-right truncate" title={syncError}>
+                {syncError}
+              </span>
+            )}
           </div>
         </div>
 

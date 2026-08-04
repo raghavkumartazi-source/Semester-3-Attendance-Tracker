@@ -19,7 +19,8 @@ interface AttendanceContextType {
   // Cloud Auth & Sync
   user: User | null;
   syncStatus: 'Synced' | 'Syncing' | 'Offline' | 'Error';
-  lastSynced: Date | undefined;
+  syncError?: string;
+  lastSynced?: Date;
   syncNow: () => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -32,6 +33,7 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
   
   const [user, setUser] = useState<User | null>(null);
   const [syncStatus, setSyncStatus] = useState<'Synced' | 'Syncing' | 'Offline' | 'Error'>('Offline');
+  const [syncError, setSyncError] = useState<string>('');
   const [lastSynced, setLastSynced] = useState<Date | undefined>();
 
   // 1. Initial Load from LocalStorage
@@ -107,11 +109,14 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
       }
       
       setSyncStatus('Synced');
+      setSyncError('');
       setLastSynced(new Date());
     } catch (e) {
       console.warn('Full sync failed:', e);
+      const error = e as { message?: string };
       if (typeof navigator !== 'undefined' && navigator.onLine) {
         setSyncStatus('Error');
+        setSyncError(error?.message || 'Unknown database error');
       } else {
         setSyncStatus('Offline');
       }
@@ -171,10 +176,13 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
         setSyncStatus('Syncing');
         syncRepo.syncSingleSession(user.id, updatedSession).then(() => {
           setSyncStatus('Synced');
+          setSyncError('');
           setLastSynced(new Date());
         }).catch((e) => {
           console.warn('Sync failed:', e);
+          const error = e as { message?: string };
           setSyncStatus('Error');
+          setSyncError(error?.message || 'Update failed');
         });
       }
       return updated;
@@ -192,8 +200,13 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
         setSyncStatus('Syncing');
         syncRepo.syncSingleSession(user.id, sessionWithTime).then(() => {
           setSyncStatus('Synced');
+          setSyncError('');
           setLastSynced(new Date());
-        }).catch(() => setSyncStatus('Error'));
+        }).catch((e) => {
+          const error = e as { message?: string };
+          setSyncStatus('Error');
+          setSyncError(error?.message || 'Insert failed');
+        });
       }
       return updated;
     });
@@ -237,6 +250,7 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
       isLoaded,
       user,
       syncStatus,
+      syncError,
       lastSynced,
       syncNow,
       signOut
