@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { AttendanceProvider } from '@/components/AttendanceProvider';
 import BottomNav from '@/components/BottomNav';
+import { Analytics } from '@vercel/analytics/next';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -52,6 +53,7 @@ export default function RootLayout({
           </main>
           <BottomNav />
         </AttendanceProvider>
+        <Analytics />
       </body>
     </html>
   );
