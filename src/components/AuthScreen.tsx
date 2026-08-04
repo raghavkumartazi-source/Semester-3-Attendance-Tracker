@@ -13,27 +13,44 @@ interface AuthScreenProps {
 
 export default function AuthScreen({ userEmail, syncStatus, lastSynced, onSignOut, onSyncNow }: AuthScreenProps) {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
     setError('');
 
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
-      options: {
-        emailRedirectTo: window.location.origin,
-      },
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
+    }
+    // No need to set success message because the provider will pick up the user and update the UI
+    setLoading(false);
+  };
+
+  const handleSignUp = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage('');
+    setError('');
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
     });
 
     if (error) {
       setError(error.message);
     } else {
-      setMessage('Check your email for the login link!');
+      setMessage('Check your email to confirm your account!');
     }
     setLoading(false);
   };
@@ -103,7 +120,7 @@ export default function AuthScreen({ userEmail, syncStatus, lastSynced, onSignOu
         </p>
       </div>
 
-      <form onSubmit={handleLogin} className="space-y-3">
+      <form onSubmit={handleSignIn} className="space-y-3">
         <div>
           <input
             type="email"
@@ -114,17 +131,38 @@ export default function AuthScreen({ userEmail, syncStatus, lastSynced, onSignOu
             className="w-full glass-control rounded-[16px] px-4 py-3.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all"
           />
         </div>
+        <div>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter your password"
+            required
+            className="w-full glass-control rounded-[16px] px-4 py-3.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all"
+          />
+        </div>
 
         {error && <p className="text-[10px] text-red-400 font-medium px-1">{error}</p>}
         {message && <p className="text-[10px] text-emerald-400 font-medium px-1">{message}</p>}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full glass-control-active rounded-[16px] py-3.5 text-xs font-bold text-white tracking-widest disabled:opacity-50"
-        >
-          {loading ? 'SENDING LINK...' : 'SEND MAGIC LINK'}
-        </button>
+        <div className="flex gap-3 pt-1">
+          <button
+            type="submit"
+            disabled={loading || !email || !password}
+            className="flex-1 glass-control-active rounded-[16px] py-3 text-xs font-bold text-white tracking-widest disabled:opacity-50"
+          >
+            {loading ? '...' : 'SIGN IN'}
+          </button>
+          
+          <button
+            type="button"
+            onClick={handleSignUp}
+            disabled={loading || !email || !password}
+            className="flex-1 glass-control rounded-[16px] py-3 text-xs font-bold text-white/60 hover:text-white disabled:opacity-50 transition-all"
+          >
+            CREATE ACCOUNT
+          </button>
+        </div>
       </form>
     </div>
   );
