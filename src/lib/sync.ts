@@ -61,8 +61,6 @@ export const syncRepo = {
         session_id: session.id,
         status: session.status,
         updated_at: new Date(session.updatedAt || Date.now()).toISOString(),
-      }, {
-        onConflict: 'user_id,session_id'
       });
 
     if (error) {
@@ -93,9 +91,7 @@ export const syncRepo = {
 
     const { error } = await supabase
       .from('attendance_records')
-      .upsert(recordsToUpload, {
-        onConflict: 'user_id,session_id'
-      });
+      .upsert(recordsToUpload);
 
     if (error) {
       console.warn('Supabase bulk upload failed:', {
