@@ -5,6 +5,7 @@ import { Session, Subject, AttendanceStatus } from '@/lib/types';
 import { DAY_SHORT, MONTH_SHORT } from '@/lib/config';
 import { getSubjectAttendance, formatPercentage } from '@/lib/calculations';
 import { parseDate, formatDate } from '@/lib/sessions';
+import StatusPopover from './StatusPopover';
 
 interface Props {
   subjects: Subject[];
@@ -36,6 +37,7 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
   const scrollRef = useRef<HTMLDivElement>(null);
   const todayColRef = useRef<HTMLDivElement>(null);
   const [activePopover, setActivePopover] = useState<string | null>(null);
+  const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement | null>(null);
 
   const todayStr = formatDate(new Date());
 
@@ -109,22 +111,23 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
     }
   }, []);
 
-  // Close popover on outside click
+  // Close popover on outside click — handled by StatusPopover
   useEffect(() => {
     if (!activePopover) return;
-    const handler = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest('[data-popover]')) {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
         setActivePopover(null);
+        setPopoverAnchor(null);
       }
     };
-    document.addEventListener('click', handler);
-    return () => document.removeEventListener('click', handler);
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
   }, [activePopover]);
 
   const handleStatusChange = (sessionId: string, status: AttendanceStatus) => {
     onMarkAttendance(sessionId, status);
     setActivePopover(null);
+    setPopoverAnchor(null);
   };
 
   const firstFutureDate = uniqueDates.find(d => d > todayStr);
@@ -268,11 +271,17 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
                         }`}
                       >
                         {daySessions.map((session) => (
-                          <div key={session.id} className="relative w-full" data-popover>
+                          <div key={session.id} className="relative w-full">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setActivePopover(activePopover === session.id ? null : session.id);
+                                if (activePopover === session.id) {
+                                  setActivePopover(null);
+                                  setPopoverAnchor(null);
+                                } else {
+                                  setActivePopover(session.id);
+                                  setPopoverAnchor(e.currentTarget);
+                                }
                               }}
                               className={`flex h-6 w-full items-center justify-center rounded-[5px] text-[10px] transition-all duration-200 hover:brightness-110 active:scale-90 border ${getStatusCellClass(session.status)}`}
                               title={`${row.subject.code}\n${String(parseDate(date).getDate()).padStart(2, '0')} ${MONTH_SHORT[parseDate(date).getMonth()]} ${parseDate(date).getFullYear()}\n${session.startTime}–${session.endTime}\n${session.classType}`}
@@ -280,35 +289,17 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
                               {STATUS_DISPLAY[session.status]}
                             </button>
 
-                            {/* Popover */}
-                            {activePopover === session.id && (
-                              <div className="absolute top-full left-1/2 -translate-x-1/2 z-50 mt-1 flex flex-col gap-0.5 glass-floating rounded-xl p-1.5" data-popover>
-                                {(['PRESENT', 'ABSENT', 'CANCELLED', 'UNMARKED'] as AttendanceStatus[]).map(s => (
-                                  <button
-                                    key={s}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleStatusChange(session.id, s);
-                                    }}
-                                    className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap ${
-                                      session.status === s
-                                        ? 'bg-white/10 text-white shadow-inner'
-                                        : 'text-white/50 hover:bg-white/5 hover:text-white'
-                                    }`}
-                                  >
-                                    <span className={`inline-block h-2 w-2 rounded-full shadow-sm ${
-                                      s === 'PRESENT' ? 'bg-emerald-500 shadow-emerald-500/50' :
-                                      s === 'ABSENT' ? 'bg-red-500 shadow-red-500/50' :
-                                      s === 'CANCELLED' ? 'bg-zinc-400' :
-                                      'bg-white/20 border border-white/30'
-                                    }`} />
-                                    {s === 'PRESENT' ? 'Present' :
-                                     s === 'ABSENT' ? 'Absent' :
-                                     s === 'CANCELLED' ? 'Cancelled' :
-                                     'Unmarked'}
-                                  </button>
-                                ))}
-                              </div>
+                            {/* Portal-based Popover */}
+                            {activePopover === session.id && popoverAnchor && (
+                              <StatusPopover
+                                anchorEl={popoverAnchor}
+                                currentStatus={session.status}
+                                onSelect={(s) => handleStatusChange(session.id, s)}
+                                onClose={() => {
+                                  setActivePopover(null);
+                                  setPopoverAnchor(null);
+                                }}
+                              />
                             )}
                           </div>
                         ))}
