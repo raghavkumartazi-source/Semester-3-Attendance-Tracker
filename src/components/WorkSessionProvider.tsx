@@ -14,7 +14,7 @@ interface SessionContextType {
   syncStatus: 'Synced' | 'Syncing' | 'Offline' | 'Error';
   syncError?: string;
   isLoaded: boolean;
-  bulkAddSessions: (newSessions: Omit<WorkSession, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>[]) => void;
+  bulkAddSessions: (newSessions: Omit<WorkSession, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>[]) => Promise<void>;
 }
 
 const WorkSessionContext = createContext<SessionContextType | null>(null);
@@ -62,12 +62,24 @@ export function WorkSessionProvider({ children }: { children: ReactNode }) {
         }
       }
       
+      console.log('=== SYNC DIAGNOSTICS ===');
+      console.log('total raw local WorkSessions:', currentSessions.length);
+      const localIds = new Set(currentSessions.map(s => s.id));
+      console.log('unique local WorkSession IDs:', localIds.size);
+      if (localIds.size < currentSessions.length) {
+        console.log('Duplicate IDs found in local storage!');
+      }
+      console.log('cloud WorkSession count:', cloudSessions.length);
+      
       cloudSessions.forEach(cloud => {
         if (!newSessions.find(s => s.id === cloud.id)) {
           newSessions.push({ ...cloud });
           changed = true;
         }
       });
+      
+      console.log('provider active session count (excluding deleted):', newSessions.filter(s => !s.deleted_at).length);
+      console.log('========================');
       
       if (changed) {
         workSessionStorage.save(newSessions);
@@ -156,33 +168,72 @@ export function WorkSessionProvider({ children }: { children: ReactNode }) {
     });
   }, [user]);
 
-  const bulkAddSessions = useCallback((payloads: Omit<WorkSession, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>[]) => {
+  const bulkAddSessions = useCallback(async (payloads: Omit<WorkSession, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>[]): Promise<void> => {
     if (payloads.length === 0) return;
-    const now = new Date().toISOString();
-    const newSessions = payloads.map(p => ({
-      ...p,
-      id: crypto.randomUUID(),
-      created_at: now,
-      updated_at: now,
-      deleted_at: null,
-    }));
-
-    setSessions(prev => {
-      const updated = [...prev, ...newSessions];
-      workSessionStorage.save(updated);
-      
-      if (user) {
-        setSyncStatus('Syncing');
-        workSessionSync.uploadLocalSessions(user.id, newSessions).then(() => {
-          setSyncStatus('Synced');
-          setSyncError('');
-        }).catch((e) => {
-          const error = e as { message?: string };
-          setSyncStatus('Error');
-          setSyncError(error?.message || 'Bulk insert failed');
-        });
+    
+    // 1. Deduplicate within the incoming batch itself
+    const uniquePayloads: typeof payloads = [];
+    const seen = new Set<string>();
+    for (const p of payloads) {
+      const key = `${p.task_id}-${p.planned_start}-${p.planned_end}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniquePayloads.push(p);
       }
-      return updated;
+    }
+    
+    if (uniquePayloads.length === 0) return;
+
+    return new Promise((resolve, reject) => {
+      const now = new Date().toISOString();
+      
+      setSessions(prev => {
+        // 2. Deduplicate against existing active sessions
+        const actuallyNew = uniquePayloads.filter(p => {
+          const isDuplicate = prev.some(s => 
+            !s.deleted_at && 
+            s.status !== 'CANCELLED' && 
+            s.task_id === p.task_id && 
+            s.planned_start === p.planned_start && 
+            s.planned_end === p.planned_end
+          );
+          return !isDuplicate;
+        });
+
+        if (actuallyNew.length === 0) {
+          resolve(); // Nothing new to add
+          return prev;
+        }
+
+        const newSessions = actuallyNew.map(p => ({
+          ...p,
+          id: crypto.randomUUID(),
+          created_at: now,
+          updated_at: now,
+          deleted_at: null,
+        }));
+
+        const updated = [...prev, ...newSessions];
+        workSessionStorage.save(updated);
+        
+        if (user) {
+          setSyncStatus('Syncing');
+          workSessionSync.uploadLocalSessions(user.id, newSessions).then(() => {
+            setSyncStatus('Synced');
+            setSyncError('');
+            resolve();
+          }).catch((e) => {
+            const error = e as { message?: string };
+            setSyncStatus('Error');
+            setSyncError(error?.message || 'Bulk insert failed');
+            reject(new Error(error?.message || 'Bulk insert failed'));
+          });
+        } else {
+          resolve();
+        }
+        
+        return updated;
+      });
     });
   }, [user]);
 

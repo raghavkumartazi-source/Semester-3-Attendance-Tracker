@@ -235,5 +235,16 @@ export const generateSmartPlan = (
   }
   console.log('============================\n');
 
-  return { sessions: suggestedSessions, overloadedTasks };
+  // Final defensive deduplication (proposal-level duplicate protection)
+  const uniqueSuggestedSessions: typeof suggestedSessions = [];
+  const seenProposed = new Set<string>();
+  for (const s of suggestedSessions) {
+    const key = `${s.task_id}-${s.planned_start}-${s.planned_end}`;
+    if (!seenProposed.has(key)) {
+      seenProposed.add(key);
+      uniqueSuggestedSessions.push(s);
+    }
+  }
+
+  return { sessions: uniqueSuggestedSessions, overloadedTasks };
 };

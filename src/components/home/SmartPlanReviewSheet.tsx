@@ -18,6 +18,7 @@ export function SmartPlanReviewSheet({
   const { bulkAddSessions } = useWorkSessions();
   const [mounted, setMounted] = useState(false);
   const [activeSessions, setActiveSessions] = useState(plan.sessions);
+  const [isAccepting, setIsAccepting] = useState(false);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -32,9 +33,16 @@ export function SmartPlanReviewSheet({
     setActiveSessions(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleAccept = () => {
-    bulkAddSessions(activeSessions);
-    onClose();
+  const handleAccept = async () => {
+    if (isAccepting) return; // double-submission protection
+    setIsAccepting(true);
+    try {
+      await bulkAddSessions(activeSessions);
+      onClose();
+    } catch (e) {
+      console.error('Failed to save sessions:', e);
+      setIsAccepting(false); // unlock to retry
+    }
   };
 
   if (!mounted) return null;
@@ -135,9 +143,14 @@ export function SmartPlanReviewSheet({
           <div className="shrink-0 p-6 pt-4 bg-[#0a0d14] sm:rounded-b-[28px] border-t border-white/5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
             <button
               onClick={handleAccept}
-              className="w-full bg-emerald-500 text-[#07080b] font-bold text-sm tracking-wide py-4 rounded-xl active:scale-[0.98] shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+              disabled={isAccepting}
+              className={`w-full font-bold text-sm tracking-wide py-4 rounded-xl active:scale-[0.98] transition-all ${
+                isAccepting
+                  ? 'bg-emerald-500/50 text-[#07080b]/50 cursor-not-allowed'
+                  : 'bg-emerald-500 text-[#07080b] shadow-[0_0_20px_rgba(16,185,129,0.2)]'
+              }`}
             >
-              Accept Plan ({activeSessions.length} Sessions)
+              {isAccepting ? 'Saving...' : `Accept Plan (${activeSessions.length} Sessions)`}
             </button>
           </div>
           
