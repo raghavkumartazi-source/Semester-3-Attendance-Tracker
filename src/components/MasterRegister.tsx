@@ -5,6 +5,7 @@ import { Session, Subject, AttendanceStatus } from '@/lib/types';
 import { DAY_SHORT, MONTH_SHORT } from '@/lib/config';
 import { getSubjectAttendance, formatPercentage } from '@/lib/calculations';
 import { parseDate, formatDate } from '@/lib/sessions';
+import Link from 'next/link';
 import StatusPopover from './StatusPopover';
 
 interface Props {
@@ -138,21 +139,21 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
   const overallPercentage = overallConducted === 0 ? '--' : ((overallPresent / overallConducted) * 100).toFixed(1) + '%';
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-12 md:pb-0">
       {/* Controls & Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-1">
         <div>
           <h1 className="text-xl font-bold text-white tracking-tight">Master Register</h1>
           <p className="text-[11px] text-white/50 font-medium mt-0.5">Semester III · Unified attendance</p>
         </div>
-        <div className="glass-floating rounded-[18px] flex items-center gap-1 p-1.5 self-start sm:self-auto">
-          <button onClick={scrollToStart} className="glass-control rounded-[12px] px-3.5 py-2 text-[10px] font-bold text-white/70 hover:text-white tracking-wide">
+        <div className="glass-floating rounded-[18px] flex items-center justify-between w-full sm:w-auto gap-1 p-1.5 overflow-hidden flex-nowrap">
+          <button onClick={scrollToStart} className="glass-control rounded-[12px] px-3 py-2 text-[10px] font-bold text-white/70 hover:text-white tracking-wide truncate flex-1 sm:flex-none">
             Start
           </button>
           <button onClick={() => scrollBy(-1)} className="glass-control rounded-[12px] px-3 py-2 text-[11px] font-bold text-white/70 hover:text-white">
             ‹
           </button>
-          <button onClick={scrollToToday} className="glass-control-active rounded-[12px] px-5 py-2 text-[10px] font-bold text-white tracking-wider">
+          <button onClick={scrollToToday} className="glass-control-active rounded-[12px] px-3 sm:px-5 py-2 text-[10px] font-bold text-white tracking-wider flex-1 sm:flex-none">
             TODAY
           </button>
           <button onClick={() => scrollBy(1)} className="glass-control rounded-[12px] px-3 py-2 text-[11px] font-bold text-white/70 hover:text-white">
@@ -162,8 +163,8 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
       </div>
 
       {/* Semester Status Bar */}
-      <div className="glass-elevated rounded-[16px] px-5 py-3 flex flex-wrap items-center gap-x-6 gap-y-2">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Semester III</span>
+      <div className="glass-elevated rounded-[16px] px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between sm:justify-start gap-x-4 sm:gap-x-6 gap-y-3">
+        <span className="hidden sm:inline-block text-[10px] font-bold uppercase tracking-widest text-white/40">Semester III</span>
         {overallConducted === 0 ? (
           <span className="text-xs font-bold text-white/50">Overall -- <span className="font-medium opacity-60 ml-1">NO DATA</span></span>
         ) : (
@@ -172,16 +173,16 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
               <span className="text-[10px] uppercase tracking-wider text-white/40">Overall</span>
               <span className="text-sm font-bold text-white">{overallPercentage}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-wider text-white/40">Present</span>
+            <div className="flex flex-col sm:flex-row sm:items-center items-center gap-1 sm:gap-2">
+              <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-white/40">Present</span>
               <span className="text-sm font-bold text-emerald-400">{overallPresent}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-wider text-white/40">Absent</span>
+            <div className="flex flex-col sm:flex-row sm:items-center items-center gap-1 sm:gap-2 border-l border-white/[0.05] sm:border-none pl-4 sm:pl-0">
+              <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-white/40">Absent</span>
               <span className="text-sm font-bold text-red-400">{overallAbsent}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-wider text-white/40">Conducted</span>
+            <div className="flex flex-col sm:flex-row sm:items-center items-center gap-1 sm:gap-2 border-l border-white/[0.05] sm:border-none pl-4 sm:pl-0">
+              <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-white/40">Classes</span>
               <span className="text-sm font-bold text-white/80">{overallConducted}</span>
             </div>
             <div className="hidden sm:flex flex-1 justify-end">
@@ -191,8 +192,8 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
         )}
       </div>
 
-      {/* Glass Slab Container */}
-      <div className="relative glass-surface rounded-[20px] overflow-hidden text-sm">
+      {/* Glass Slab Container (Desktop Only) */}
+      <div className="hidden md:block relative glass-surface rounded-[20px] overflow-hidden text-sm">
         <div ref={scrollRef} className="overflow-x-auto scrollbar-thin max-h-[75vh]">
           <div className="inline-block min-w-max">
             
@@ -325,6 +326,59 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
 
           </div>
         </div>
+      </div>
+
+      {/* Mobile Register (< 768px) */}
+      <div className="md:hidden flex flex-col space-y-3">
+        {rowData.map((row) => {
+          let statusClass = 'text-white border-white/10 bg-white/5';
+          if (row.stats.percentage !== null) {
+            if (row.stats.percentage >= 75) statusClass = 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400 shadow-[inset_0_1px_1px_rgba(16,185,129,0.15)]';
+            else if (row.stats.percentage >= 65) statusClass = 'border-amber-500/20 bg-amber-500/10 text-amber-400 shadow-[inset_0_1px_1px_rgba(245,158,11,0.15)]';
+            else statusClass = 'border-red-500/20 bg-red-500/10 text-red-400 shadow-[inset_0_1px_1px_rgba(239,68,68,0.15)]';
+          }
+
+          return (
+            <Link 
+              key={row.subject.code}
+              href={`/subjects/${encodeURIComponent(row.subject.code)}`}
+              className="block glass-elevated rounded-[22px] p-4 sm:p-5 active:scale-[0.98] transition-transform"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex-1 min-w-0 pr-4">
+                  <h3 className="text-sm sm:text-base font-bold text-white truncate">{row.subject.code}</h3>
+                  <p className="text-[10px] sm:text-[11px] text-white/50 font-medium truncate mt-0.5">{row.subject.name}</p>
+                </div>
+                <div className={`px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-[14px] border ${statusClass} flex items-center justify-center min-w-[64px] sm:min-w-[72px]`}>
+                  <span className="text-base sm:text-lg font-bold tracking-tight">
+                    {formatPercentage(row.stats.percentage)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-1 sm:gap-2 border-t border-white/[0.06] pt-3 sm:pt-4">
+                <div className="flex flex-col items-center">
+                  <span className="text-[9px] sm:text-[10px] text-white/40 font-bold uppercase tracking-widest mb-1">Present</span>
+                  <span className="text-sm font-bold text-emerald-400">{row.stats.present}</span>
+                </div>
+                <div className="flex flex-col items-center border-l border-white/[0.04]">
+                  <span className="text-[9px] sm:text-[10px] text-white/40 font-bold uppercase tracking-widest mb-1">Absent</span>
+                  <span className="text-sm font-bold text-red-400">{row.stats.absent}</span>
+                </div>
+                <div className="flex flex-col items-center border-l border-white/[0.04]">
+                  <span className="text-[9px] sm:text-[10px] text-white/40 font-bold uppercase tracking-widest mb-1">Classes</span>
+                  <span className="text-sm font-bold text-white/80">{row.stats.totalConducted}</span>
+                </div>
+                <div className="flex flex-col items-center border-l border-white/[0.04]">
+                  <span className="text-[9px] sm:text-[10px] text-white/40 font-bold uppercase tracking-widest mb-1">{row.stats.needToAttend > 0 ? 'Next' : 'Bunk'}</span>
+                  <span className={`text-sm font-bold ${row.stats.needToAttend > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                    {row.stats.totalConducted === 0 ? '—' : (row.stats.needToAttend > 0 ? row.stats.needToAttend : row.stats.canBunk)}
+                  </span>
+                </div>
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

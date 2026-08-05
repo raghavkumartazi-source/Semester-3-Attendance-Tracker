@@ -5,7 +5,7 @@ import SkeletonDashboard from './SkeletonDashboard';
 import { TodayHeader } from './home/TodayHeader';
 import { NextClass } from './home/NextClass';
 import { TodayTimeline } from './home/TodayTimeline';
-import { TaskList } from './home/TaskList';
+import { HomeTaskSummary } from './home/HomeTaskSummary';
 import { TodayProgress } from './home/TodayProgress';
 import { AttendanceSnapshot } from './home/AttendanceSnapshot';
 
@@ -21,7 +21,7 @@ export default function Dashboard() {
       <TodayHeader />
       <NextClass />
       <TodayTimeline />
-      <TaskList />
+      <HomeTaskSummary />
       <TodayProgress />
       <AttendanceSnapshot />
     </div>

@@ -6,6 +6,7 @@ import Link from 'next/link';
 const NAV_ITEMS = [
   { href: '/', label: 'Home', icon: HomeIcon },
   { href: '/subjects', label: 'Subjects', icon: BookIcon },
+  { href: '/tasks', label: 'Tasks', icon: TaskIcon },
   { href: '/schedule', label: 'Schedule', icon: CalendarIcon },
   { href: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
@@ -28,7 +29,7 @@ export default function BottomNav() {
         {/* Animated active pill */}
         {activeIndex >= 0 && (
           <div 
-            className="absolute top-2 bottom-2 w-1/4 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+            className="absolute top-2 bottom-2 w-1/5 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
             style={{ transform: `translateX(${safeActiveIndex * 100}%)` }}
           >
             <div className="w-full h-full px-1.5">
@@ -95,6 +96,15 @@ function SettingsIcon({ active }: { active: boolean }) {
     <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={active ? 2 : 1.8} strokeLinecap="round" strokeLinejoin="round" className="transition-all duration-300">
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+    </svg>
+  );
+}
+
+function TaskIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={active ? 2 : 1.8} strokeLinecap="round" strokeLinejoin="round" className="transition-all duration-300">
+      <path d="M9 11l3 3L22 4" />
+      <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
     </svg>
   );
 }

@@ -3,6 +3,7 @@
 import { useTasks } from '../TaskProvider';
 import { useAttendance } from '../AttendanceProvider';
 import { timeUtils } from '@/lib/timeUtils';
+import { Task } from '@/lib/types';
 
 export function TodayProgress() {
   const { tasks, updateTask } = useTasks();
@@ -16,7 +17,7 @@ export function TodayProgress() {
   const presentSessions = todaySessions.filter(s => s.status === 'PRESENT');
   const absentSessions = todaySessions.filter(s => s.status === 'ABSENT');
 
-  const activityFeed: Array<{id: string, text: string, time: number, type: 'task' | 'class', task?: any}> = [
+  const activityFeed: Array<{id: string, text: string, time: number, type: 'task' | 'class', task?: Task}> = [
     ...completedTasksToday.map(t => ({
       id: t.id,
       text: `Completed ${t.title}`,
