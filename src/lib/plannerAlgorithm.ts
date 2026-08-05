@@ -23,10 +23,49 @@ export const generateSmartPlan = (
   // 1. Filter and prepare tasks
   const now = new Date();
   
+  console.log('=== PLANNER WINDOW DEBUG ===');
+  console.log(`current local datetime: ${now.toString()}`);
+  console.log(`current local ISO date: ${now.toISOString()}`);
+  console.log(`planning horizon start: ${now.toISOString()}`);
+  console.log(`planning horizon end (max): ${new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString()}`);
+  console.log(`weekday work window: ${prefs.weekdayWorkStart} - ${prefs.weekdayWorkEnd}`);
+  console.log(`weekend work window: ${prefs.weekendWorkStart} - ${prefs.weekendWorkEnd}`);
+  console.log(`minSessionDuration: ${prefs.minSessionDuration}`);
+  console.log(`prefSessionDuration: ${prefs.prefSessionDuration}`);
+  console.log(`bufferDuration: ${prefs.bufferDuration}`);
+  console.log('============================');
+
+  console.log('=== PLANNER TASK DEBUG ===');
   const incompleteTasks = tasks.filter(t => {
-    if (t.completed || t.deleted_at || !t.estimated_minutes || !t.due_at) return false;
-    return true; // Overdue tasks are now included as critical backlog
+    let eligible = true;
+    let reason = '';
+    
+    if (t.completed) { eligible = false; reason = 'completed'; }
+    else if (t.deleted_at) { eligible = false; reason = 'deleted'; }
+    else if (!t.estimated_minutes) { eligible = false; reason = 'no estimated_minutes'; }
+    else if (!t.due_at) { eligible = false; reason = 'no due_at'; }
+    
+    const existingSessions = workSessions.filter(s => s.task_id === t.id && s.status === 'PLANNED' && !s.deleted_at);
+    const plannedMinutes = existingSessions.reduce((total, s) => {
+      const start = new Date(s.planned_start).getTime();
+      const end = new Date(s.planned_end).getTime();
+      return total + Math.round((end - start) / 60000);
+    }, 0);
+    const unallocatedMinutes = eligible ? Math.max(0, (t.estimated_minutes || 0) - plannedMinutes) : 0;
+
+    console.log(`- Task: [${t.id}] ${t.title}`);
+    console.log(`  completed: ${t.completed}`);
+    console.log(`  deleted_at: ${t.deleted_at}`);
+    console.log(`  due_at: ${t.due_at}`);
+    console.log(`  estimated_minutes: ${t.estimated_minutes}`);
+    console.log(`  priority: ${t.priority}`);
+    console.log(`  existing PLANNED minutes: ${plannedMinutes}`);
+    console.log(`  calculated unallocatedMinutes: ${unallocatedMinutes}`);
+    console.log(`  eligible: ${eligible}${!eligible ? ` (reason: ${reason})` : ''}`);
+
+    return eligible;
   });
+  console.log('==========================');
   if (incompleteTasks.length === 0) return { sessions: [], overloadedTasks: [] };
   
   // Calculate remaining effort for each task
@@ -115,6 +154,10 @@ export const generateSmartPlan = (
       const startStr = isWeekend ? prefs.weekendWorkStart : prefs.weekdayWorkStart;
       const endStr = isWeekend ? prefs.weekendWorkEnd : prefs.weekdayWorkEnd;
       
+      console.log(`\n=== PLANNER DAY DEBUG: ${currentDay.toLocaleDateString()} ===`);
+      console.log(`configured work start/end: ${startStr} - ${endStr}`);
+      console.log(`class blocks: ${blockedTimes.length} total blocks (classes & sessions) configured in system`);
+      
       const [sh, sm] = startStr.split(':').map(Number);
       const [eh, em] = endStr.split(':').map(Number);
       
@@ -151,6 +194,7 @@ export const generateSmartPlan = (
         });
         
         if (!overlapsBlocked && !overlapsSuggested) {
+          console.log(`  -> Found free block: ${iterTime.toLocaleTimeString()} to ${iterEnd.toLocaleTimeString()} (duration: ${potentialSession}m)`);
           // Valid block found!
           suggestedSessions.push({
             task_id: tNeed.task.id,
@@ -175,6 +219,21 @@ export const generateSmartPlan = (
       overloadedTasks.push(tNeed.task);
     }
   }
+
+  console.log('\n=== PLANNER RESULT DEBUG ===');
+  console.log(`eligible task count: ${taskNeeds.length}`);
+  console.log(`proposed session count: ${suggestedSessions.length}`);
+  const totalMins = suggestedSessions.reduce((acc, s) => {
+    const start = new Date(s.planned_start).getTime();
+    const end = new Date(s.planned_end).getTime();
+    return acc + Math.round((end - start) / 60000);
+  }, 0);
+  console.log(`total proposed minutes: ${totalMins}`);
+  console.log(`overloaded task count: ${overloadedTasks.length}`);
+  if (overloadedTasks.length > 0) {
+    console.log(`overloaded tasks: ${overloadedTasks.map(t => t.title).join(', ')}`);
+  }
+  console.log('============================\n');
 
   return { sessions: suggestedSessions, overloadedTasks };
 };
