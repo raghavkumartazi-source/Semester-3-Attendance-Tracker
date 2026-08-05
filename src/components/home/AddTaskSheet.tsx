@@ -6,10 +6,12 @@ import { SUBJECTS } from '@/lib/config';
 import { TaskType, TaskPriority, Task } from '@/lib/types';
 import { timeUtils } from '@/lib/timeUtils';
 import { useTasks } from '../TaskProvider';
+import { ManualPlanTaskSheet } from './ManualPlanTaskSheet';
 
 export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, taskToEdit?: Task }) {
   const { addTask, updateTask } = useTasks();
   const [mounted, setMounted] = useState(false);
+  const [showPlanSheet, setShowPlanSheet] = useState(false);
   
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -35,9 +37,10 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
   const [dueAtMode, setDueAtMode] = useState<string>(initialDueAt);
   const [customDate, setCustomDate] = useState(taskToEdit?.due_at ? new Date(taskToEdit.due_at).toISOString().split('T')[0] : '');
   const [customTime, setCustomTime] = useState(taskToEdit?.due_at && new Date(taskToEdit.due_at).toTimeString().substring(0, 5) !== '23:59' ? new Date(taskToEdit.due_at).toTimeString().substring(0, 5) : '');
+  const [estimatedMinutes, setEstimatedMinutes] = useState<number | ''>(taskToEdit?.estimated_minutes || '');
   const [notes, setNotes] = useState(taskToEdit?.notes || '');
 
-  const initialAdvanced = Boolean(taskToEdit && (taskToEdit.type !== 'STUDY' || taskToEdit.notes || initialDueAt === 'custom' || customTime));
+  const initialAdvanced = Boolean(taskToEdit && (taskToEdit.type !== 'STUDY' || taskToEdit.notes || taskToEdit.estimated_minutes || initialDueAt === 'custom' || customTime));
   const [isAdvanced, setIsAdvanced] = useState(initialAdvanced);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -72,7 +75,8 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
         type,
         priority,
         notes: notes.trim() || null,
-        due_at: finalDueAt
+        due_at: finalDueAt,
+        estimated_minutes: typeof estimatedMinutes === 'number' ? estimatedMinutes : null
       });
     } else {
       addTask({
@@ -83,7 +87,8 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
         completed: false,
         completed_at: null,
         notes: notes.trim() || null,
-        due_at: finalDueAt
+        due_at: finalDueAt,
+        estimated_minutes: typeof estimatedMinutes === 'number' ? estimatedMinutes : null
       });
     }
 
@@ -203,7 +208,6 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
               </svg>
             </button>
 
-            {/* Advanced Section */}
             {isAdvanced && (
               <div className="space-y-5 animate-fade-in-up">
                 
@@ -228,6 +232,17 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                       </div>
                     </div>
+                  </div>
+                  <div className="min-w-0">
+                    <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Estimate (Mins)</label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 60"
+                      min="1"
+                      value={estimatedMinutes}
+                      onChange={(e) => setEstimatedMinutes(e.target.value ? parseInt(e.target.value) : '')}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500/50 text-sm placeholder-white/30"
+                    />
                   </div>
                 </div>
 
@@ -270,6 +285,22 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
               </div>
             )}
             
+            {taskToEdit && (
+              <div className="pt-4 mt-2 border-t border-white/5">
+                <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-3">Planning</label>
+                <button
+                  type="button"
+                  onClick={() => setShowPlanSheet(true)}
+                  className="w-full py-3 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-indigo-500/20 transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  <span>Plan Manual Work Session</span>
+                </button>
+              </div>
+            )}
+            
             <div className="h-4"></div>
           </div>
 
@@ -286,6 +317,9 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
           
         </form>
       </div>
+      {showPlanSheet && taskToEdit && (
+        <ManualPlanTaskSheet task={taskToEdit} onClose={() => setShowPlanSheet(false)} />
+      )}
     </div>
   );
 

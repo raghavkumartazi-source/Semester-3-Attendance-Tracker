@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Task } from '@/lib/types';
 import { timeUtils } from '@/lib/timeUtils';
 import { SUBJECTS } from '@/lib/config';
+import { useWorkSessions } from '../WorkSessionProvider';
 
 export function TaskItem({ task, onComplete, onEdit, onDelete }: { task: Task, onComplete: () => void, onEdit: () => void, onDelete: () => void }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -11,6 +12,14 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: { task: Task, o
   const isToday = timeUtils.isToday(task.due_at);
   const isTomorrow = timeUtils.isTomorrow(task.due_at);
   const subject = SUBJECTS.find(s => s.code === task.subject_id);
+  const { sessions } = useWorkSessions();
+  
+  const taskSessions = sessions.filter(s => s.task_id === task.id && s.status === 'PLANNED' && !s.deleted_at);
+  const plannedMinutes = taskSessions.reduce((total, s) => {
+    const start = new Date(s.planned_start).getTime();
+    const end = new Date(s.planned_end).getTime();
+    return total + Math.round((end - start) / 60000);
+  }, 0);
 
   let dateLabel = '';
   if (isOverdue) dateLabel = 'Overdue';
@@ -65,6 +74,20 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: { task: Task, o
             </span>
           )}
         </div>
+
+        {task.estimated_minutes ? (
+          <div className="mt-2 flex items-center gap-2">
+            <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+              <div 
+                className={`h-full rounded-full transition-all duration-500 ${plannedMinutes >= task.estimated_minutes ? 'bg-emerald-500' : 'bg-indigo-500'}`}
+                style={{ width: `${Math.min(100, (plannedMinutes / task.estimated_minutes) * 100)}%` }}
+              />
+            </div>
+            <span className="text-[10px] font-medium text-white/40 shrink-0">
+              {timeUtils.formatDuration(plannedMinutes)} planned for {timeUtils.formatDuration(task.estimated_minutes)} estimate
+            </span>
+          </div>
+        ) : null}
       </div>
 
       <div className="absolute top-3 right-3">

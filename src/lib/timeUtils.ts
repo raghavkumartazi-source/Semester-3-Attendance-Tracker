@@ -56,5 +56,19 @@ export const timeUtils = {
     const today = new Date();
     d.setHours(23, 59, 59, 999);
     return d.getTime() < today.getTime();
+  },
+
+  formatDuration: (minutes: number): string => {
+    if (minutes < 60) return `${Math.round(minutes)}m`;
+    const h = Math.floor(minutes / 60);
+    const m = Math.round(minutes % 60);
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  },
+
+  getLocalISODate: (d: Date = new Date()): string => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 };

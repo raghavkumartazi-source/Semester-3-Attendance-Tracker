@@ -3,12 +3,18 @@
 import { useState, useRef } from 'react';
 import { useAttendance } from '@/components/AttendanceProvider';
 import AuthScreen from '@/components/AuthScreen';
+import { loadPlannerPreferences, savePlannerPreferences, validatePlannerPreferences, DEFAULT_PLANNER_PREFERENCES, PlannerPreferences } from '@/lib/plannerPreferences';
 
 export default function SettingsPage() {
   const { resetAll, exportData, importData, user, syncStatus, lastSynced, signOut, syncNow } = useAttendance();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [plannerPrefs, setPlannerPrefs] = useState<PlannerPreferences>(loadPlannerPreferences());
+  const [plannerExpanded, setPlannerExpanded] = useState(false);
+  const [plannerErrors, setPlannerErrors] = useState<Partial<Record<keyof PlannerPreferences, string>>>({});
+  const [showPlannerReset, setShowPlannerReset] = useState(false);
 
   const handleExport = () => {
     const json = exportData();
@@ -36,6 +42,28 @@ export default function SettingsPage() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const handlePlannerChange = (field: keyof PlannerPreferences, value: string | number) => {
+    const next = { ...plannerPrefs, [field]: value };
+    const { valid, errors } = validatePlannerPreferences(next);
+    setPlannerPrefs(next);
+    setPlannerErrors(errors);
+    if (valid) {
+      savePlannerPreferences(next);
+    }
+  };
+
+  const formatTimeRange = (start: string, end: string) => {
+    const format12 = (t: string) => {
+      const parts = t.split(':').map(Number);
+      let h = parts[0];
+      const m = parts[1];
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      return `${h}${m > 0 ? `:${m.toString().padStart(2, '0')}` : ''} ${ampm}`;
+    };
+    return `${format12(start)}–${format12(end)}`;
+  };
+
   return (
     <div className="max-w-lg mx-auto space-y-6 pb-24 animate-fade-in-up">
       <h1 className="text-lg font-bold text-white mb-2">Settings</h1>
@@ -48,6 +76,118 @@ export default function SettingsPage() {
         onSignOut={signOut}
         onSyncNow={syncNow}
       />
+
+      {/* Planner Settings */}
+      <div className="space-y-3">
+        <h2 className="text-[11px] font-semibold tracking-widest text-white/50 uppercase">
+          Planner
+        </h2>
+        
+        <div className="glass-elevated rounded-[18px] overflow-hidden transition-all duration-300">
+          <button
+            onClick={() => setPlannerExpanded(!plannerExpanded)}
+            className="w-full flex items-center justify-between px-5 py-4 text-left"
+          >
+            <div>
+              <p className="text-sm font-bold tracking-wide text-white drop-shadow-sm">Smart Planner Preferences</p>
+              {!plannerExpanded && (
+                <p className="text-[11px] text-white/50 mt-0.5">
+                  Weekdays {formatTimeRange(plannerPrefs.weekdayWorkStart, plannerPrefs.weekdayWorkEnd)} · {plannerPrefs.prefSessionDuration} min sessions
+                </p>
+              )}
+            </div>
+            <svg className={`w-5 h-5 text-white/40 transition-transform duration-300 ${plannerExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          
+          {plannerExpanded && (
+            <div className="px-5 pb-5 pt-1 space-y-6 border-t border-white/5 animate-fade-in-up">
+              
+              <div className="space-y-4">
+                <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Weekdays</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] text-white/50 mb-1.5">Available from</label>
+                    <input type="time" value={plannerPrefs.weekdayWorkStart} onChange={(e) => handlePlannerChange('weekdayWorkStart', e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500/50 text-sm" />
+                    {plannerErrors.weekdayWorkStart && <p className="text-[10px] text-red-400 mt-1">{plannerErrors.weekdayWorkStart}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-white/50 mb-1.5">Available until</label>
+                    <input type="time" value={plannerPrefs.weekdayWorkEnd} onChange={(e) => handlePlannerChange('weekdayWorkEnd', e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500/50 text-sm" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Weekends</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] text-white/50 mb-1.5">Available from</label>
+                    <input type="time" value={plannerPrefs.weekendWorkStart} onChange={(e) => handlePlannerChange('weekendWorkStart', e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500/50 text-sm" />
+                    {plannerErrors.weekendWorkStart && <p className="text-[10px] text-red-400 mt-1">{plannerErrors.weekendWorkStart}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-white/50 mb-1.5">Available until</label>
+                    <input type="time" value={plannerPrefs.weekendWorkEnd} onChange={(e) => handlePlannerChange('weekendWorkEnd', e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500/50 text-sm" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Session Length</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] text-white/50 mb-1.5">Minimum (min)</label>
+                    <input type="number" min="10" max="180" value={plannerPrefs.minSessionDuration} onChange={(e) => handlePlannerChange('minSessionDuration', parseInt(e.target.value) || 10)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500/50 text-sm" />
+                    {plannerErrors.minSessionDuration && <p className="text-[10px] text-red-400 mt-1">{plannerErrors.minSessionDuration}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-white/50 mb-1.5">Preferred (min)</label>
+                    <input type="number" min="10" max="240" value={plannerPrefs.prefSessionDuration} onChange={(e) => handlePlannerChange('prefSessionDuration', parseInt(e.target.value) || 60)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500/50 text-sm" />
+                    {plannerErrors.prefSessionDuration && <p className="text-[10px] text-red-400 mt-1">{plannerErrors.prefSessionDuration}</p>}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Buffer</h3>
+                <div>
+                  <label className="block text-[10px] text-white/50 mb-1.5">Between commitments (min)</label>
+                  <input type="number" min="0" max="60" value={plannerPrefs.bufferDuration} onChange={(e) => handlePlannerChange('bufferDuration', parseInt(e.target.value) || 0)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500/50 text-sm" />
+                  {plannerErrors.bufferDuration && <p className="text-[10px] text-red-400 mt-1">{plannerErrors.bufferDuration}</p>}
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-white/5">
+                {!showPlannerReset ? (
+                  <button onClick={() => setShowPlannerReset(true)} className="text-[11px] font-bold text-white/40 hover:text-white/80 transition-colors uppercase tracking-widest">
+                    Reset to Defaults
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setShowPlannerReset(false)} className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-white/60 hover:bg-white/5 transition-colors">
+                      Cancel
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setPlannerPrefs(DEFAULT_PLANNER_PREFERENCES);
+                        setPlannerErrors({});
+                        savePlannerPreferences(DEFAULT_PLANNER_PREFERENCES);
+                        setShowPlannerReset(false);
+                      }} 
+                      className="px-3 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-[11px] font-bold transition-colors"
+                    >
+                      Confirm Reset
+                    </button>
+                  </div>
+                )}
+              </div>
+
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Data Management */}
       <div className="space-y-3">

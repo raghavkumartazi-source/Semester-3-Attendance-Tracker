@@ -75,4 +75,19 @@ export interface Task {
   notes: string | null;
   created_at: string; // ISO string
   updated_at: string; // ISO string
+  estimated_minutes?: number | null;
+}
+
+export type WorkSessionStatus = 'PLANNED' | 'COMPLETED' | 'CANCELLED';
+
+export interface WorkSession {
+  id: string;
+  user_id?: string;
+  task_id: string | null;
+  planned_start: string; // ISO string
+  planned_end: string; // ISO string
+  status: WorkSessionStatus;
+  created_at: string; // ISO string
+  updated_at: string; // ISO string
+  deleted_at: string | null; // ISO string for tombstones
 }

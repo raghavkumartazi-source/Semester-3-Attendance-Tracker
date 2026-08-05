@@ -12,7 +12,7 @@ export function TodayProgress() {
   const completedTasksToday = tasks.filter(t => t.completed && timeUtils.isToday(t.completed_at));
   
   const d = new Date();
-  const localDate = d.toLocaleDateString('en-CA'); 
+  const localDate = timeUtils.getLocalISODate(d);
   const todaySessions = sessions.filter(s => s.date === localDate && s.status !== 'CANCELLED');
   const presentSessions = todaySessions.filter(s => s.status === 'PRESENT');
   const absentSessions = todaySessions.filter(s => s.status === 'ABSENT');
