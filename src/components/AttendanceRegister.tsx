@@ -7,6 +7,7 @@ import { DAY_SHORT, MONTH_SHORT } from '@/lib/config';
 import { getSubjectAttendance, formatPercentage, getStatusColor, getStatusLabel } from '@/lib/calculations';
 import { parseDate, formatDate } from '@/lib/sessions';
 import StatusPopover from './StatusPopover';
+import AddExtraClassModal from './AddExtraClassModal';
 
 interface Props {
   subject: Subject;
@@ -45,6 +46,7 @@ export default function AttendanceRegister({ subject, sessions, onMarkAttendance
   const todayColRef = useRef<HTMLDivElement>(null);
   const [activePopover, setActivePopover] = useState<string | null>(null);
   const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement | null>(null);
+  const [showExtraModal, setShowExtraModal] = useState(false);
 
   const todayStr = formatDate(new Date());
 
@@ -178,6 +180,12 @@ export default function AttendanceRegister({ subject, sessions, onMarkAttendance
           <button onClick={() => scrollBy(-1)} className="glass-control rounded-[10px] px-3 py-1.5 text-[10px] font-semibold text-white/60 hover:text-white">‹</button>
         </div>
         <div className="glass-elevated rounded-[14px] flex items-center gap-px p-1">
+          <button onClick={() => setShowExtraModal(true)} className="glass-control rounded-[10px] px-3 py-1.5 text-[10px] font-semibold text-white/60 hover:text-white mr-2 flex items-center gap-1">
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            EXTRA
+          </button>
           <button onClick={scrollToToday} className="glass-control-active rounded-[10px] px-4 py-1.5 text-[10px] font-bold text-white tracking-wider">TODAY</button>
           <button onClick={() => scrollBy(1)} className="glass-control rounded-[10px] px-3 py-1.5 text-[10px] font-semibold text-white/60 hover:text-white">›</button>
         </div>
@@ -288,6 +296,13 @@ export default function AttendanceRegister({ subject, sessions, onMarkAttendance
           </div>
         </div>
       </div>
+      
+      {showExtraModal && (
+        <AddExtraClassModal 
+          subject={subject} 
+          onClose={() => setShowExtraModal(false)} 
+        />
+      )}
     </div>
   );
 }

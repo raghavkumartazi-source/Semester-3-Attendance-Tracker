@@ -3,7 +3,7 @@ import { Subject, TimetableSlot } from './types';
 export const MINIMUM_ATTENDANCE = 0.75;
 
 export const SEMESTER_START = '2026-07-23';
-export const SEMESTER_END = '2026-11-27';
+export const SEMESTER_END = '2026-11-10';
 
 export const SUBJECTS: Subject[] = [
   { code: 'EC-201', name: 'Solid State Electronic Devices', shortName: 'SSED', lectures: 3, tutorials: 0, practicals: 0 },

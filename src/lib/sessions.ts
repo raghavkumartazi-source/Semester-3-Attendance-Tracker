@@ -101,7 +101,34 @@ export function createExtraSession(
 ): Session {
   const d = parseDate(date);
   return {
-    id: `extra-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    id: `extra|${subjectCode}|${date}|${startTime}|${endTime}|${classType}`,
+    subjectCode,
+    date,
+    day: d.getDay(),
+    startTime,
+    endTime,
+    classType,
+    status: 'UNMARKED',
+    isExtra: true,
+  };
+}
+
+/**
+ * Parse an extra session ID to reconstruct the session metadata.
+ */
+export function parseExtraSessionId(id: string): Session | null {
+  if (!id.startsWith('extra|')) return null;
+  
+  const parts = id.split('|');
+  if (parts.length !== 6) return null;
+  
+  const [, subjectCode, date, startTime, endTime, classTypeStr] = parts;
+  const d = parseDate(date);
+  
+  const classType = classTypeStr as 'Lecture' | 'Tutorial' | 'Lab';
+  
+  return {
+    id,
     subjectCode,
     date,
     day: d.getDay(),

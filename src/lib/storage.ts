@@ -32,10 +32,14 @@ export const storage = {
       const data: StorageData = JSON.parse(raw);
       const savedSessions = data.sessions || [];
       
-      // Map existing non-unmarked statuses
+      // Map existing non-unmarked statuses and collect extra sessions
       const savedStatusMap = new Map<string, Session['status']>();
+      const extraSessions: Session[] = [];
+      
       for (const s of savedSessions) {
-        if (s.status && s.status !== 'UNMARKED') {
+        if (s.isExtra) {
+          extraSessions.push(s);
+        } else if (s.status && s.status !== 'UNMARKED') {
           savedStatusMap.set(s.id, s.status);
         }
       }
@@ -49,7 +53,7 @@ export const storage = {
         return session;
       });
       
-      return mergedSessions;
+      return [...mergedSessions, ...extraSessions];
     } catch {
       this.save(freshSessions);
       return freshSessions;

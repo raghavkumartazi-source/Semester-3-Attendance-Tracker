@@ -6,6 +6,7 @@ import { storage } from '@/lib/storage';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { syncRepo, CloudRecord } from '@/lib/sync';
+import { parseExtraSessionId } from '@/lib/sessions';
 
 interface AttendanceContextType {
   sessions: Session[];
@@ -70,6 +71,7 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
       cloudRecords.forEach(cr => cloudMap.set(cr.session_id, cr));
       
       // Merge Cloud into Local
+      const localIds = new Set(newSessions.map(s => s.id));
       for (let i = 0; i < newSessions.length; i++) {
         const local = newSessions[i];
         const cloud = cloudMap.get(local.id);
@@ -86,6 +88,19 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
             };
             changed = true;
           }
+        }
+      }
+      
+      // Inject cloud extra sessions missing locally
+      for (const cr of cloudRecords) {
+        if (!localIds.has(cr.session_id) && cr.session_id.startsWith('extra|')) {
+           const newExtra = parseExtraSessionId(cr.session_id);
+           if (newExtra) {
+             newExtra.status = cr.status as AttendanceStatus;
+             newExtra.updatedAt = cr.updated_at;
+             newSessions.push(newExtra);
+             changed = true;
+           }
         }
       }
       
