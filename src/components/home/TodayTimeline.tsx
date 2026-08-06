@@ -62,7 +62,7 @@ export function TodayTimeline() {
         });
 
       const workEvents: TimelineEvent[] = workSessions
-        .filter(s => s.planned_start.startsWith(localDate))
+        .filter(s => s.planned_start.startsWith(localDate) && !s.deleted_at && s.status !== 'CANCELLED')
         .map(s => {
           const start = new Date(s.planned_start);
           const end = new Date(s.planned_end);

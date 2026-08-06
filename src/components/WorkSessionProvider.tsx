@@ -62,24 +62,12 @@ export function WorkSessionProvider({ children }: { children: ReactNode }) {
         }
       }
       
-      console.log('=== SYNC DIAGNOSTICS ===');
-      console.log('total raw local WorkSessions:', currentSessions.length);
-      const localIds = new Set(currentSessions.map(s => s.id));
-      console.log('unique local WorkSession IDs:', localIds.size);
-      if (localIds.size < currentSessions.length) {
-        console.log('Duplicate IDs found in local storage!');
-      }
-      console.log('cloud WorkSession count:', cloudSessions.length);
-      
       cloudSessions.forEach(cloud => {
         if (!newSessions.find(s => s.id === cloud.id)) {
           newSessions.push({ ...cloud });
           changed = true;
         }
       });
-      
-      console.log('provider active session count (excluding deleted):', newSessions.filter(s => !s.deleted_at).length);
-      console.log('========================');
       
       if (changed) {
         workSessionStorage.save(newSessions);

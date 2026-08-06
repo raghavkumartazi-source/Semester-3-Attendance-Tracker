@@ -22,53 +22,18 @@ export const generateSmartPlan = (
   
   // 1. Filter and prepare tasks
   const now = new Date();
-  
-  console.log('=== PLANNER WINDOW DEBUG ===');
-  console.log(`current local datetime: ${now.toString()}`);
-  console.log(`current local ISO date: ${now.toISOString()}`);
-  console.log(`planning horizon start: ${now.toISOString()}`);
-  console.log(`planning horizon end (max): ${new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString()}`);
-  console.log(`weekday work window: ${prefs.weekdayWorkStart} - ${prefs.weekdayWorkEnd}`);
-  console.log(`weekend work window: ${prefs.weekendWorkStart} - ${prefs.weekendWorkEnd}`);
-  console.log(`minSessionDuration: ${prefs.minSessionDuration}`);
-  console.log(`prefSessionDuration: ${prefs.prefSessionDuration}`);
-  console.log(`bufferDuration: ${prefs.bufferDuration}`);
-  console.log('============================');
 
-  console.log('=== PLANNER TASK DEBUG ===');
   const incompleteTasks = tasks.filter(t => {
-    let eligible = true;
-    let reason = '';
-    
-    if (t.completed) { eligible = false; reason = 'completed'; }
-    else if (t.deleted_at) { eligible = false; reason = 'deleted'; }
-    else if (!t.estimated_minutes) { eligible = false; reason = 'no estimated_minutes'; }
-    else if (!t.due_at) { eligible = false; reason = 'no due_at'; }
-    
-    const existingSessions = workSessions.filter(s => s.task_id === t.id && s.status === 'PLANNED' && !s.deleted_at);
-    const plannedMinutes = existingSessions.reduce((total, s) => {
-      const start = new Date(s.planned_start).getTime();
-      const end = new Date(s.planned_end).getTime();
-      return total + Math.round((end - start) / 60000);
-    }, 0);
-    const unallocatedMinutes = eligible ? Math.max(0, (t.estimated_minutes || 0) - plannedMinutes) : 0;
-
-    console.log(`- Task: [${t.id}] ${t.title}`);
-    console.log(`  completed: ${t.completed}`);
-    console.log(`  deleted_at: ${t.deleted_at}`);
-    console.log(`  due_at: ${t.due_at}`);
-    console.log(`  estimated_minutes: ${t.estimated_minutes}`);
-    console.log(`  priority: ${t.priority}`);
-    console.log(`  existing PLANNED minutes: ${plannedMinutes}`);
-    console.log(`  calculated unallocatedMinutes: ${unallocatedMinutes}`);
-    console.log(`  eligible: ${eligible}${!eligible ? ` (reason: ${reason})` : ''}`);
-
-    return eligible;
+    if (t.completed) return false;
+    if (t.deleted_at) return false;
+    if (!t.estimated_minutes) return false;
+    if (!t.due_at) return false;
+    return true;
   });
-  console.log('==========================');
+
   if (incompleteTasks.length === 0) return { sessions: [], overloadedTasks: [] };
   
-  // Calculate remaining effort for each task
+  // Calculate remaining effort for each task (only PLANNED sessions count)
   const taskNeeds = incompleteTasks.map(t => {
     const existingSessions = workSessions.filter(s => s.task_id === t.id && s.status === 'PLANNED' && !s.deleted_at);
     const plannedMinutes = existingSessions.reduce((total, s) => {
@@ -84,20 +49,17 @@ export const generateSmartPlan = (
     };
   }).filter(t => t.remainingMinutes > 0);
 
-  // Sort tasks by priority, urgency
+  // Sort tasks by priority × urgency (overdue tasks float to top)
   taskNeeds.sort((a, b) => {
-    // Treat overdue tasks with very high urgency
     const isOverdueA = a.dueDate.getTime() < now.getTime();
     const isOverdueB = b.dueDate.getTime() < now.getTime();
     
     if (isOverdueA && !isOverdueB) return -1;
     if (isOverdueB && !isOverdueA) return 1;
 
-    // 1. Urgency
     const daysA = Math.max(0, (a.dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     const daysB = Math.max(0, (b.dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     
-    // 2. Priority
     const pWeight = { HIGH: 3, MEDIUM: 2, LOW: 1 };
     const pA = pWeight[a.task.priority];
     const pB = pWeight[b.task.priority];
@@ -108,7 +70,7 @@ export const generateSmartPlan = (
     return scoreB - scoreA; // descending
   });
 
-  // Prepare existing commitments
+  // Prepare existing commitments as blocked time ranges
   const blockedTimes: TimeBlock[] = [];
   
   // Add class sessions to blocked times
@@ -138,11 +100,11 @@ export const generateSmartPlan = (
     blockedTimes.push({ start, end });
   });
 
-    // 14 days lookahead
+  // Schedule sessions for each task (14-day lookahead)
   for (const tNeed of taskNeeds) {
     let remaining = tNeed.remainingMinutes;
     const currentDay = new Date(now);
-    currentDay.setHours(0,0,0,0);
+    currentDay.setHours(0, 0, 0, 0);
     
     // For overdue tasks, schedule before a virtual deadline of 14 days
     const isOverdue = tNeed.dueDate.getTime() < now.getTime();
@@ -154,10 +116,6 @@ export const generateSmartPlan = (
       const startStr = isWeekend ? prefs.weekendWorkStart : prefs.weekdayWorkStart;
       const endStr = isWeekend ? prefs.weekendWorkEnd : prefs.weekdayWorkEnd;
       
-      console.log(`\n=== PLANNER DAY DEBUG: ${currentDay.toLocaleDateString()} ===`);
-      console.log(`configured work start/end: ${startStr} - ${endStr}`);
-      console.log(`class blocks: ${blockedTimes.length} total blocks (classes & sessions) configured in system`);
-      
       const [sh, sm] = startStr.split(':').map(Number);
       const [eh, em] = endStr.split(':').map(Number);
       
@@ -167,73 +125,108 @@ export const generateSmartPlan = (
       const workEnd = new Date(currentDay);
       workEnd.setHours(eh, em, 0, 0);
       
-      // We will try to place blocks of prefSessionDuration, or down to minSessionDuration
+      // Adaptive session scheduling
       let iterTime = new Date(Math.max(workStart.getTime(), now.getTime()));
       
-      while (iterTime < workEnd && remaining >= prefs.minSessionDuration) {
-        const potentialSession = Math.min(remaining, prefs.prefSessionDuration);
-        const iterEnd = new Date(iterTime);
-        iterEnd.setMinutes(iterEnd.getMinutes() + potentialSession);
+      while (iterTime < workEnd && remaining > 0) {
+        // Compile all active blocks (static + newly suggested sessions)
+        const activeBlocks: TimeBlock[] = [...blockedTimes];
         
-        if (iterEnd > workEnd) {
-          iterTime = new Date(iterEnd); // Push forward to break loop
-          continue;
-        }
-        
-        // Check if [iterTime, iterEnd] overlaps with any blockedTimes or newly suggestedSessions
-        const overlapsBlocked = blockedTimes.some(b => 
-          (iterTime < b.end && iterEnd > b.start)
-        );
-        
-        const overlapsSuggested = suggestedSessions.some(s => {
+        suggestedSessions.forEach(s => {
           const ss = new Date(s.planned_start);
           const se = new Date(s.planned_end);
           ss.setMinutes(ss.getMinutes() - prefs.bufferDuration);
           se.setMinutes(se.getMinutes() + prefs.bufferDuration);
-          return (iterTime < se && iterEnd > ss);
+          activeBlocks.push({ start: ss, end: se });
         });
+
+        // 1. Is iterTime currently inside a blocked region? Skip past it.
+        const currentBlock = activeBlocks.find(b => iterTime >= b.start && iterTime < b.end);
+        if (currentBlock) {
+          iterTime = new Date(currentBlock.end);
+          continue;
+        }
+
+        // 2. Find the NEXT blocking event boundary
+        const futureBlocks = activeBlocks.filter(b => b.start > iterTime);
+        const nextBlockStart = futureBlocks.length > 0
+          ? new Date(Math.min(...futureBlocks.map(b => b.start.getTime())))
+          : null;
+
+        const endBounds = [workEnd.getTime(), deadline.getTime()];
+        if (nextBlockStart) {
+          endBounds.push(nextBlockStart.getTime());
+        }
+
+        const nextLimitTime = new Date(Math.min(...endBounds));
+
+        // 3. Calculate available minutes until the next limit
+        const availableMinutes = Math.floor((nextLimitTime.getTime() - iterTime.getTime()) / 60000);
+
+        if (availableMinutes <= 0) {
+          if (nextBlockStart && iterTime.getTime() === nextBlockStart.getTime()) {
+            iterTime.setMinutes(iterTime.getMinutes() + 1);
+            continue;
+          } else {
+            break; // Hit workEnd or deadline
+          }
+        }
+
+        // 4. Calculate adaptive session size
+        let sessionMinutes = Math.min(
+          remaining,
+          prefs.prefSessionDuration,
+          availableMinutes
+        );
+
+        // 5. Small-remainder rebalancing
+        // If scheduling sessionMinutes would leave a remainder that's > 0 but < minSessionDuration,
+        // shrink the current session so the remainder becomes exactly minSessionDuration.
+        const remainderAfterSession = remaining - sessionMinutes;
         
-        if (!overlapsBlocked && !overlapsSuggested) {
-          console.log(`  -> Found free block: ${iterTime.toLocaleTimeString()} to ${iterEnd.toLocaleTimeString()} (duration: ${potentialSession}m)`);
-          // Valid block found!
+        if (remainderAfterSession > 0 && remainderAfterSession < prefs.minSessionDuration) {
+          const deficit = prefs.minSessionDuration - remainderAfterSession;
+          const rebalancedSession = sessionMinutes - deficit;
+          
+          if (rebalancedSession >= prefs.minSessionDuration) {
+            sessionMinutes = rebalancedSession;
+          }
+          // If rebalancing would make this session too small, keep original size.
+          // The remainder will be flagged as overloaded.
+        }
+
+        // 6. Create session if it meets minimum threshold
+        if (sessionMinutes >= prefs.minSessionDuration) {
+          const iterEnd = new Date(iterTime);
+          iterEnd.setMinutes(iterEnd.getMinutes() + sessionMinutes);
+          
           suggestedSessions.push({
             task_id: tNeed.task.id,
             planned_start: iterTime.toISOString(),
             planned_end: iterEnd.toISOString(),
             status: 'PLANNED'
           });
-          remaining -= potentialSession;
+          remaining -= sessionMinutes;
           
           iterTime = new Date(iterEnd);
           iterTime.setMinutes(iterTime.getMinutes() + prefs.bufferDuration);
         } else {
-          // Advance iterTime by 15 mins to search next slot
-          iterTime.setMinutes(iterTime.getMinutes() + 15);
+          // Slot too small — skip past the limit
+          iterTime = new Date(nextLimitTime);
+          if (nextBlockStart && nextLimitTime.getTime() === nextBlockStart.getTime()) {
+            iterTime.setMinutes(iterTime.getMinutes() + 1);
+          }
         }
       }
       
       currentDay.setDate(currentDay.getDate() + 1);
     }
     
-    if (remaining >= prefs.minSessionDuration) {
+    // Strict overload: any remaining effort means the task is overloaded
+    if (remaining > 0) {
       overloadedTasks.push(tNeed.task);
     }
   }
-
-  console.log('\n=== PLANNER RESULT DEBUG ===');
-  console.log(`eligible task count: ${taskNeeds.length}`);
-  console.log(`proposed session count: ${suggestedSessions.length}`);
-  const totalMins = suggestedSessions.reduce((acc, s) => {
-    const start = new Date(s.planned_start).getTime();
-    const end = new Date(s.planned_end).getTime();
-    return acc + Math.round((end - start) / 60000);
-  }, 0);
-  console.log(`total proposed minutes: ${totalMins}`);
-  console.log(`overloaded task count: ${overloadedTasks.length}`);
-  if (overloadedTasks.length > 0) {
-    console.log(`overloaded tasks: ${overloadedTasks.map(t => t.title).join(', ')}`);
-  }
-  console.log('============================\n');
 
   // Final defensive deduplication (proposal-level duplicate protection)
   const uniqueSuggestedSessions: typeof suggestedSessions = [];
@@ -245,6 +238,12 @@ export const generateSmartPlan = (
       uniqueSuggestedSessions.push(s);
     }
   }
+
+  // Concise production log
+  const totalMins = uniqueSuggestedSessions.reduce((acc, s) => {
+    return acc + Math.round((new Date(s.planned_end).getTime() - new Date(s.planned_start).getTime()) / 60000);
+  }, 0);
+  console.log(`[SmartPlanner] ${taskNeeds.length} eligible → ${uniqueSuggestedSessions.length} sessions (${totalMins}m)${overloadedTasks.length > 0 ? ` | ${overloadedTasks.length} overloaded` : ''}`);
 
   return { sessions: uniqueSuggestedSessions, overloadedTasks };
 };

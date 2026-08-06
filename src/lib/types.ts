@@ -33,7 +33,7 @@ export interface Session {
   classType: ClassType;
   status: AttendanceStatus;
   isExtra: boolean;
-  updatedAt?: number;
+  updatedAt?: string; // ISO timestamp string (consistent with cloud & other providers)
 }
 
 export interface SubjectAttendance {

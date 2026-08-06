@@ -28,7 +28,7 @@ export function TodayProgress() {
     ...presentSessions.map(s => ({
       id: s.id,
       text: `Attended ${s.subjectCode}`,
-      time: s.updatedAt || new Date().getTime(),
+      time: s.updatedAt ? new Date(s.updatedAt).getTime() : d.getTime(),
       type: 'class' as const
     }))
   ].sort((a, b) => b.time - a.time);

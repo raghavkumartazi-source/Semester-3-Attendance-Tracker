@@ -76,13 +76,13 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
         
         if (cloud) {
           const cloudDate = new Date(cloud.updated_at).getTime();
-          const localDate = local.updatedAt || 0;
+          const localDate = local.updatedAt ? new Date(local.updatedAt).getTime() : 0;
           
           if (cloudDate > localDate) {
             newSessions[i] = { 
               ...local, 
               status: cloud.status as AttendanceStatus, 
-              updatedAt: cloudDate 
+              updatedAt: cloud.updated_at 
             };
             changed = true;
           }
@@ -100,7 +100,7 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
         const cloud = cloudMap.get(s.id);
         if (!cloud) return true; 
         const cloudDate = new Date(cloud.updated_at).getTime();
-        const localDate = s.updatedAt || 0;
+        const localDate = s.updatedAt ? new Date(s.updatedAt).getTime() : 0;
         return localDate > cloudDate;
       });
       
@@ -164,7 +164,7 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateSessionStatus = useCallback((sessionId: string, status: AttendanceStatus) => {
-    const now = Date.now();
+    const now = new Date().toISOString();
     setSessions(prev => {
       const updated = prev.map(s =>
         s.id === sessionId ? { ...s, status, updatedAt: now } : s
@@ -190,7 +190,7 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const addSession = useCallback((session: Session) => {
-    const now = Date.now();
+    const now = new Date().toISOString();
     setSessions(prev => {
       const sessionWithTime = { ...session, updatedAt: now };
       const updated = [...prev, sessionWithTime];
