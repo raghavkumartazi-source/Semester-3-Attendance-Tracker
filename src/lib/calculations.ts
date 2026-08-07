@@ -155,3 +155,114 @@ export function getAttendanceButtonColor(status: AttendanceStatus): string {
     case 'UNMARKED': return 'glass-button text-zinc-400 hover:text-white drop-shadow-sm';
   }
 }
+
+/**
+ * Calculate the current "Perfect Streak".
+ * A streak is consecutive past days (that had classes) where all marked classes were 'PRESENT'.
+ * If a day had an 'ABSENT', the streak resets.
+ * Days with only 'CANCELLED' or 'UNMARKED' are ignored.
+ */
+export function calculateCurrentStreak(sessions: Session[]): number {
+  // Group sessions by date
+  const byDate: Record<string, Session[]> = {};
+  for (const s of sessions) {
+    if (!byDate[s.date]) byDate[s.date] = [];
+    byDate[s.date].push(s);
+  }
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const pastDates = Object.keys(byDate)
+    .filter(date => date <= todayStr)
+    .sort((a, b) => b.localeCompare(a)); // sort descending (newest first)
+
+  let streak = 0;
+
+  for (const date of pastDates) {
+    const daySessions = byDate[date];
+    
+    let hasPresent = false;
+    let hasAbsent = false;
+    
+    for (const s of daySessions) {
+      if (s.status === 'ABSENT') hasAbsent = true;
+      if (s.status === 'PRESENT') hasPresent = true;
+    }
+
+    if (hasAbsent) {
+      // Streak broken
+      break;
+    }
+    
+    if (hasPresent) {
+      // Day was perfect (no absent, at least one present)
+      streak++;
+    }
+  }
+
+  return streak;
+}
+
+/**
+ * Get cumulative attendance percentage over time.
+ * Returns an array of { date, percentage } objects for charting.
+ */
+export function getAttendanceTrends(sessions: Session[]): { date: string; percentage: number }[] {
+  // Sort sessions chronologically (oldest first)
+  const sorted = [...sessions].sort((a, b) => a.date.localeCompare(b.date));
+
+  const trends: { date: string; percentage: number }[] = [];
+  let cumulativePresent = 0;
+  let cumulativeTotal = 0;
+  
+  // Group by date to avoid multiple data points per day
+  const byDate: Record<string, Session[]> = {};
+  for (const s of sorted) {
+    if (!byDate[s.date]) byDate[s.date] = [];
+    byDate[s.date].push(s);
+  }
+
+  const dates = Object.keys(byDate).sort();
+
+  for (const date of dates) {
+    const daySessions = byDate[date];
+    for (const s of daySessions) {
+      if (s.status === 'PRESENT') {
+        cumulativePresent++;
+        cumulativeTotal++;
+      } else if (s.status === 'ABSENT') {
+        cumulativeTotal++;
+      }
+    }
+    
+    // Only push if there was at least one class conducted so far
+    if (cumulativeTotal > 0) {
+      trends.push({
+        date,
+        percentage: Number(((cumulativePresent / cumulativeTotal) * 100).toFixed(1))
+      });
+    }
+  }
+
+  return trends;
+}
+
+/**
+ * Get a breakdown of all session statuses for pie charts.
+ */
+export function getOverallStats(sessions: Session[]): { name: string; value: number; color: string }[] {
+  let present = 0;
+  let absent = 0;
+  let cancelled = 0;
+
+  for (const s of sessions) {
+    if (s.status === 'PRESENT') present++;
+    if (s.status === 'ABSENT') absent++;
+    if (s.status === 'CANCELLED') cancelled++;
+  }
+
+  return [
+    { name: 'Present', value: present, color: '#10B981' }, // Emerald-500
+    { name: 'Absent', value: absent, color: '#EF4444' },  // Red-500
+    { name: 'Cancelled', value: cancelled, color: '#9CA3AF' } // Gray-400
+  ].filter(stat => stat.value > 0);
+}

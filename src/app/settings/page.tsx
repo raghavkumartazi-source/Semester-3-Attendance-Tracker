@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { useAttendance } from '@/components/AttendanceProvider';
 import AuthScreen from '@/components/AuthScreen';
 import { loadPlannerPreferences, savePlannerPreferences, validatePlannerPreferences, DEFAULT_PLANNER_PREFERENCES, PlannerPreferences } from '@/lib/plannerPreferences';
+import { ExportReportButton } from '@/components/ExportReportButton';
 
 export default function SettingsPage() {
   const { resetAll, exportData, importData, user, syncStatus, lastSynced, signOut, syncNow } = useAttendance();
@@ -280,6 +281,10 @@ export default function SettingsPage() {
             </div>
           </div>
         )}
+      </div>
+
+      <div className="pt-2">
+        <ExportReportButton />
       </div>
 
       {/* About */}

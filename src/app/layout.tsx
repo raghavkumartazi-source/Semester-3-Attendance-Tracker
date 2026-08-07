@@ -1,13 +1,14 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Outfit } from 'next/font/google';
 import './globals.css';
 import { AttendanceProvider } from '@/components/AttendanceProvider';
 import { TaskProvider } from '@/components/TaskProvider';
 import { WorkSessionProvider } from '@/components/WorkSessionProvider';
 import BottomNav from '@/components/BottomNav';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import PageTransition from '@/components/PageTransition';
 
-const inter = Inter({ subsets: ['latin'] });
+const outfit = Outfit({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Semester III Attendance',
@@ -40,7 +41,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-[#07080b] text-zinc-100 antialiased min-h-screen relative overflow-x-hidden selection:bg-white/20`}>
+      <body className={`${outfit.className} bg-[#07080b] text-zinc-100 antialiased min-h-screen relative overflow-x-hidden selection:bg-white/20`}>
         
         {/* Atmospheric Animated Background */}
         <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden bg-[#07080b]">
@@ -53,22 +54,24 @@ export default function RootLayout({
                style={{ background: 'radial-gradient(circle, rgba(59,130,246,1) 0%, transparent 60%)' }} />
                
           {/* Subtle violet wash — center shifting */}
-          <div className="absolute top-[20%] left-[20%] w-[1000px] h-[800px] rounded-full opacity-[0.04] animate-orb-slower"
-               style={{ background: 'radial-gradient(ellipse, rgba(139,92,246,1) 0%, transparent 70%)' }} />
+          <div className="absolute top-[60%] right-[-10%] w-[600px] h-[600px] rounded-full opacity-[0.05] animate-orb-slow"
+               style={{ background: 'radial-gradient(circle, rgba(139,92,246,1) 0%, transparent 60%)' }} />
         </div>
 
-        <AttendanceProvider>
-          <TaskProvider>
+        <ErrorBoundary>
+          <AttendanceProvider>
             <WorkSessionProvider>
-              <ErrorBoundary>
-                <main className="mx-auto px-4 pt-6 pb-28 relative z-0">
-                  {children}
+              <TaskProvider>
+                <main className="mx-auto px-4 pt-6 pb-28 min-h-screen flex flex-col relative z-0">
+                  <PageTransition>
+                    {children}
+                  </PageTransition>
                 </main>
-              </ErrorBoundary>
-              <BottomNav />
+                <BottomNav />
+              </TaskProvider>
             </WorkSessionProvider>
-          </TaskProvider>
-        </AttendanceProvider>
+          </AttendanceProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );
