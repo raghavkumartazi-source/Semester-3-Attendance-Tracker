@@ -11,9 +11,7 @@ export function TodayHeader() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setGreeting(timeUtils.getGreeting());
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDateStr(timeUtils.getFormattedDate());
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setProgress(timeUtils.getSemesterProgress());
   }, []);
 

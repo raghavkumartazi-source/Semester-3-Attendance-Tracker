@@ -7,6 +7,7 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { syncRepo, CloudRecord } from '@/lib/sync';
 import { parseExtraSessionId } from '@/lib/sessions';
+import UndoToast from './UndoToast';
 
 interface AttendanceContextType {
   sessions: Session[];
@@ -36,6 +37,14 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
   const [syncStatus, setSyncStatus] = useState<'Synced' | 'Syncing' | 'Offline' | 'Error'>('Offline');
   const [syncError, setSyncError] = useState<string>('');
   const [lastSynced, setLastSynced] = useState<Date | undefined>();
+  
+  const [toastState, setToastState] = useState<{
+    show: boolean;
+    sessionId: string;
+    subjectCode: string;
+    status: AttendanceStatus;
+    previousStatus: AttendanceStatus;
+  } | null>(null);
 
   // 1. Initial Load from LocalStorage
   useEffect(() => {
@@ -154,15 +163,16 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
     const handleOnline = () => {
       if (user && isLoaded) performFullSync(user, sessions);
     };
+    const handleOffline = () => setSyncStatus('Offline');
     
     window.addEventListener('focus', handleFocus);
     window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', () => setSyncStatus('Offline'));
+    window.addEventListener('offline', handleOffline);
     
     return () => {
       window.removeEventListener('focus', handleFocus);
       window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', () => setSyncStatus('Offline'));
+      window.removeEventListener('offline', handleOffline);
     };
   }, [user, isLoaded, sessions, performFullSync]);
 
@@ -181,6 +191,17 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
   const updateSessionStatus = useCallback((sessionId: string, status: AttendanceStatus) => {
     const now = new Date().toISOString();
     setSessions(prev => {
+      const oldSession = prev.find(s => s.id === sessionId);
+      if (oldSession && status !== 'UNMARKED' && oldSession.status !== status) {
+        setToastState({
+          show: true,
+          sessionId,
+          subjectCode: oldSession.subjectCode,
+          status,
+          previousStatus: oldSession.status
+        });
+      }
+
       const updated = prev.map(s =>
         s.id === sessionId ? { ...s, status, updatedAt: now } : s
       );
@@ -271,6 +292,18 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
       signOut
     }}>
       {children}
+      {toastState && (
+        <UndoToast
+          show={toastState.show}
+          subjectCode={toastState.subjectCode}
+          status={toastState.status}
+          onUndo={() => {
+            updateSessionStatus(toastState.sessionId, toastState.previousStatus);
+            setToastState(null);
+          }}
+          onClose={() => setToastState(prev => prev ? { ...prev, show: false } : null)}
+        />
+      )}
     </AttendanceContext.Provider>
   );
 }

@@ -8,9 +8,11 @@ import { TodayTimeline } from './home/TodayTimeline';
 import { HomeTaskSummary } from './home/HomeTaskSummary';
 import { TodayProgress } from './home/TodayProgress';
 import { AttendanceSnapshot } from './home/AttendanceSnapshot';
+import AttendanceForecast from './home/AttendanceForecast';
+import { SUBJECTS } from '@/lib/config';
 
 export default function Dashboard() {
-  const { isLoaded } = useAttendance();
+  const { isLoaded, sessions } = useAttendance();
 
   if (!isLoaded) {
     return <SkeletonDashboard />;
@@ -24,6 +26,9 @@ export default function Dashboard() {
       <HomeTaskSummary />
       <TodayProgress />
       <AttendanceSnapshot />
+      <div className="mt-8">
+        <AttendanceForecast subjects={SUBJECTS} sessions={sessions} />
+      </div>
     </div>
   );
 }

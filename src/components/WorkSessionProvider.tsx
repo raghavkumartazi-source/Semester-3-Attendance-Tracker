@@ -31,7 +31,6 @@ export function WorkSessionProvider({ children }: { children: ReactNode }) {
     const loaded = workSessionStorage.load();
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSessions(loaded);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoaded(true);
   }, []);
 
@@ -115,15 +114,16 @@ export function WorkSessionProvider({ children }: { children: ReactNode }) {
     const handleOnline = () => {
       if (user && isLoaded) performFullSync(sessions);
     };
+    const handleOffline = () => setSyncStatus('Offline');
     
     window.addEventListener('focus', handleFocus);
     window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', () => setSyncStatus('Offline'));
+    window.addEventListener('offline', handleOffline);
     
     return () => {
       window.removeEventListener('focus', handleFocus);
       window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', () => setSyncStatus('Offline'));
+      window.removeEventListener('offline', handleOffline);
     };
   }, [user, isLoaded, sessions, performFullSync]);
 
