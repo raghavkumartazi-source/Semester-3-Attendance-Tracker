@@ -20,37 +20,39 @@ export const SUBJECTS: Subject[] = [
 export const TIMETABLE: TimetableSlot[] = [
   // MONDAY
   { day: 1, subjectCode: 'EO-201', startTime: '09:00', endTime: '09:55', classType: 'Lecture' },
-  { day: 1, subjectCode: 'HLM', startTime: '10:00', endTime: '11:30', classType: 'Lecture' },
+  { day: 1, subjectCode: 'HLM', startTime: '10:00', endTime: '10:55', classType: 'Lecture' },
+  { day: 1, subjectCode: 'HLM', startTime: '11:00', endTime: '11:55', classType: 'Lecture' },
+  { day: 1, subjectCode: 'MO-201', startTime: '17:30', endTime: '18:25', classType: 'Tutorial' },
 
   // TUESDAY
   { day: 2, subjectCode: 'MA-201', startTime: '08:00', endTime: '08:55', classType: 'Lecture' },
-  { day: 2, subjectCode: 'MO-201', startTime: '09:00', endTime: '09:55', classType: 'Lecture' },
   { day: 2, subjectCode: 'EC-201', startTime: '10:00', endTime: '10:55', classType: 'Lecture' },
   { day: 2, subjectCode: 'EC-203', startTime: '11:00', endTime: '11:55', classType: 'Lecture' },
-  { day: 2, subjectCode: 'EC-202', startTime: '14:30', endTime: '15:25', classType: 'Lecture' },
+  { day: 2, subjectCode: 'MO-201', startTime: '12:00', endTime: '12:55', classType: 'Lecture' },
   { day: 2, subjectCode: 'EO-103', startTime: '15:30', endTime: '17:25', classType: 'Lab' },
+  { day: 2, subjectCode: 'EC-202', startTime: '17:30', endTime: '18:25', classType: 'Lecture' },
 
   // WEDNESDAY
   { day: 3, subjectCode: 'MA-201', startTime: '08:00', endTime: '08:55', classType: 'Lecture' },
-  { day: 3, subjectCode: 'MO-201', startTime: '09:00', endTime: '09:55', classType: 'Lecture' },
-  { day: 3, subjectCode: 'EC-201', startTime: '10:00', endTime: '10:55', classType: 'Lecture' },
+  { day: 3, subjectCode: 'EC-202', startTime: '10:00', endTime: '10:55', classType: 'Lecture' },
   { day: 3, subjectCode: 'EC-203', startTime: '11:00', endTime: '11:55', classType: 'Lecture' },
-  { day: 3, subjectCode: 'EC-202', startTime: '14:30', endTime: '15:25', classType: 'Lecture' },
+  { day: 3, subjectCode: 'MO-201', startTime: '12:00', endTime: '12:55', classType: 'Lecture' },
   { day: 3, subjectCode: 'MA-201', startTime: '15:30', endTime: '16:25', classType: 'Tutorial' },
   { day: 3, subjectCode: 'EO-201', startTime: '16:30', endTime: '17:25', classType: 'Tutorial' },
+  { day: 3, subjectCode: 'EC-202', startTime: '17:30', endTime: '18:25', classType: 'Lecture' },
 
-  // THURSDAY — EO-201 has TWO separate lectures
+  // THURSDAY
   { day: 4, subjectCode: 'EO-201', startTime: '08:00', endTime: '08:55', classType: 'Lecture' },
   { day: 4, subjectCode: 'EO-201', startTime: '09:00', endTime: '09:55', classType: 'Lecture' },
-  { day: 4, subjectCode: 'HLM', startTime: '10:00', endTime: '11:30', classType: 'Lecture' },
+  { day: 4, subjectCode: 'HLM', startTime: '10:00', endTime: '10:55', classType: 'Lecture' },
+  { day: 4, subjectCode: 'HLM', startTime: '11:00', endTime: '11:55', classType: 'Lecture' },
 
   // FRIDAY
   { day: 5, subjectCode: 'MA-201', startTime: '08:00', endTime: '08:55', classType: 'Lecture' },
-  { day: 5, subjectCode: 'MO-201', startTime: '09:00', endTime: '09:55', classType: 'Lecture' },
-  { day: 5, subjectCode: 'EC-201', startTime: '10:00', endTime: '10:55', classType: 'Lecture' },
+  { day: 5, subjectCode: 'EO-201', startTime: '10:00', endTime: '10:55', classType: 'Lecture' },
   { day: 5, subjectCode: 'EC-203', startTime: '11:00', endTime: '11:55', classType: 'Lecture' },
-  { day: 5, subjectCode: 'EC-202', startTime: '14:30', endTime: '15:25', classType: 'Lecture' },
-  { day: 5, subjectCode: 'MO-201', startTime: '15:30', endTime: '16:25', classType: 'Lab' },
+  { day: 5, subjectCode: 'MO-201', startTime: '12:00', endTime: '12:55', classType: 'Lecture' },
+  { day: 5, subjectCode: 'EC-202', startTime: '17:30', endTime: '18:25', classType: 'Lecture' },
 ];
 
 export const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];

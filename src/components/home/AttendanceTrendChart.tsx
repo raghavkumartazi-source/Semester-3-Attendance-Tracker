@@ -90,6 +90,7 @@ export function AttendanceTrendChart({ sessions }: Props) {
                   return label;
                 }
               }}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any) => [`${value}%`, 'Attendance']}
             />
             <Area 

@@ -68,6 +68,7 @@ export function OverallBreakdownChart({ sessions }: Props) {
                 boxShadow: '0 8px 32px rgba(0,0,0,0.4)'
               }}
               itemStyle={{ color: '#fff', fontWeight: 'bold' }}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any, name: any) => [`${value} Classes`, name]}
             />
           </PieChart>
