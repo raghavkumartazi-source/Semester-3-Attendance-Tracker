@@ -124,7 +124,7 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
       {/* Controls & Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-1">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-tight">Master Register</h1>
+          <h1 className="text-xl font-extrabold tracking-tight gradient-text">Master Register</h1>
           <p className="text-[11px] text-white/50 font-medium mt-0.5">Semester III · Unified attendance</p>
         </div>
         <div className="glass-floating rounded-[18px] flex items-center justify-between w-full sm:w-auto gap-1 p-1.5 overflow-hidden flex-nowrap">

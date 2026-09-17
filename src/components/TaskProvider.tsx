@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { Task } from '@/lib/types';
 import { taskStorage } from '@/lib/taskStorage';
 import { taskSync } from '@/lib/taskSync';
+import { emitParticle } from '@/lib/backgroundParticles';
 import { useAttendance } from './AttendanceProvider';
 
 interface TaskContextType {
@@ -157,11 +158,19 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const updateTask = useCallback((taskId: string, updates: Partial<Task>) => {
     const now = new Date().toISOString();
+    let justCompleted = false;
     setTasks(prev => {
       const updated = prev.map(t =>
         t.id === taskId ? { ...t, ...updates, updated_at: now } : t
       );
       taskStorage.save(updated);
+
+      // Detect a fresh completion for the background particle stream.
+      const before = prev.find(t => t.id === taskId);
+      const after = updated.find(t => t.id === taskId);
+      if (updates.completed && after?.completed && !before?.completed) {
+        justCompleted = true;
+      }
       
       const updatedTask = updated.find(t => t.id === taskId);
       if (user && updatedTask) {
@@ -177,6 +186,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       }
       return updated;
     });
+
+    // Blue mote drifting up the background on task completion.
+    if (justCompleted && typeof window !== 'undefined') {
+      emitParticle(
+        window.innerWidth / 2 + (Math.random() - 0.5) * window.innerWidth * 0.4,
+        window.innerHeight * 0.7,
+        'oklch(65% 0.22 250)',
+        'complete'
+      );
+    }
   }, [user]);
 
   const deleteTask = useCallback((taskId: string) => {

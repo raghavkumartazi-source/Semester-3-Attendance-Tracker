@@ -116,7 +116,7 @@ export function TodayTimeline() {
               return (
                 <div key={event.id} className={`animate-slide-in-right stagger-${Math.min(i + 3, 8)} flex items-center relative z-10 ${isPast ? 'opacity-60' : ''}`}>
                   <div className={`w-[40px] flex justify-center shrink-0`}>
-                    <div className={`w-2.5 h-2.5 rounded-full outline outline-4 outline-[#07080b] ${
+                    <div className={`w-2.5 h-2.5 rounded-full outline outline-4 outline-[#040406] ${
                       isNow ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,1)]' :
                       session.status === 'PRESENT' ? 'bg-emerald-500' :
                       session.status === 'ABSENT' ? 'bg-amber-500' :
@@ -150,7 +150,7 @@ export function TodayTimeline() {
               return (
                 <div key={event.id} className={`animate-slide-in-right stagger-${Math.min(i + 3, 8)} flex items-center relative z-10 ${isPast ? 'opacity-60' : ''}`}>
                   <div className={`w-[40px] flex justify-center shrink-0`}>
-                    <div className={`w-2.5 h-2.5 rounded-full outline outline-4 outline-[#07080b] ${
+                    <div className={`w-2.5 h-2.5 rounded-full outline outline-4 outline-[#040406] ${
                       isNow ? 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,1)]' :
                       session.status === 'COMPLETED' ? 'bg-indigo-400' :
                       session.status === 'CANCELLED' ? 'bg-white/10' :

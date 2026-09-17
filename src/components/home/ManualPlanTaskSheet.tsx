@@ -50,7 +50,7 @@ export function ManualPlanTaskSheet({ task, onClose }: { task: Task, onClose: ()
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative w-full max-w-lg bg-[#0a0d14] sm:rounded-[28px] rounded-t-[28px] shadow-2xl sm:border border-t border-white/10 slide-up flex flex-col min-w-0">
+      <div className="relative w-full max-w-lg bg-[rgba(14,16,23,0.45)] backdrop-blur-2xl sm:rounded-[28px] rounded-t-[28px] shadow-2xl sm:border border-t border-white/10 slide-up flex flex-col min-w-0">
         
         <div className="sm:hidden absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-white/20 rounded-full" />
 
@@ -104,10 +104,10 @@ export function ManualPlanTaskSheet({ task, onClose }: { task: Task, onClose: ()
             </div>
           </div>
 
-          <div className="p-6 pt-4 bg-[#0a0d14] sm:rounded-b-[28px] border-t border-white/5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+          <div className="p-6 pt-4 bg-[rgba(14,16,23,0.45)] backdrop-blur-2xl sm:rounded-b-[28px] border-t border-white/5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
             <button
               type="submit"
-              className="w-full bg-emerald-500 text-[#07080b] font-bold text-sm tracking-wide py-4 rounded-xl active:scale-[0.98] shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+              className="w-full bg-emerald-500 text-[#040406] font-bold text-sm tracking-wide py-4 rounded-xl active:scale-[0.98] shadow-[0_0_20px_rgba(16,185,129,0.2)]"
             >
               Save Session
             </button>

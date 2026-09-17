@@ -21,7 +21,7 @@ export default function SchedulePage() {
 
   return (
     <div className="max-w-lg mx-auto space-y-8 pb-24">
-      <h1 className="text-lg font-bold text-white animate-fade-in-up stagger-1 px-1">Weekly Schedule</h1>
+      <h1 className="text-2xl font-extrabold tracking-tight gradient-text animate-fade-in-up stagger-1 px-1">Weekly Schedule</h1>
 
       {WEEKDAYS.map(day => {
         const daySlots = TIMETABLE
@@ -66,7 +66,7 @@ export default function SchedulePage() {
                       <div className={`absolute -left-[21px] mt-1.5 w-2.5 h-2.5 rounded-full border-2 ${
                         isNow ? 'bg-red-500 border-red-500 now-pulse' :
                         isToday && !isPast ? 'bg-white border-white' :
-                        'bg-[#07080b] border-white/20'
+                        'bg-[#040406] border-white/20'
                       }`} />
 
                       <div className="w-12 pt-0.5 shrink-0">

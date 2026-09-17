@@ -1,398 +1,1169 @@
 @import "tailwindcss";
 
+/* ============================================
+   TAILWIND v4 THEME & SYSTEM COLORS
+   ============================================ */
+@theme {
+    --color-background: #040406;
+    --color-foreground: #f0f0f5;
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+    /* ── Semester palette (base surfaces) ── */
+    --color-semester-bg: #040406;
+    --color-semester-bg-elevated: #0a0a0f;
+
+    /* ── Subject accent families (OKLCH for perceptual uniformity) ── */
+    --color-ec: oklch(65% 0.22 250);    /* EC — violet-blue */
+    --color-eo: oklch(60% 0.18 150);    /* EO — green */
+    --color-ma: oklch(75% 0.15 90);     /* MA — amber */
+    --color-mo: oklch(65% 0.20 340);    /* MO — rose */
+    --color-hlm: oklch(50% 0.02 240);   /* HLM — slate */
+
+    /* ── Semantic attendance levels ── */
+    --color-attendance-safe: oklch(55% 0.18 145);
+    --color-attendance-warn: oklch(65% 0.20 85);
+    --color-attendance-danger: oklch(55% 0.22 25);
+
+    /* ── Glass system (refined) ── */
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-highlight: rgba(255, 255, 255, 0.12);
+    --glass-shadow: rgba(0, 0, 0, 0.4);
+
+    /* ── Stagger & feedback animations ── */
+    --animate-shimmer: shimmer 2s infinite;
+    --animate-float: float 6s ease-in-out infinite;
+    --animate-glow-pulse: glowPulse 2s ease-in-out infinite;
+    --animate-breathe: breathe 4s ease-in-out infinite;
+    --animate-gradient-shift: gradientShift 8s ease infinite;
+    --animate-fade-in-up: fadeInUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    --animate-slide-in-right: slideInRight 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    --animate-number-pop: numberPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    --animate-draw-line: drawLine 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    --animate-spin-slow: spin 8s linear infinite;
+
+    /* Plain fade (used by modals & page sections) */
+    --animate-fade-in: fadeIn 0.4s ease-out forwards;
+
+    /* Celebration & feedback animations */
+    --animate-emoji-pop: emojiPop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    --animate-emoji-float: emojiFloat 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    --animate-particle: particle 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    --animate-shake: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    --animate-ring-burst: ringBurst 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 :root {
-  --background: #07080b;
-  --foreground: #f0f0f5;
-  --glass-bg: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
-  --glass-border: rgba(255,255,255,0.13);
-  --glass-highlight: rgba(255,255,255,0.15);
-  --glass-shadow-dark: rgba(0,0,0,0.45);
+    /* Apple System Colors */
+    --apple-blue: #0a84ff;
+    --apple-green: #30d158;
+    --apple-red: #ff453a;
+    --apple-orange: #ff9f0a;
+    --apple-purple: #bf5af2;
+
+    /* Glass Refraction */
+    --glass-tint: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.14);
+    --glass-highlight: rgba(255, 255, 255, 0.5);
+    --glass-shadow: rgba(0, 0, 0, 0.5);
 }
 
 * {
-  -webkit-tap-highlight-color: transparent;
+    -webkit-tap-highlight-color: transparent;
 }
 
 html {
-  scroll-behavior: smooth;
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    /* Use dynamic viewport height so content isn't pushed by iOS chrome */
+    min-height: 100dvh;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Animations */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.92); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes shimmer {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
-}
-
-@keyframes ringDraw {
-  from { stroke-dasharray: 0 264; }
-}
-
-@keyframes countPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.04); }
-}
-
-@keyframes nowPulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
-  50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
-}
-
-@keyframes progressFill {
-  from { width: 0%; }
-}
-
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(-12px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes floatOrb {
-  0% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(5%, 5%) scale(1.05); }
-  66% { transform: translate(-2%, 4%) scale(0.95); }
-  100% { transform: translate(0, 0) scale(1); }
-}
-
-.animate-orb {
-  animation: floatOrb 20s ease-in-out infinite;
-}
-
-.animate-orb-slow {
-  animation: floatOrb 25s ease-in-out infinite reverse;
-}
-
-.animate-orb-slower {
-  animation: floatOrb 30s ease-in-out infinite;
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  opacity: 0;
-}
-
-.animate-scale-in {
-  animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  opacity: 0;
-}
-
-.animate-slide-in-right {
-  animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  opacity: 0;
-}
-
-.stagger-1 { animation-delay: 0.06s; }
-.stagger-2 { animation-delay: 0.12s; }
-.stagger-3 { animation-delay: 0.18s; }
-.stagger-4 { animation-delay: 0.24s; }
-.stagger-5 { animation-delay: 0.30s; }
-.stagger-6 { animation-delay: 0.36s; }
-.stagger-7 { animation-delay: 0.42s; }
-.stagger-8 { animation-delay: 0.48s; }
-
-/* Skeleton shimmer */
-.skeleton-shimmer {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.03) 25%,
-    rgba(255, 255, 255, 0.08) 50%,
-    rgba(255, 255, 255, 0.03) 75%
-  );
-  background-size: 800px 100%;
-  animation: shimmer 1.8s ease-in-out infinite;
-  border-radius: 12px;
-}
-
-/* Progress bar fill */
-.progress-bar-fill {
-  animation: progressFill 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* SVG ring draw animation */
-.ring-animated {
-  animation: ringDraw 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* NOW pulse indicator */
-.now-pulse {
-  animation: nowPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-corner {
-  background: transparent;
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "tnum" 1;
+    /* Tabular numbers for dates/percentages */
+    letter-spacing: -0.02em;
+    overflow-x: hidden;
+    /* iOS: prevent rubber-band pull-to-refresh and chain scrolling */
+    overscroll-behavior-y: none;
+    -webkit-touch-callout: none;
+    /* Respect the Dynamic Island + home indicator */
+    min-height: 100dvh;
 }
 
 /* ============================================
-   LIQUID GLASS MATERIAL SYSTEM
+   iOS SAFE-AREA UTILITIES (Dynamic Island / home indicator)
    ============================================ */
 
-/*
- * Level 1: glass-surface
- * Base-level glass slab. For large containers like the Master Register.
- * Sits just above the background.
- */
-.glass-surface {
-  position: relative;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.03),
-    rgba(255, 255, 255, 0.005)
-  );
-  backdrop-filter: blur(32px) saturate(150%);
-  -webkit-backdrop-filter: blur(32px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
-    inset 0 -1px 0 0 rgba(255, 255, 255, 0.02),
-    0 20px 60px -10px rgba(0, 0, 0, 0.45),
-    0 4px 20px 0 rgba(0, 0, 0, 0.2);
+.pt-safe {
+    padding-top: max(0.75rem, env(safe-area-inset-top));
 }
-/* Specular reflection pseudo-element */
-.glass-surface::before {
-  content: '';
-  position: absolute;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.16),
-    inset 0 -1px 0 0 rgba(255, 255, 255, 0.03),
-    0 8px 32px 0 rgba(0, 0, 0, 0.35);
-  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+
+.pb-safe {
+    padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
 }
+
+.bottom-safe {
+    bottom: calc(0.5rem + env(safe-area-inset-bottom));
+}
+
+
+
+/* ============================================
+   KEYFRAME ANIMATIONS
+   ============================================ */
+
+/* Semester Breath: one slow inhale/exhale per entire semester */
+@keyframes semesterBreath {
+    0% {
+        transform: scale(1);
+        opacity: 0.45;
+    }
+    50% {
+        transform: scale(1.12);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 0.45;
+    }
+}
+
+/* Skeleton shimmer sweep */
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* Gentle floating for icons/elements */
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+}
+
+/* Glow pulse for active indicators */
+@keyframes glowPulse {
+    0%, 100% { 
+        box-shadow: 0 0 8px rgba(10, 132, 255, 0.4), 0 0 20px rgba(10, 132, 255, 0.1);
+        opacity: 1;
+    }
+    50% { 
+        box-shadow: 0 0 16px rgba(10, 132, 255, 0.6), 0 0 40px rgba(10, 132, 255, 0.2);
+        opacity: 0.85;
+    }
+}
+
+/* Breathing scale effect */
+@keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+}
+
+/* Gradient color shift */
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Entrance: fade in + slide up */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Plain opacity fade */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Bottom sheet / modal slide-up */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(28px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.slide-up {
+    animation: slideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Entrance: slide in from right */
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Number pop-in */
+@keyframes numberPop {
+    0% {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    70% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Draw a vertical line downward */
+@keyframes drawLine {
+    from { height: 0; }
+    to { height: 100%; }
+}
+
+/* Ring draw for SVG circles */
+@keyframes ringDraw {
+    from {
+        stroke-dasharray: 0 264;
+    }
+    to {
+        stroke-dasharray: 264 264;
+    }
+}
+
+@keyframes countPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes nowPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(10, 132, 255, 0.7); }
+    50% { box-shadow: 0 0 0 8px rgba(10, 132, 255, 0); }
+}
+
+/* NOW badge ring pulse */
+@keyframes nowRingPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+    50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+}
+
+/* Fire emoji subtle bounce */
+@keyframes fireBounce {
+    0%, 100% { transform: scale(1) translateY(0); }
+    25% { transform: scale(1.15) translateY(-2px); }
+    50% { transform: scale(1.05) translateY(0); }
+    75% { transform: scale(1.1) translateY(-1px); }
+}
+
+/* Sparkle twinkle */
+@keyframes sparkle {
+    0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+    50% { opacity: 1; transform: scale(1) rotate(180deg); }
+}
+
+/* Progress bar glow trail */
+@keyframes progressGlow {
+    0% { background-position: -100% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* ============================================
+   CELEBRATION / FEEDBACK ANIMATIONS
+   ============================================ */
+
+/* Emoji springs in with an overshoot */
+@keyframes emojiPop {
+    0% {
+        transform: scale(0) rotate(-25deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.35) rotate(8deg);
+        opacity: 1;
+    }
+    75% {
+        transform: scale(0.92) rotate(-4deg);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+/* Emoji rises and fades outward (burst particles) */
+@keyframes emojiFloat {
+    0% {
+        transform: translate(0, 0) scale(0.4) rotate(0deg);
+        opacity: 0;
+    }
+    20% {
+        transform: translate(calc(var(--dx) * 0.25), calc(var(--dy) * 0.25)) scale(1.1) rotate(calc(var(--rot) * 0.3));
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--dx), var(--dy)) scale(0.5) rotate(var(--rot));
+        opacity: 0;
+    }
+}
+
+/* Small particle dot flung outward */
+@keyframes particle {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--dx), var(--dy)) scale(0.2);
+        opacity: 0;
+    }
+}
+
+/* Expanding ring shockwave */
+@keyframes ringBurst {
+    0% {
+        transform: scale(0.3);
+        opacity: 0.9;
+    }
+    100% {
+        transform: scale(2.2);
+        opacity: 0;
+    }
+}
+
+/* Disapproving shake for negative actions */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    15% { transform: translateX(-6px); }
+    30% { transform: translateX(5px); }
+    45% { transform: translateX(-4px); }
+    60% { transform: translateX(3px); }
+    75% { transform: translateX(-2px); }
+    90% { transform: translateX(1px); }
+}
+
+/* Utility classes */
+.animate-emoji-pop {
+    animation: emojiPop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-shake {
+    animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* Celebration burst layer (fixed, pointer-independent, above everything) */
+.celebration-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.celebration-emoji {
+    position: absolute;
+    font-size: 24px;
+    line-height: 1;
+    animation: emojiFloat 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    will-change: transform, opacity;
+}
+
+.celebration-particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    animation: particle 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    will-change: transform, opacity;
+}
+
+.celebration-ring {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    margin: -30px 0 0 -30px;
+    animation: ringBurst 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    will-change: transform, opacity;
+}
+
+/* ============================================
+   DOMAIN-AWARE BACKGROUND SYSTEM — layered atmosphere
+   aurora · starfield · semester breath · timetable grid · progress horizon · subject wash · particles
+   Layers are pure CSS except the particle <canvas> (lib/backgroundParticles.ts).
+   All respect prefers-reduced-motion (rule at bottom).
+   ============================================ */
+
+.bg-layers {
+    position: fixed;
+    inset: 0;
+    z-index: -10;
+    pointer-events: none;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+/* Layer 0: Base — deep near-black with a faint top falloff for depth */
+body {
+    background:
+        radial-gradient(130% 85% at 50% -15%, #0c0e16 0%, var(--color-semester-bg) 58%),
+        var(--color-semester-bg);
+    background-color: var(--color-semester-bg);
+}
+
+/* ── Layer 1: Aurora — slow-drifting tints from subject accents + time of day ── */
+.bg-aurora {
+    position: absolute;
+    inset: -25%;
+    background:
+        radial-gradient(38% 34% at 26% 22%, var(--aurora-a, oklch(65% 0.22 250 / 0.22)), transparent 70%),
+        radial-gradient(34% 32% at 76% 30%, var(--aurora-b, oklch(60% 0.18 150 / 0.18)), transparent 72%),
+        radial-gradient(46% 42% at 52% 84%, var(--aurora-c, oklch(65% 0.20 340 / 0.16)), transparent 74%);
+    filter: blur(28px);
+    animation: auroraDrift 26s ease-in-out infinite alternate;
+    will-change: transform, opacity;
+}
+
+@keyframes auroraDrift {
+    0%   { transform: translate3d(-2.5%, -1.5%, 0) scale(1.02); }
+    50%  { transform: translate3d(2%, 1.5%, 0) scale(1.06); }
+    100% { transform: translate3d(-1%, 2.5%, 0) scale(1.03); }
+}
+
+/* ── Layer 2: Semester Breath — one inhale/exhale across the whole semester ── */
+.bg-breath {
+    position: absolute;
+    inset: -12%;
+    background: radial-gradient(
+        circle at 50% 40%,
+        rgba(255, 255, 255, 0.07),
+        rgba(255, 255, 255, 0.02) 40%,
+        transparent 64%
+    );
+    animation: semesterBreath var(--semester-duration, 9000000s) linear forwards;
+    animation-delay: var(--semester-delay, 0s);
+    will-change: transform, opacity;
+}
+
+/* ── Layer 3: Starfield — faint fixed points for depth ── */
+.bg-stars {
+    position: absolute;
+    inset: 0;
+    background-image:
+        radial-gradient(1.2px 1.2px at 12% 18%, rgba(255,255,255,0.55), transparent),
+        radial-gradient(1px 1px at 28% 62%, rgba(255,255,255,0.35), transparent),
+        radial-gradient(1.2px 1.2px at 44% 12%, rgba(255,255,255,0.45), transparent),
+        radial-gradient(1px 1px at 61% 44%, rgba(255,255,255,0.30), transparent),
+        radial-gradient(1.2px 1.2px at 76% 24%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 88% 58%, rgba(255,255,255,0.30), transparent),
+        radial-gradient(1px 1px at 8% 78%, rgba(255,255,255,0.35), transparent),
+        radial-gradient(1px 1px at 35% 86%, rgba(255,255,255,0.28), transparent),
+        radial-gradient(1.2px 1.2px at 67% 76%, rgba(255,255,255,0.40), transparent),
+        radial-gradient(1px 1px at 93% 12%, rgba(255,255,255,0.30), transparent),
+        radial-gradient(1px 1px at 55% 30%, rgba(255,255,255,0.22), transparent),
+        radial-gradient(1px 1px at 20% 45%, rgba(255,255,255,0.24), transparent);
+    -webkit-mask-image: radial-gradient(ellipse 92% 92% at 50% 32%, #000 28%, transparent 88%);
+    mask-image: radial-gradient(ellipse 92% 92% at 50% 32%, #000 28%, transparent 88%);
+    animation: starTwinkle 7s ease-in-out infinite;
+}
+
+@keyframes starTwinkle {
+    0%, 100% { opacity: 0.7; }
+    50%      { opacity: 1; }
+}
+
+/* ── Layer 4: Timetable Grid — visible graph paper + pulsing "today" column ── */
+.bg-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+    background-size: 60px 60px;
+    -webkit-mask-image: radial-gradient(ellipse 95% 88% at 50% 38%, #000 22%, rgba(0,0,0,0.4) 70%, transparent 93%);
+    mask-image: radial-gradient(ellipse 95% 88% at 50% 38%, #000 22%, rgba(0,0,0,0.4) 70%, transparent 93%);
+}
+
+/* Today's column: (dayOfWeek - 3) × 60px, centered on Wednesday */
+.bg-grid::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(50% + var(--today-col, 0px));
+    width: 60px;
+    margin-left: -30px;
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.12),
+        rgba(255, 255, 255, 0.035) 55%,
+        transparent
+    );
+    transform-origin: center;
+    animation: breathe 4s ease-in-out infinite;
+}
+
+/* ── Layer 5: Progress Horizon — attendance % as a glowing line at 65vh ── */
+.bg-horizon {
+    position: absolute;
+    left: 12%;
+    right: 12%;
+    top: 65vh;
+    height: 2px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.10);
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+}
+
+.bg-horizon::after {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: calc(var(--attendance-pct, 0) * 1%);
+    background: var(--horizon-color, var(--color-attendance-safe));
+    border-radius: 99px;
+    box-shadow: 0 0 8px var(--horizon-color, var(--color-attendance-safe));
+    transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 1.2s ease;
+}
+
+/* Sun marker: bright dot riding the horizon at exactly attendance % */
+.bg-horizon::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: calc(var(--attendance-pct, 0) * 1%);
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow:
+        0 0 10px 2px var(--horizon-color, var(--color-attendance-safe)),
+        0 0 24px 5px color-mix(in srgb, var(--horizon-color, var(--color-attendance-safe)) 45%, transparent);
+    opacity: var(--horizon-marker-opacity, 0);
+    transition: left 1.2s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.6s ease;
+}
+
+/* > 75% attendance: the horizon ignites */
+.bg-horizon.glowing::after {
+    box-shadow:
+        0 0 12px var(--horizon-color, var(--color-attendance-safe)),
+        0 0 32px color-mix(in srgb, var(--horizon-color, var(--color-attendance-safe)) 60%, transparent);
+}
+
+/* ── Layer 6: Subject Wash — radial bloom of the next/current subject accent ── */
+.bg-wash {
+    position: absolute;
+    left: -15%;
+    right: -15%;
+    bottom: -28%;
+    height: 82%;
+    background: radial-gradient(
+        ellipse 66% 60% at 50% 100%,
+        var(--subject-wash-color, var(--color-ec)),
+        transparent 64%
+    );
+    opacity: 0.16;
+    transition: background 1.5s ease-out, opacity 1.5s ease-out;
+}
+
+/* ── Layer 7: Particle Stream — transparent canvas, driven by JS engine ── */
+.bg-particles {
+    position: fixed;
+    inset: 0;
+    z-index: -5;
+    pointer-events: none;
+    display: block;
+}
+
+/* ============================================
+   STAGGER DELAY UTILITY CLASSES
+   ============================================ */
+
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+.stagger-6 { animation-delay: 0.3s; }
+.stagger-7 { animation-delay: 0.35s; }
+.stagger-8 { animation-delay: 0.4s; }
+
+/* ============================================
+   TRUE LIQUID GLASS SYSTEM (visionOS / iOS 26 style)
+   ============================================ */
+
+.liquid-glass {
+    position: relative;
+    background: var(--glass-tint);
+    backdrop-filter: blur(50px) saturate(220%);
+    -webkit-backdrop-filter: blur(50px) saturate(220%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.5),
+        inset 0 1px 1px rgba(255, 255, 255, 0.18);
+    transition: all 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* The specular light reflection on the top edge */
+.liquid-glass::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+    border-radius: 50%;
+    opacity: 0.9;
+}
+
+.liquid-glass:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+    box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.55),
+        inset 0 1px 1px rgba(255, 255, 255, 0.25);
+}
+
+/* Floating Glass (For Modals, iOS Tab Bars) */
+.liquid-glass-floating {
+    background: rgba(18, 18, 23, 0.30);
+    backdrop-filter: blur(45px) saturate(200%);
+    -webkit-backdrop-filter: blur(45px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+/* ── Refined Glass Tiers ── */
+
+/* Panel: primary cards, hero widgets */
+.glass-panel {
+    --glass-bg: rgba(255, 255, 255, 0.045);
+    position: relative;
+    background: var(--glass-bg);
+    backdrop-filter: blur(55px) saturate(240%);
+    -webkit-backdrop-filter: blur(55px) saturate(240%);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    box-shadow:
+        0 8px 32px var(--glass-shadow),
+        inset 0 1px 0 var(--glass-highlight);
+    transition: all 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.glass-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 12%;
+    right: 12%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.glass-panel:hover {
+    background: color-mix(in srgb, var(--glass-bg) 100%, rgba(255, 255, 255, 0.03));
+    border-color: color-mix(in srgb, var(--glass-border) 100%, rgba(255, 255, 255, 0.08));
+    transform: translateY(-2px);
+    box-shadow:
+        0 12px 40px var(--glass-shadow),
+        inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 100%, rgba(255, 255, 255, 0.08));
+}
+
+/* Elevated: timeline cards, list items */
+.glass-elevated {
+    --glass-bg: rgba(255, 255, 255, 0.035);
+    --glass-highlight: rgba(255, 255, 255, 0.10);
+    background: var(--glass-bg);
+    backdrop-filter: blur(40px) saturate(220%);
+    -webkit-backdrop-filter: blur(40px) saturate(220%);
+    border: 1px solid var(--glass-border);
+    border-radius: 18px;
+    box-shadow:
+        0 4px 16px var(--glass-shadow),
+        inset 0 1px 0 var(--glass-highlight);
+    transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .glass-elevated:hover {
-  border-color: rgba(255, 255, 255, 0.2);
-  box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
-    inset 0 -1px 0 0 rgba(255, 255, 255, 0.03),
-    0 12px 40px 0 rgba(0, 0, 0, 0.4);
-}
-.glass-elevated::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(
-    120deg,
-    rgba(255, 255, 255, 0.06) 0%,
-    transparent 40%
-  );
-  pointer-events: none;
-  z-index: 1;
+    background: color-mix(in srgb, var(--glass-bg) 100%, rgba(255, 255, 255, 0.025));
+    transform: translateY(-1px);
+    box-shadow:
+        0 6px 24px var(--glass-shadow),
+        inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 100%, rgba(255, 255, 255, 0.06));
 }
 
-/*
- * Level 3: glass-floating
- * Popovers, floating bars, modals. Highest Z-depth.
- * Most visible glass with strong blur and bright edges.
- */
-.glass-floating {
-  position: relative;
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.07),
-    rgba(255, 255, 255, 0.015)
-  );
-  backdrop-filter: blur(48px) saturate(160%);
-  -webkit-backdrop-filter: blur(48px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
-    inset 0 -1px 0 0 rgba(255, 255, 255, 0.04),
-    0 24px 60px -8px rgba(0, 0, 0, 0.5),
-    0 8px 20px 0 rgba(0, 0, 0, 0.25);
-}
-.glass-floating::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(
-    110deg,
-    rgba(255, 255, 255, 0.1) 0%,
-    rgba(255, 255, 255, 0.03) 25%,
-    transparent 50%
-  );
-  pointer-events: none;
-  z-index: 1;
+/* Surface: subtle background sections */
+.glass-surface {
+    --glass-bg: rgba(255, 255, 255, 0.028);
+    background: var(--glass-bg);
+    backdrop-filter: blur(32px) saturate(190%);
+    -webkit-backdrop-filter: blur(32px) saturate(190%);
+    border: 1px solid var(--glass-border);
+    border-radius: 22px;
+    box-shadow: 0 2px 8px var(--glass-shadow);
+    transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/*
- * Level R: glass-recessed
- * Cells, inputs, recessed areas. Sunken into the surface.
- */
+/* Recessed: inset areas like progress bar tracks */
 .glass-recessed {
-  background: rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow:
-    inset 0 1px 3px rgba(0, 0, 0, 0.3),
-    inset 0 0 0 0.5px rgba(255, 255, 255, 0.04);
+    background: rgba(6, 6, 9, 0.38);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
-/*
- * Frozen pane: for sticky columns
- */
+/* Buttons: interactive glass elements */
+.glass-button {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.glass-button:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.glass-button:active {
+    transform: scale(0.95) translateY(0);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Controls: compact inline buttons (segmented nav, TODAY, ‹ ›) ── */
+
+.glass-control {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    color: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.glass-control:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.16);
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.glass-control:active {
+    transform: scale(0.94);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Active/prominent control (TODAY button, primary CTA in lists) */
+.glass-control-active {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.06));
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    color: #fff;
+    box-shadow:
+        0 2px 10px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.glass-control-active:hover {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.1));
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.glass-control-active:active {
+    transform: scale(0.95);
+}
+
+/* ── Frozen: frosted sticky columns/headers in the register ── */
+
 .glass-frozen {
-  background: linear-gradient(
-    180deg,
-    rgba(16, 18, 24, 0.65),
-    rgba(12, 14, 20, 0.55)
-  );
-  backdrop-filter: blur(32px) saturate(150%);
-  -webkit-backdrop-filter: blur(32px) saturate(150%);
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow:
-    4px 0 16px rgba(0, 0, 0, 0.3),
-    inset -1px 0 0 rgba(255, 255, 255, 0.06);
+    background: rgba(14, 15, 20, 0.55);
+    backdrop-filter: blur(40px) saturate(190%);
+    -webkit-backdrop-filter: blur(40px) saturate(190%);
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.4);
 }
 
 .glass-frozen-right {
-  background: linear-gradient(
-    180deg,
-    rgba(16, 18, 24, 0.65),
-    rgba(12, 14, 20, 0.55)
-  );
-  backdrop-filter: blur(32px) saturate(150%);
-  -webkit-backdrop-filter: blur(32px) saturate(150%);
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow:
-    -4px 0 16px rgba(0, 0, 0, 0.3),
-    inset 1px 0 0 rgba(255, 255, 255, 0.06);
+    background: rgba(14, 15, 20, 0.55);
+    backdrop-filter: blur(40px) saturate(190%);
+    -webkit-backdrop-filter: blur(40px) saturate(190%);
+    box-shadow: -2px 0 12px rgba(0, 0, 0, 0.4);
 }
 
-/* Interactive glass controls */
-.glass-control {
-  position: relative;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.07),
-    rgba(255, 255, 255, 0.02)
-  );
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 2px 8px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
-}
-.glass-control:hover {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.11),
-    rgba(255, 255, 255, 0.04)
-  );
-  border-color: rgba(255, 255, 255, 0.16);
-}
-.glass-control:active {
-  transform: scale(0.97);
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.05),
-    rgba(255, 255, 255, 0.01)
-  );
+/* Floating: bottom nav, modals */
+.glass-floating {
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    background: var(--glass-bg);
+    backdrop-filter: blur(55px) saturate(220%);
+    -webkit-backdrop-filter: blur(55px) saturate(220%);
+    border: 1px solid var(--glass-border);
+    box-shadow:
+        0 20px 60px var(--glass-shadow),
+        0 0 0 0.5px rgba(255, 255, 255, 0.12),
+        inset 0 1px 0 var(--glass-highlight);
 }
 
-/* Glass control — selected / active state */
-.glass-control-active {
-  position: relative;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.12),
-    rgba(255, 255, 255, 0.03)
-  );
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.04),
-    0 4px 16px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
+/* ── Subject-tinted glass variants ──
+   Compose onto any glass-* class to tint its specular highlight:
+   <div className="glass-elevated glass-ec"> */
+.glass-ec { --glass-highlight: oklch(65% 0.22 250 / 0.15); }
+.glass-eo { --glass-highlight: oklch(60% 0.18 150 / 0.15); }
+.glass-ma { --glass-highlight: oklch(75% 0.15 90 / 0.15); }
+.glass-mo { --glass-highlight: oklch(65% 0.20 340 / 0.15); }
+.glass-hlm { --glass-highlight: oklch(50% 0.02 240 / 0.15); }
+
+/* ============================================
+   ATTENDANCE TRACKER COMPONENTS
+   ============================================ */
+
+/* 1. Stat Cards (e.g., "98% Present", "2 Absences") */
+.stat-card {
+    position: relative;
+    padding: 20px;
+    border-radius: 24px;
+    overflow: hidden;
 }
 
-/* ========== LEGACY ALIASES ========== */
-.glass-panel {
-  position: relative;
-  background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.015));
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border: 1px solid rgba(255,255,255,0.12);
-  box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.14), inset 0 -1px 0 0 rgba(255,255,255,0.02), 0 20px 60px -10px rgba(0,0,0,0.45), 0 4px 20px 0 rgba(0,0,0,0.2);
-}
-.glass-panel::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(115deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 30%, transparent 50%);
-  pointer-events: none;
-  z-index: 1;
+.stat-card .stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
 }
 
-.glass-card {
-  position: relative;
-  background: linear-gradient(140deg, rgba(255,255,255,0.09), rgba(255,255,255,0.025));
-  backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
-  border: 1px solid rgba(255,255,255,0.14);
-  box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.16), inset 0 -1px 0 0 rgba(255,255,255,0.03), 0 8px 32px 0 rgba(0,0,0,0.35);
-  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-}
-.glass-card:hover {
-  border-color: rgba(255,255,255,0.2);
-}
-.glass-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(120deg, rgba(255,255,255,0.06) 0%, transparent 40%);
-  pointer-events: none;
-  z-index: 1;
+/* 2. Attendance Grid Cells (Calendar Days) */
+.attendance-cell {
+    position: relative;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.6);
+    transition: all 0.2s ease;
 }
 
-.glass-button {
-  position: relative;
-  background: linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
-  border: 1px solid rgba(255,255,255,0.1);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 8px rgba(0,0,0,0.2);
-  transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
-}
-.glass-button:hover {
-  background: linear-gradient(135deg, rgba(255,255,255,0.11), rgba(255,255,255,0.04));
-  border-color: rgba(255,255,255,0.16);
-}
-.glass-button:active {
-  transform: scale(0.97);
+.attendance-cell:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.9);
 }
 
-/* Safe area for notched phones */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  body {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
+/* 3. Status Colors & Checked States */
+.status-present {
+    background: rgba(48, 209, 88, 0.15) !important;
+    border-color: rgba(48, 209, 88, 0.4) !important;
+    color: #30d158 !important;
+    box-shadow: inset 0 0 10px rgba(48, 209, 88, 0.2);
+}
+
+.status-absent {
+    background: rgba(255, 69, 58, 0.15) !important;
+    border-color: rgba(255, 69, 58, 0.4) !important;
+    color: #ff453a !important;
+}
+
+.status-late {
+    background: rgba(255, 159, 10, 0.15) !important;
+    border-color: rgba(255, 159, 10, 0.4) !important;
+    color: #ff9f0a !important;
+}
+
+/* 4. Apple-Style Segmented Control (View Switcher) */
+.segmented-control {
+    display: flex;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.segment {
+    flex: 1;
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    border-radius: 9px;
+    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    cursor: pointer;
+}
+
+.segment.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 5. Floating iOS Tab Bar */
+.glass-tab-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    padding: 12px 20px;
+    border-radius: 30px;
+    z-index: 100;
+}
+
+/* ============================================
+   ANIMATED COMPONENTS
+   ============================================ */
+
+.ring-animated {
+    animation: ringDraw 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.live-indicator {
+    width: 8px;
+    height: 8px;
+    background: var(--apple-blue);
+    border-radius: 50%;
+    animation: nowPulse 2s infinite;
+}
+
+/* NOW badge with ring pulse */
+.now-badge {
+    animation: nowRingPulse 2s infinite;
+}
+
+/* "Now" live dot pulse (schedule/timeline) */
+.now-pulse {
+    animation: nowPulse 2s infinite;
+}
+
+/* Thin scrollbar for horizontal scrollers (register, timelines) */
+.scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.16);
+    border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.28);
+}
+
+/* Animated fill for mini progress bars */
+.progress-bar-fill {
+    transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Fire emoji bounce */
+.fire-bounce {
+    display: inline-block;
+    animation: fireBounce 2s ease-in-out infinite;
+}
+
+/* Sparkle dots (CSS-only particles) */
+.sparkle-container {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.sparkle-dot {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(249, 115, 22, 0.6);
+    animation: sparkle 2s ease-in-out infinite;
+}
+
+.sparkle-dot:nth-child(1) { top: 20%; right: 15%; animation-delay: 0s; }
+.sparkle-dot:nth-child(2) { top: 60%; right: 25%; animation-delay: 0.5s; }
+.sparkle-dot:nth-child(3) { top: 40%; right: 10%; animation-delay: 1s; }
+.sparkle-dot:nth-child(4) { top: 80%; right: 20%; animation-delay: 1.5s; }
+
+/* Skeleton shimmer */
+.skeleton-shimmer {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.04) 25%,
+        rgba(255, 255, 255, 0.08) 50%,
+        rgba(255, 255, 255, 0.04) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+    border-radius: 8px;
+}
+
+/* Progress bar with glow trail */
+.progress-glow {
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-glow::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.3) 50%,
+        transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: progressGlow 2s ease-in-out infinite;
+}
+
+/* Gradient text utility */
+.gradient-text {
+    background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.7) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Animated gradient border */
+.gradient-border {
+    position: relative;
+}
+
+.gradient-border::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3));
+    background-size: 200% 200%;
+    animation: gradientShift 8s ease infinite;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.gradient-border:hover::after {
+    opacity: 1;
+}
+
+/* ============================================
+   NATIVE FORM & FOCUS STATES
+   ============================================ */
+
+.glass-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: #fff;
+    transition: all 0.2s ease;
+}
+
+.glass-input:focus {
+    outline: none;
+    border-color: var(--apple-blue);
+    box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.2);
+    background: rgba(0, 0, 0, 0.3);
+}
+
+/* macOS Keyboard Navigation Focus */
+*:focus-visible {
+    outline: 2px solid var(--apple-blue);
+    outline-offset: 3px;
+    border-radius: 6px;
+}
+
+/* ============================================
+   ACCESSIBILITY & SCROLLBARS
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    /* Kill all background motion instantly */
+    .bg-aurora,
+    .bg-breath,
+    .bg-stars,
+    .bg-grid::before,
+    .bg-horizon::after,
+    .bg-horizon::before,
+    .bg-wash,
+    .stream-particle {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+/* Safe Areas for iPhone Notch / Dynamic Island */
+@supports (padding: env(safe-area-inset-bottom)) {
+    .glass-tab-bar {
+        bottom: calc(20px + env(safe-area-inset-bottom));
+    }
 }

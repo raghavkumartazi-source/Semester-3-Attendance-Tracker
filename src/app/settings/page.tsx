@@ -67,7 +67,7 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-lg mx-auto space-y-6 pb-24 animate-fade-in-up">
-      <h1 className="text-lg font-bold text-white mb-2">Settings</h1>
+      <h1 className="text-2xl font-extrabold tracking-tight gradient-text mb-2">Settings</h1>
 
       {/* Authentication & Cloud Sync */}
       <AuthScreen 

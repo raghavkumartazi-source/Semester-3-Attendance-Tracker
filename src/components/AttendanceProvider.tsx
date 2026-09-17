@@ -7,6 +7,7 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { syncRepo, CloudRecord } from '@/lib/sync';
 import { parseExtraSessionId } from '@/lib/sessions';
+import { emitParticle } from '@/lib/backgroundParticles';
 import UndoToast from './UndoToast';
 
 interface AttendanceContextType {
@@ -190,6 +191,7 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
 
   const updateSessionStatus = useCallback((sessionId: string, status: AttendanceStatus) => {
     const now = new Date().toISOString();
+    let markedPresent = false;
     setSessions(prev => {
       const oldSession = prev.find(s => s.id === sessionId);
       if (oldSession && status !== 'UNMARKED' && oldSession.status !== status) {
@@ -200,6 +202,7 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
           status,
           previousStatus: oldSession.status
         });
+        if (status === 'PRESENT') markedPresent = true;
       }
 
       const updated = prev.map(s =>
@@ -223,6 +226,16 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
       }
       return updated;
     });
+
+    // Feed the progress horizon with a green ember when marking Present.
+    if (markedPresent && typeof window !== 'undefined') {
+      emitParticle(
+        window.innerWidth / 2 + (Math.random() - 0.5) * window.innerWidth * 0.3,
+        window.innerHeight * 0.65,
+        'oklch(55% 0.18 145)',
+        'tap'
+      );
+    }
   }, [user]);
 
   const addSession = useCallback((session: Session) => {

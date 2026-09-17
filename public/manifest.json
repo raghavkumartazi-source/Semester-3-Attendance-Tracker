@@ -1,6 +1,6 @@
 {
-  "name": "Semester III Attendance",
-  "short_name": "Attendance",
+  "name": "3rd Sem Tracker",
+  "short_name": "Tracker",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#07080b",

@@ -88,7 +88,7 @@ export function HomeTaskSummary() {
       {taskToDelete && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center animate-fade-in-up" style={{ animationDuration: '0.2s' }}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setTaskToDelete(undefined)} />
-          <div className="relative w-full max-w-sm bg-[#0a0d14] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-2xl border border-white/10 slide-up">
+          <div className="relative w-full max-w-sm bg-[rgba(14,16,23,0.45)] backdrop-blur-2xl sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-2xl border border-white/10 slide-up">
             <h3 className="text-lg font-bold text-white mb-2">Delete Task?</h3>
             <p className="text-sm text-white/60 mb-6">Are you sure you want to delete &quot;{taskToDelete.title}&quot;?</p>
             <div className="flex gap-3">

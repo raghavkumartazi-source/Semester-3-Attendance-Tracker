@@ -118,7 +118,7 @@ export default function AttendanceRegister({ subject, sessions, onMarkAttendance
         <p className="text-[10px] font-bold tracking-[0.2em] text-white/50 uppercase">
           {subject.code}
         </p>
-        <h1 className="mt-1 text-xl font-bold text-white">{subject.name}</h1>
+        <h1 className="mt-1 text-xl font-extrabold tracking-tight gradient-text">{subject.name}</h1>
         <p className="mt-2 inline-block rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-[10px] font-medium text-white/60">
           L-T-P: {ltp}
         </p>

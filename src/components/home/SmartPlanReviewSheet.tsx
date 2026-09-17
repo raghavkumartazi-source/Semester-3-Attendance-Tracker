@@ -63,7 +63,7 @@ export function SmartPlanReviewSheet({
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative w-full max-w-lg bg-[#0a0d14] sm:rounded-[28px] rounded-t-[28px] shadow-2xl sm:border border-t border-white/10 slide-up flex flex-col max-h-[90dvh] sm:max-h-[min(760px,85dvh)] min-w-0">
+      <div className="relative w-full max-w-lg bg-[rgba(14,16,23,0.45)] backdrop-blur-2xl sm:rounded-[28px] rounded-t-[28px] shadow-2xl sm:border border-t border-white/10 slide-up flex flex-col max-h-[90dvh] sm:max-h-[min(760px,85dvh)] min-w-0">
         
         <div className="sm:hidden absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-white/20 rounded-full" />
 
@@ -140,14 +140,14 @@ export function SmartPlanReviewSheet({
             <div className="h-4"></div>
           </div>
 
-          <div className="shrink-0 p-6 pt-4 bg-[#0a0d14] sm:rounded-b-[28px] border-t border-white/5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+          <div className="shrink-0 p-6 pt-4 bg-[rgba(14,16,23,0.45)] backdrop-blur-2xl sm:rounded-b-[28px] border-t border-white/5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
             <button
               onClick={handleAccept}
               disabled={isAccepting}
               className={`w-full font-bold text-sm tracking-wide py-4 rounded-xl active:scale-[0.98] transition-all ${
                 isAccepting
-                  ? 'bg-emerald-500/50 text-[#07080b]/50 cursor-not-allowed'
-                  : 'bg-emerald-500 text-[#07080b] shadow-[0_0_20px_rgba(16,185,129,0.2)]'
+                  ? 'bg-emerald-500/50 text-[#040406]/50 cursor-not-allowed'
+                  : 'bg-emerald-500 text-[#040406] shadow-[0_0_20px_rgba(16,185,129,0.2)]'
               }`}
             >
               {isAccepting ? 'Saving...' : `Accept Plan (${activeSessions.length} Sessions)`}
