@@ -3,110 +3,47 @@
 import { useEffect, useRef } from 'react';
 import { useAttendance } from '@/components/AttendanceProvider';
 import { getOverallAttendance } from '@/lib/calculations';
-import { getTodaySlots } from '@/lib/sessions';
-import {
-  SUBJECT_COLORS,
-  DEFAULT_WASH_COLOR,
-  horizonColorForLevel,
-  semesterDurationSeconds,
-  semesterDelaySeconds,
-  todayGridColumnPx,
-  auroraTriadForHour,
-  complementOf,
-} from '@/lib/theme';
+import { ambientColorsForHour, SUBJECT_COLORS } from '@/lib/theme';
 import { initParticleCanvas, destroyParticleCanvas } from '@/lib/backgroundParticles';
-import type { TimetableSlot } from '@/lib/types';
-
-const GLOW_THRESHOLD = 75;
-
-function toMinutes(time: string): number {
-  const [h, m] = time.split(':').map(Number);
-  return h * 60 + m;
-}
-
-/**
- * The subject whose accent colors the wash:
- * the class happening now, else the next one today, else the first of the day.
- */
-function pickAccentSubject(slots: TimetableSlot[]): string | null {
-  if (slots.length === 0) return null;
-
-  const now = new Date().getHours() * 60 + new Date().getMinutes();
-  const sorted = [...slots].sort((a, b) => toMinutes(a.startTime) - toMinutes(b.startTime));
-
-  const current = sorted.find((s) => {
-    const start = toMinutes(s.startTime);
-    const end = start + (s.classType === 'Lab' ? 120 : 60);
-    return now >= start && now <= end;
-  });
-  if (current) return current.subjectCode;
-
-  const next = sorted.find((s) => toMinutes(s.startTime) > now);
-  if (next) return next.subjectCode;
-
-  return sorted[0].subjectCode;
-}
 
 export default function BackgroundFX() {
   const { sessions } = useAttendance();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Sync live domain vars: attendance %, horizon color, today's column.
+  // Drive 3D ambient colors from time of day + attendance.
   useEffect(() => {
     const root = document.documentElement;
 
-    const overall = getOverallAttendance(sessions);
-    const pct = overall.percentage ?? 0;
+    const sync = () => {
+      const overall = getOverallAttendance(sessions);
+      const { primary, secondary } = ambientColorsForHour();
 
-    root.style.setProperty('--attendance-pct', String(pct));
-    root.style.setProperty('--horizon-color', horizonColorForLevel(overall.level));
-    root.style.setProperty('--today-col', `${todayGridColumnPx()}px`);
+      // Set geometric shape colors
+      root.style.setProperty('--geo-1', primary);
+      root.style.setProperty('--geo-2', secondary);
+      root.style.setProperty('--geo-3', SUBJECT_COLORS['MA-201'] || '#ffaa00');
+      root.style.setProperty('--geo-4', SUBJECT_COLORS['MO-201'] || '#ff6600');
+      root.style.setProperty('--geo-5', SUBJECT_COLORS['HLM'] || '#aa00ff');
 
-    // Show the sun marker only once there is real attendance data.
-    root.style.setProperty('--horizon-marker-opacity', overall.totalConducted > 0 ? '1' : '0');
+      // Attendance health tint
+      if (overall.level === 'DANGER') {
+        root.style.setProperty('--geo-3', '#ff3344');
+        root.style.setProperty('--geo-4', '#ff3344');
+      } else if (overall.level === 'WARNING') {
+        root.style.setProperty('--geo-3', '#ffaa00');
+        root.style.setProperty('--geo-4', '#ffaa00');
+      } else {
+        root.style.setProperty('--geo-3', '#00ff88');
+        root.style.setProperty('--geo-4', '#00ffff');
+      }
+    };
 
-    // Ignite the horizon above threshold.
-    const horizon = document.querySelector('.bg-horizon');
-    horizon?.classList.toggle('glowing', pct > GLOW_THRESHOLD);
+    sync();
+    const interval = setInterval(sync, 60000);
+    return () => clearInterval(interval);
   }, [sessions]);
 
-  // Aurora + semester breath + subject wash: recompute on mount and as the day advances.
-  useEffect(() => {
-    const root = document.documentElement;
-
-    const syncSemester = () => {
-      root.style.setProperty('--semester-duration', `${semesterDurationSeconds()}s`);
-      root.style.setProperty('--semester-delay', `${semesterDelaySeconds()}s`);
-    };
-
-    const syncAurora = () => {
-      const triad = auroraTriadForHour();
-      root.style.setProperty('--aurora-a', triad.a);
-      root.style.setProperty('--aurora-b', triad.b);
-      root.style.setProperty('--aurora-c', triad.c);
-    };
-
-    const syncWash = () => {
-      const accent = pickAccentSubject(getTodaySlots());
-      const wash = (accent && SUBJECT_COLORS[accent]) || DEFAULT_WASH_COLOR;
-      root.style.setProperty('--subject-wash-color', wash);
-      // Tint one aurora lobe with the subject accent for cohesion.
-      root.style.setProperty('--aurora-c', complementOf(wash));
-    };
-
-    syncSemester();
-    syncAurora();
-    syncWash();
-
-    const interval = setInterval(() => {
-      syncAurora();
-      syncWash();
-    }, 60000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Layer 5: bind the particle canvas for its lifetime.
+  // Particle canvas for interaction feedback.
   useEffect(() => {
     if (!canvasRef.current) return;
     initParticleCanvas(canvasRef.current);
@@ -114,14 +51,19 @@ export default function BackgroundFX() {
   }, []);
 
   return (
-    <div className="bg-layers" aria-hidden="true">
-      <div className="bg-aurora" />
-      <div className="bg-breath" />
-      <div className="bg-stars" />
-      <div className="bg-grid" />
-      <div className="bg-horizon" />
-      <div className="bg-wash" />
-      <canvas className="bg-particles" ref={canvasRef} />
+    <div className="bg-3d-layers" aria-hidden="true">
+      {/* Floating geometric shapes in 3D */}
+      <div className="bg-geo-shape bg-geo-1" style={{ background: 'var(--geo-1)' }} />
+      <div className="bg-geo-shape bg-geo-2" style={{ background: 'var(--geo-2)' }} />
+      <div className="bg-geo-shape bg-geo-3" style={{ background: 'var(--geo-3)' }} />
+      <div className="bg-geo-shape bg-geo-4" style={{ background: 'var(--geo-4)' }} />
+      <div className="bg-geo-shape bg-geo-5" style={{ background: 'var(--geo-5)' }} />
+      
+      {/* Grid pattern with 3D depth */}
+      <div className="grid-3d" />
+      
+      {/* Particle stream canvas */}
+      <canvas className="bg-particles particles-3d" ref={canvasRef} />
     </div>
   );
 }

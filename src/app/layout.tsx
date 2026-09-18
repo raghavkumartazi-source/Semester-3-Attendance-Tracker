@@ -35,7 +35,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover',
-  themeColor: '#040406',
+  themeColor: '#050508',
 };
 
 export default function RootLayout({
@@ -45,7 +45,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${outfit.className} bg-[#040406] text-zinc-100 antialiased min-h-dvh relative overflow-x-hidden selection:bg-white/20`}>
+      <body className={`${outfit.className} bg-[#050508] text-white antialiased min-h-dvh relative overflow-x-hidden selection:bg-white/20`}>
 
         <ErrorBoundary>
           <AttendanceProvider>
@@ -54,13 +54,15 @@ export default function RootLayout({
               <TaskProvider>
                 <MarksProvider>
                   <PlannerProvider>
-                    <main className="mx-auto px-4 pt-safe pb-32 min-h-dvh flex flex-col relative z-0">
-                      <PageTransition>
-                        {children}
-                      </PageTransition>
-                    </main>
-                    <BottomNav />
-                    <CelebrationLayer />
+                    <div className="relative flex flex-col min-h-dvh">
+                      <main className="flex-1 mx-auto px-4 pt-safe pb-28 min-h-0">
+                        <PageTransition>
+                          {children}
+                        </PageTransition>
+                      </main>
+                      <BottomNav />
+                      <CelebrationLayer />
+                    </div>
                   </PlannerProvider>
                 </MarksProvider>
               </TaskProvider>
