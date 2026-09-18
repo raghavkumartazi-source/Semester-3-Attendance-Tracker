@@ -11,6 +11,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import PageTransition from '@/components/PageTransition';
 import { CelebrationLayer } from '@/components/CelebrationBurst';
 import BackgroundFX from '@/components/BackgroundFX';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const outfit = Outfit({ subsets: ['latin'] });
 
@@ -69,6 +70,7 @@ export default function RootLayout({
             </WorkSessionProvider>
           </AttendanceProvider>
         </ErrorBoundary>
+        <SpeedInsights />
       </body>
     </html>
   );
