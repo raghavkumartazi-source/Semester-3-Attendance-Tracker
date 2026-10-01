@@ -14,10 +14,19 @@ export function HomeTaskSummary() {
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<Task | undefined>(undefined);
 
-  const incompleteTasks = tasks.filter(t => !t.completed);
+  const incompleteTasks = tasks.filter(t => !t.completed && !t.deleted_at);
+
 
   if (incompleteTasks.length === 0) {
-    return null;
+    return (
+      <section>
+        <div className="section-heading"><h2>Tasks</h2><Link href="/tasks" className="section-link">View all →</Link></div>
+        <div className="empty-state"><p>A little room to focus.</p><p>Add an assignment or a study goal for today.</p>
+          <button type="button" onClick={() => setIsAddSheetOpen(true)} className="ink-btn px-4 py-2 mt-4">Add a task</button>
+        </div>
+        {isAddSheetOpen && <AddTaskSheet onClose={() => setIsAddSheetOpen(false)} />}
+      </section>
+    );
   }
 
   const sortedTasks = [...incompleteTasks].sort((a, b) => {

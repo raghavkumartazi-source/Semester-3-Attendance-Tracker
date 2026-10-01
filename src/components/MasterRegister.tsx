@@ -124,10 +124,10 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
       {/* Controls & Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-1">
         <div>
-          <h1 className="text-xl font-extrabold tracking-tight gradient-text">Master Register</h1>
-          <p className="text-[11px] text-white/50 font-medium mt-0.5">Semester III · Unified attendance</p>
+          <h1 className="text-3xl font-semibold tracking-tight">Attendance</h1>
+          <p className="text-[11px] text-white/50 font-medium mt-0.5">Your subjects, attendance and room to miss a class.</p>
         </div>
-        <div className="glass-floating rounded-[18px] flex items-center justify-between w-full sm:w-auto gap-1 p-1.5 overflow-hidden flex-nowrap">
+        <div className="glass-floating rounded-[18px] hidden md:flex items-center justify-between w-full sm:w-auto gap-1 p-1.5 overflow-hidden flex-nowrap">
           <button onClick={scrollToStart} className="glass-control rounded-[12px] px-3 py-2 text-[10px] font-bold text-white/70 hover:text-white tracking-wide truncate flex-1 sm:flex-none">
             Start
           </button>
@@ -147,7 +147,7 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
       <div className="glass-elevated rounded-[16px] px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between sm:justify-start gap-x-4 sm:gap-x-6 gap-y-3">
         <span className="hidden sm:inline-block text-[10px] font-bold uppercase tracking-widest text-white/40">Semester III</span>
         {overallConducted === 0 ? (
-          <span className="text-xs font-bold text-white/50">Overall -- <span className="font-medium opacity-60 ml-1">NO DATA</span></span>
+          <span className="text-xs font-bold text-white/50">No attendance recorded yet. Open a subject to get started.</span>
         ) : (
           <>
             <div className="flex items-center gap-2">
@@ -351,7 +351,7 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
                   <span className="text-sm font-bold text-white/80">{row.stats.totalConducted}</span>
                 </div>
                 <div className="flex flex-col items-center border-l border-white/[0.04]">
-                  <span className="text-[9px] sm:text-[10px] text-white/40 font-bold uppercase tracking-widest mb-1">{row.stats.needToAttend > 0 ? 'Next' : 'Bunk'}</span>
+                  <span className="text-[9px] sm:text-[10px] text-white/40 font-bold uppercase tracking-widest mb-1">{row.stats.needToAttend > 0 ? 'Attend' : 'Can miss'}</span>
                   <span className={`text-sm font-bold ${row.stats.needToAttend > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
                     {row.stats.totalConducted === 0 ? '—' : (row.stats.needToAttend > 0 ? row.stats.needToAttend : row.stats.canBunk)}
                   </span>

@@ -1,101 +1,55 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { ArrowUpRightIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import Link from 'next/link';
 import { timeUtils } from '@/lib/timeUtils';
-import { motion } from 'framer-motion';
-
-function useCountUp(target: number, duration: number = 1200) {
-  const [count, setCount] = useState(0);
-  const startTime = useRef<number | null>(null);
-  const rafRef = useRef<number>(0);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (target === 0) { setCount(0); return; }
-    
-    const animate = (timestamp: number) => {
-      if (!startTime.current) startTime.current = timestamp;
-      const elapsed = timestamp - startTime.current;
-      const progress = Math.min(elapsed / duration, 1);
-      // Ease out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setCount(Math.round(eased * target));
-      if (progress < 1) {
-        rafRef.current = requestAnimationFrame(animate);
-      }
-    };
-
-    rafRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [target, duration]);
-
-  return count;
-}
+import { AnimatedNumber, TiltCard } from '../ui/Motion';
 
 export function TodayHeader() {
-  const [greeting, setGreeting] = useState('Good morning');
-  const [dateStr, setDateStr] = useState('');
-  const [progress, setProgress] = useState({ currentDay: 0, totalDays: 1, percentage: 0 });
-
+  const reduced = useReducedMotion();
+  const [info, setInfo] = useState<{ greeting: string; date: string; progress: ReturnType<typeof timeUtils.getSemesterProgress> } | null>(null);
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setGreeting(timeUtils.getGreeting());
-    setDateStr(timeUtils.getFormattedDate());
-    setProgress(timeUtils.getSemesterProgress());
+    const update = () => setInfo({ greeting: timeUtils.getGreeting(), date: new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }), progress: timeUtils.getSemesterProgress() });
+    update();
+    const timer = setInterval(update, 60000);
+    return () => clearInterval(timer);
   }, []);
-
-  const animatedDay = useCountUp(progress.currentDay, 1500);
-  const animatedPercentage = useCountUp(Math.round(progress.percentage), 1800);
-
+  const progress = info?.progress.percentage ?? 0;
   return (
-    <div className="mb-6">
-      <motion.h1 
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className="text-3xl font-extrabold tracking-tight gradient-text mb-1 drop-shadow-sm"
-      >
-        {greeting}
-      </motion.h1>
-      <motion.p 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.15 }}
-        className="text-sm text-zinc-400 font-medium tracking-wide"
-      >
-        {dateStr}
-      </motion.p>
-
-      <motion.div 
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.25 }}
-        className="mt-4 glass-recessed p-3 rounded-2xl flex flex-col gap-2 relative overflow-hidden"
-      >
-        <div className="flex justify-between items-center z-10 relative">
-          <span className="text-[10px] uppercase tracking-widest text-white/50 font-bold">
-            3rd Sem Tracker
-          </span>
-          <span className="text-[10px] font-bold text-white/40 tracking-wider uppercase tabular-nums">
-            Day <span className="text-white/70">{animatedDay}</span> / {progress.totalDays}
-          </span>
+    <div className="today-intro">
+      <div className="greeting-row">
+        <div><p className="greeting-eyebrow">{info?.greeting ?? 'Welcome back'} <span className="greeting-spark">✦</span></p><h1>Make today <em>count.</em></h1></div>
+        <span className="date-chip">{info?.date ?? 'Semester III'}</span>
+      </div>
+      <TiltCard className="semester-hero">
+        <div className="hero-grain" aria-hidden="true" />
+        <div className="hero-copy">
+          <span className="hero-kicker"><span /> SEMESTER IN PROGRESS</span>
+          <h2>One day closer.<br /><span>You’ve got this.</span></h2>
+          <p>Day {info?.progress.currentDay ?? '—'} <span>of {info?.progress.totalDays ?? '—'}</span></p>
+          <Link className="hero-link" href="/planner">Plan what’s next<ArrowUpRightIcon aria-hidden="true" /></Link>
         </div>
-        <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden z-10 relative shadow-inner">
-          <motion.div 
-            className="h-full rounded-full relative progress-glow"
-            style={{ 
-              background: 'linear-gradient(90deg, #10b981, #34d399, #6ee7b7)',
-              backgroundSize: '200% 100%',
-            }}
-            initial={{ width: 0 }}
-            animate={{ width: `${progress.percentage}%` }}
-            transition={{ duration: 1.8, ease: [0.22, 1, 0.36, 1], delay: 0.4 }}
-          />
+        <div className="orbital-scene" aria-hidden="true">
+          <div className="orbital-shadow" />
+          <div className="orbital-float">
+            <div className="orbital-body">
+              <div className="orbital-edge" />
+              <svg className="orbital-ring" viewBox="0 0 160 160">
+                <defs><linearGradient id="semester-ring" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#e5ffb0" /><stop offset=".5" stopColor="#b6ed79" /><stop offset="1" stopColor="#68a64a" /></linearGradient></defs>
+                <circle cx="80" cy="80" r="63" fill="none" stroke="#343551" strokeWidth="13" />
+                <motion.circle cx="80" cy="80" r="63" fill="none" stroke="url(#semester-ring)" strokeWidth="13" strokeLinecap="round" pathLength="100" strokeDasharray="100" initial={reduced ? false : { strokeDashoffset: 100 }} animate={{ strokeDashoffset: 100 - progress }} transition={{ duration: 1.6, ease: [.22, 1, .36, 1], delay: .15 }} />
+              </svg>
+              <div className="orbital-center"><strong><AnimatedNumber value={progress} /><small>%</small></strong><span>of the journey</span></div>
+              <span className="orbital-glint" />
+            </div>
+          </div>
+          <span className="orbit-star star-one">✦</span><span className="orbit-star star-two">✧</span>
         </div>
-        <div className="flex justify-end z-10 relative">
-          <span className="text-[10px] font-bold text-emerald-400/60 tabular-nums">{animatedPercentage}% complete</span>
-        </div>
-      </motion.div>
+        <span className="sr-only">Semester {Math.round(progress)} percent complete.</span>
+        <div className="hero-footer"><SparklesIcon aria-hidden="true" /><span>Small steps. Every day.</span><span className="hero-footer-line" /></div>
+      </TiltCard>
     </div>
   );
 }

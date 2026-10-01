@@ -47,8 +47,8 @@ export default function StatusPopover({ anchorEl, currentStatus, onSelect, onClo
   const calculate = useCallback(() => {
     if (!anchorEl) return;
     const rect = anchorEl.getBoundingClientRect();
-    const popoverHeight = 164; // 4 items × 34px + padding
-    const popoverWidth = 148;
+    const popoverHeight = 208; // 4 items × 34px + padding
+    const popoverWidth = 180;
     const gap = 6;
 
     const spaceBelow = window.innerHeight - rect.bottom - gap;
@@ -144,7 +144,7 @@ export default function StatusPopover({ anchorEl, currentStatus, onSelect, onClo
             ? 'scale(0.92) translateY(6px)'
             : 'scale(0.92) translateY(-6px)',
         transition: 'opacity 150ms cubic-bezier(0.16, 1, 0.3, 1), transform 150ms cubic-bezier(0.16, 1, 0.3, 1)',
-        width: 148,
+        width: 180,
       }}
     >
       <motion.div
@@ -156,7 +156,7 @@ export default function StatusPopover({ anchorEl, currentStatus, onSelect, onClo
           visible: { transition: { staggerChildren: 0.04, delayChildren: 0.05 } },
         }}
         style={{
-          background: 'linear-gradient(135deg, rgba(28, 30, 40, 0.45), rgba(18, 20, 28, 0.5))',
+          background: '#202a23',
           backdropFilter: 'blur(45px) saturate(200%)',
           border: '1px solid rgba(255,255,255,0.14)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15)',
@@ -181,7 +181,7 @@ export default function StatusPopover({ anchorEl, currentStatus, onSelect, onClo
               whileTap={{ scale: 0.94 }}
               whileHover={{ scale: 1.02 }}
               transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-              className="group flex items-center gap-[10px] rounded-[10px] px-[12px] py-[8px] text-[12px] font-semibold transition-colors duration-100"
+              className="group flex items-center gap-[10px] rounded-[10px] px-[12px] min-h-11 py-[8px] text-[13px] font-semibold transition-colors duration-100"
               style={{
                 background: isSelected
                   ? 'rgba(255,255,255,0.09)'

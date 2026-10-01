@@ -1,5 +1,5 @@
 'use client';
-
+export const dynamic = 'force-dynamic';
 import { useState, useRef } from 'react';
 import { useAttendance } from '@/components/AttendanceProvider';
 import AuthScreen from '@/components/AuthScreen';

@@ -110,7 +110,7 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
       />
       
       {/* Modal / Bottom Sheet */}
-      <div className="relative w-full max-w-lg bg-[rgba(14,16,23,0.45)] backdrop-blur-2xl sm:rounded-[28px] rounded-t-[28px] shadow-2xl sm:border border-t border-white/10 slide-up flex flex-col max-h-[90dvh] sm:max-h-[min(760px,85dvh)] min-w-0">
+      <div className="relative w-full max-w-lg bg-[#171925] sm:rounded-[28px] rounded-t-[28px] shadow-2xl sm:border border-t border-white/10 slide-up flex flex-col max-h-[90dvh] sm:max-h-[min(760px,85dvh)] min-w-0">
         
         {/* Mobile Drag Handle */}
         <div className="sm:hidden absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-white/20 rounded-full" />
@@ -120,7 +120,7 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
           {/* Header (Sticky) */}
           <div className="shrink-0 pt-8 sm:pt-6 px-6 pb-4 flex items-center justify-between border-b border-white/5">
             <h2 className="text-xl font-bold text-white tracking-tight">{taskToEdit ? 'Edit Task' : 'New Task'}</h2>
-            <button type="button" onClick={onClose} className="text-white/40 hover:text-white/80 transition-colors p-1 rounded-lg hover:bg-white/5">
+            <button type="button" onClick={onClose} aria-label="Close dialog" className="text-white/40 hover:text-white/80 transition-colors p-1 rounded-lg hover:bg-white/5">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -305,7 +305,7 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
           </div>
 
           {/* Footer (Sticky) */}
-          <div className="shrink-0 p-6 pt-4 bg-[rgba(14,16,23,0.45)] backdrop-blur-2xl sm:rounded-b-[28px] border-t border-white/5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+          <div className="shrink-0 p-6 pt-4 bg-[#171925] sm:rounded-b-[28px] border-t border-white/5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
             <button
               type="submit"
               disabled={!title.trim()}

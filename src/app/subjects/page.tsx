@@ -1,5 +1,5 @@
 'use client';
-
+export const dynamic = 'force-dynamic';
 import { useAttendance } from '@/components/AttendanceProvider';
 import { SUBJECTS } from '@/lib/config';
 import MasterRegister from '@/components/MasterRegister';

@@ -1,5 +1,5 @@
 'use client';
-
+export const dynamic = 'force-dynamic';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SUBJECTS } from '@/lib/config';
@@ -104,16 +104,12 @@ export default function PlannerPage() {
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500 relative">
-      {/* Background elements */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[100px] -z-10 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[100px] -z-10 pointer-events-none" />
-
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-semibold text-white tracking-tight">
           Exam Planner
         </h1>
-        <p className="text-zinc-400 mt-1">Countdown & Reverse Study Plan</p>
+        <p className="text-zinc-400 mt-1">Make time for revision, one subject at a time.</p>
       </div>
 
       {/* Subject Selector */}
@@ -544,7 +540,7 @@ export default function PlannerPage() {
       {/* Add Exam Modal */}
       <AnimatePresence>
         {showAddExam && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
+          <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center sm:p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -557,7 +553,7 @@ export default function PlannerPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="relative w-full max-w-lg bg-[#12141a] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-white/10 flex flex-col max-h-[90vh]"
+              className="relative w-full max-w-lg bg-[#12141a] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-white/10 flex flex-col max-h-[90dvh]"
             >
               <div className="p-6 border-b border-white/5 shrink-0 flex justify-between items-center">
                 <h3 className="text-xl font-bold text-white/90">{editingExam ? 'Edit Exam' : 'Add Exam'}</h3>
@@ -696,7 +692,7 @@ export default function PlannerPage() {
       {/* Add Topic Modal */}
       <AnimatePresence>
         {showAddTopic && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
+          <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center sm:p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -709,7 +705,7 @@ export default function PlannerPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="relative w-full max-w-lg bg-[#12141a] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-white/10 flex flex-col max-h-[90vh]"
+              className="relative w-full max-w-lg bg-[#12141a] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-white/10 flex flex-col max-h-[90dvh]"
             >
               <div className="p-6 border-b border-white/5 shrink-0 flex justify-between items-center">
                 <h3 className="text-xl font-bold text-white/90">{editingTopic ? 'Edit Topic' : 'Add Topic'}</h3>

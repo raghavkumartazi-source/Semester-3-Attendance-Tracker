@@ -1,6 +1,8 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import { useState } from 'react';
+import Dialog from '@/components/Dialog';
 import { motion } from 'framer-motion';
 import { SUBJECTS } from '@/lib/config';
 import { useMarks } from '@/components/MarksProvider';
@@ -25,7 +27,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 
-const COMPONENT_TYPE_LABELS: Record<string, string> = {
+const COMPONENT_TYPE_LABELS = {
   MIDSEM: 'Midsem Exam',
   ENDSEM: 'Endsem Exam',
   QUIZ: 'Quiz',
@@ -37,7 +39,7 @@ const COMPONENT_TYPE_LABELS: Record<string, string> = {
   OTHER: 'Other',
 };
 
-const COMPONENT_TYPE_COLORS: Record<string, string> = {
+const COMPONENT_TYPE_COLORS = {
   MIDSEM: 'bg-red-500/10 text-red-400 border-red-500/20',
   ENDSEM: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
   QUIZ: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
@@ -49,7 +51,7 @@ const COMPONENT_TYPE_COLORS: Record<string, string> = {
   OTHER: 'bg-white/10 text-white/70 border-white/20',
 };
 
-const GRADE_COLORS: Record<GradeLetter, string> = {
+const GRADE_COLORS = {
   AA: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
   AB: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
   BB: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
@@ -90,7 +92,6 @@ export default function MarksPage() {
   const summary = getSubjectSummary(selectedSubject);
   const overall = getOverallSummary();
 
-  // Form state for adding/editing component
   const [formData, setFormData] = useState({
     component_type: 'QUIZ' as MarkComponent['component_type'],
     component_name: '',
@@ -102,7 +103,6 @@ export default function MarksPage() {
     notes: '',
   });
 
-  // Form state for grade config
   const [gradeConfigData, setGradeConfigData] = useState({
     grade_aa_min: 80,
     grade_ab_min: 70,
@@ -114,7 +114,6 @@ export default function MarksPage() {
     credits: 4,
   });
 
-  // Form state for scenario
   const [scenarioName, setScenarioName] = useState('');
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -164,7 +163,7 @@ export default function MarksPage() {
   const submitGradeConfig = (e: React.FormEvent) => {
     e.preventDefault();
     upsertGradeConfig({
-      user_id: '', // Will be filled by provider
+      user_id: '',
       subject_code: selectedSubject,
       ...gradeConfigData,
     });
@@ -259,7 +258,7 @@ export default function MarksPage() {
   if (!isLoaded) {
     return (
       <div className="max-w-lg mx-auto pb-24 space-y-6">
-        <div className="glass-elevated rounded-[24px] p-8 text-center animate-pulse">
+        <div className="paper-elevated rounded-[24px] p-8 text-center animate-pulse">
           <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
             <CalculatorIcon className="w-6 h-6 text-emerald-400" />
           </div>
@@ -272,15 +271,15 @@ export default function MarksPage() {
   return (
     <div className="max-w-lg mx-auto pb-24 space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight gradient-text">Semester Scorecard</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight gradient-text">Semester Scorecard</h1>
           <p className="text-sm text-white/50 mt-1">Marks & Grade Tracker</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowGradeConfig(true)}
-            className="glass-button px-4 py-2 text-sm font-medium flex items-center gap-2"
+            className="ink-btn px-4 py-2 text-sm font-medium flex items-center gap-2"
           >
             <PencilIcon className="w-4 h-4" /> Grade Config
           </button>
@@ -288,9 +287,9 @@ export default function MarksPage() {
       </div>
 
       {/* Subject Selector */}
-      <div className="glass-surface rounded-[20px] p-4">
+      <div className="paper-elevated rounded-[20px] p-4">
         <label className="text-[11px] font-bold text-white/40 uppercase tracking-widest block mb-3">Select Subject</label>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1">
           {SUBJECTS.map(subj => {
             const subjSummary = getSubjectSummary(subj.code);
             const isActive = selectedSubject === subj.code;
@@ -298,7 +297,7 @@ export default function MarksPage() {
               <button
                 key={subj.code}
                 onClick={() => setSelectedSubject(subj.code)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 ${
+                className={`shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 ${
                   isActive 
                     ? 'bg-white/10 text-white border border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.05)]'
                     : 'text-white/60 hover:text-white hover:bg-white/5'
@@ -320,7 +319,7 @@ export default function MarksPage() {
       {/* Overall SGPA Card */}
       {overall.sgpa !== null && (
         <motion.div 
-          className="glass-elevated rounded-[24px] p-6 relative overflow-hidden"
+          className="paper-elevated rounded-[24px] p-6 relative overflow-hidden"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 200, damping: 24 }}
@@ -340,12 +339,21 @@ export default function MarksPage() {
         </motion.div>
       )}
 
+      {!summary && (
+        <div className="empty-state">
+          <CalculatorIcon aria-hidden="true" />
+          <h2 className="text-lg text-white">Start your scorecard</h2>
+          <p>Add a quiz, assignment or exam for {SUBJECTS.find(s => s.code === selectedSubject)?.shortName}.</p>
+          <button type="button" onClick={() => { resetForm(); setShowAddComponent(true); }} className="ink-btn mt-5 px-5 py-3">Add first component</button>
+        </div>
+      )}
+
       {/* Subject Summary Cards */}
       {summary && (
         <>
           {/* Current Status */}
           <motion.div 
-            className="glass-elevated rounded-[24px] p-6 relative overflow-hidden"
+            className="paper-elevated rounded-[24px] p-6 relative overflow-hidden"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: 'spring', stiffness: 200, damping: 24, delay: 0.1 }}
@@ -354,7 +362,7 @@ export default function MarksPage() {
             <div className="relative z-10">
               <div className="flex items-start justify-between mb-6">
                 <div>
-                  <h2 className="text-lg font-bold text-white">{summary.subject_code} — {summary.subject_name}</h2>
+                  <h2 className="text-lg font-bold text-white">{summary.subject_code} \u2014 {summary.subject_name}</h2>
                   <p className="text-sm text-white/50 mt-1">Weightage: {summary.total_weightage.toFixed(1)}% total</p>
                 </div>
                 {summary.current_grade && (
@@ -364,7 +372,7 @@ export default function MarksPage() {
                       <span className="text-2xl font-bold">{summary.current_grade}</span>
                       <span className="text-sm font-medium">({summary.current_percentage?.toFixed(1)}%)</span>
                     </span>
-                    <p className="text-xs text-white/40 mt-1">{getGradePoints(summary.current_grade)} grade points × {summary.credits} credits</p>
+                    <p className="text-xs text-white/40 mt-1">{getGradePoints(summary.current_grade)} grade points \u00d7 {summary.credits} credits</p>
                   </div>
                 )}
               </div>
@@ -390,18 +398,18 @@ export default function MarksPage() {
               </div>
 
               {/* Projection Cards */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="glass-surface rounded-xl p-4 text-center">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="paper-surface rounded-xl p-4 text-center">
                   <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-1">Best Case</p>
                   <p className="text-2xl font-bold text-emerald-400">{summary.best_case_percentage.toFixed(1)}%</p>
                   <p className="text-[11px] text-white/50 mt-1">{getGradeFromPercentage(summary.best_case_percentage)}</p>
                 </div>
-                <div className="glass-surface rounded-xl p-4 text-center">
+                <div className="paper-surface rounded-xl p-4 text-center">
                   <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-1">Projected</p>
                   <p className="text-2xl font-bold text-blue-400">{summary.projected_percentage?.toFixed(1) ?? '--'}%</p>
                   <p className="text-[11px] text-white/50 mt-1">{summary.projected_grade ?? '--'}</p>
                 </div>
-                <div className="glass-surface rounded-xl p-4 text-center">
+                <div className="paper-surface rounded-xl p-4 text-center">
                   <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-1">Worst Case</p>
                   <p className="text-2xl font-bold text-red-400">{summary.worst_case_percentage.toFixed(1)}%</p>
                   <p className="text-[11px] text-white/50 mt-1">{getGradeFromPercentage(summary.worst_case_percentage)}</p>
@@ -412,21 +420,21 @@ export default function MarksPage() {
 
           {/* What-If Simulator */}
           <motion.div 
-            className="glass-elevated rounded-[24px] p-6 relative overflow-hidden"
+            className="paper-elevated rounded-[24px] p-6 relative overflow-hidden"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: 'spring', stiffness: 200, damping: 24, delay: 0.2 }}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-transparent pointer-events-none" />
             <div className="relative z-10">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
                   <SparklesIcon className="w-5 h-5 text-purple-400" />
                   What-If Simulator
                 </h2>
                 <button
                   onClick={() => { setEditingScenario(null); setScenarioName(''); setScenarioAssumptions({}); setShowScenario(true); }}
-                  className="glass-button px-4 py-2 text-sm font-medium flex items-center gap-2"
+                  className="ink-btn px-4 py-2 text-sm font-medium flex items-center gap-2"
                 >
                   <PlusIcon className="w-4 h-4" /> New Scenario
                 </button>
@@ -438,9 +446,10 @@ export default function MarksPage() {
                   {scenarios.filter(s => s.subject_code === selectedSubject).map(scenario => (
                     <motion.div
                       key={scenario.id}
-                      className="glass-surface rounded-xl p-4 flex items-center justify-between group"
+                      className="paper-surface rounded-xl p-4 flex items-center justify-between group"
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 }}
                     >
                       <div className="flex items-center gap-4">
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${GRADE_COLORS[scenario.projected_grade || 'F']}`}>
@@ -454,13 +463,13 @@ export default function MarksPage() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => editScenario(scenario)}
-                          className="glass-button p-2 hover:bg-white/10"
+                          className="ink-btn-ghost p-2 hover:bg-white/10"
                         >
                           <PencilIcon className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => confirmDeleteScenario(scenario)}
-                          className="glass-button p-2 hover:bg-red-500/10 hover:text-red-400"
+                          className="ink-btn-ghost p-2 hover:bg-red-500/10 hover:text-red-400"
                         >
                           <TrashIcon className="w-4 h-4" />
                         </button>
@@ -480,7 +489,7 @@ export default function MarksPage() {
                       if (requirements.length === 0) return null;
                       const avgRequired = requirements.reduce((sum, r) => sum + r.required_percentage, 0) / requirements.length;
                       return (
-                        <div key={grade} className="flex items-center justify-between glass-surface rounded-xl p-3">
+                        <div key={grade} className="flex items-center justify-between paper-recessed rounded-xl p-3">
                           <span className={`font-medium px-3 py-1 rounded-full text-sm ${GRADE_COLORS[grade]}`}>
                             Target {grade}
                           </span>
@@ -499,20 +508,20 @@ export default function MarksPage() {
 
           {/* Components List */}
           <motion.div 
-            className="glass-elevated rounded-[24px] p-6 relative overflow-hidden"
+            className="paper-elevated rounded-[24px] p-6 relative overflow-hidden"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: 'spring', stiffness: 200, damping: 24, delay: 0.3 }}
           >
             <div className="relative z-10">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
                   <CalculatorIcon className="w-5 h-5 text-blue-400" />
                   Assessment Components
                 </h2>
                 <button
                   onClick={() => { resetForm(); setEditingComponent(null); setShowAddComponent(true); }}
-                  className="glass-button px-4 py-2 text-sm font-medium flex items-center gap-2"
+                  className="ink-btn px-4 py-2 text-sm font-medium flex items-center gap-2"
                 >
                   <PlusIcon className="w-4 h-4" /> Add Component
                 </button>
@@ -529,7 +538,7 @@ export default function MarksPage() {
                   {subjectComponents.map((component, index) => (
                     <motion.div
                       key={component.id}
-                      className="glass-surface rounded-xl p-4 flex items-center gap-4 group"
+                      className="paper-surface rounded-xl p-4 flex items-center gap-4 group"
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
@@ -566,13 +575,13 @@ export default function MarksPage() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => editComponent(component)}
-                          className="glass-button p-2 hover:bg-white/10"
+                          className="ink-btn-ghost p-2 hover:bg-white/10"
                         >
                           <PencilIcon className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => confirmDeleteComponent(component)}
-                          className="glass-button p-2 hover:bg-red-500/10 hover:text-red-400"
+                          className="ink-btn-ghost p-2 hover:bg-red-500/10 hover:text-red-400"
                         >
                           <TrashIcon className="w-4 h-4" />
                         </button>
@@ -603,11 +612,10 @@ export default function MarksPage() {
 
       {/* Add/Edit Component Modal */}
       {(showAddComponent || editingComponent) && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center animate-fade-in">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setShowAddComponent(false); setEditingComponent(null); resetForm(); }} />
-          <div className="relative w-full max-w-md bg-[rgba(14,16,23,0.45)] backdrop-blur-2xl backdrop-saturate-150 sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] border-t border-white/15 slide-up">
+        <Dialog label={editingComponent ? 'Edit component' : 'Add component'} onClose={() => { setShowAddComponent(false); setEditingComponent(null); resetForm(); }}>
+          <div className="relative w-full max-w-md bg-[#171925] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] border-t border-white/15 slide-up">
             <h3 className="text-lg font-bold text-white mb-6">{editingComponent ? 'Edit Component' : 'Add Component'}</h3>
-            <form onSubmit={submitComponent} className="space-y-4 max-h-[60vh] overflow-y-auto">
+            <form onSubmit={submitComponent} className="space-y-4 max-h-[60dvh] overflow-y-auto">
               <div>
                 <label className="text-sm font-medium text-white/70 block mb-2">Component Type</label>
                 <select
@@ -733,17 +741,16 @@ export default function MarksPage() {
               </div>
             </form>
           </div>
-        </div>
+        </Dialog>
       )}
 
       {/* Grade Config Modal */}
       {showGradeConfig && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center animate-fade-in">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowGradeConfig(false)} />
-          <div className="relative w-full max-w-md bg-[rgba(14,16,23,0.45)] backdrop-blur-2xl backdrop-saturate-150 sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] border-t border-white/15 slide-up max-h-[80vh] overflow-y-auto">
+        <Dialog label={'Grade configuration'} onClose={() => { setShowGradeConfig(false); }}>
+          <div className="relative w-full max-w-md bg-[#171925] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] border-t border-white/15 slide-up max-h-[80vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-white mb-6">Grade Boundaries for {selectedSubject}</h3>
             <p className="text-sm text-white/50 mb-6">IIT BHU grading schema. Adjust if your department uses different boundaries.</p>
-            <form onSubmit={submitGradeConfig} className="space-y-3 max-h-[60vh] overflow-y-auto">
+            <form onSubmit={submitGradeConfig} className="space-y-3 max-h-[60dvh] overflow-y-auto">
               {[
                 { key: 'grade_aa_min', label: 'AA (10 pts)', default: 80 },
                 { key: 'grade_ab_min', label: 'AB (9 pts)', default: 70 },
@@ -796,16 +803,15 @@ export default function MarksPage() {
               </div>
             </form>
           </div>
-        </div>
+        </Dialog>
       )}
 
       {/* Scenario Modal */}
       {showScenario && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center animate-fade-in">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setShowScenario(false); setEditingScenario(null); setScenarioName(''); setScenarioAssumptions({}); }} />
-          <div className="relative w-full max-w-md bg-[rgba(14,16,23,0.45)] backdrop-blur-2xl backdrop-saturate-150 sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] border-t border-white/15 slide-up max-h-[80vh] overflow-y-auto">
+        <Dialog label={editingScenario ? 'Edit scenario' : 'New scenario'} onClose={() => { setShowScenario(false); setEditingScenario(null); setScenarioName(''); setScenarioAssumptions({}); }}>
+          <div className="relative w-full max-w-md bg-[#171925] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] border-t border-white/15 slide-up max-h-[80vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-white mb-4">{editingScenario ? 'Edit Scenario' : 'New What-If Scenario'}</h3>
-            <form onSubmit={submitScenario} className="space-y-4 max-h-[60vh] overflow-y-auto">
+            <form onSubmit={submitScenario} className="space-y-4 max-h-[60dvh] overflow-y-auto">
               <div>
                 <label className="text-sm font-medium text-white/70 block mb-2">Scenario Name</label>
                 <input
@@ -894,8 +900,9 @@ export default function MarksPage() {
               </div>
             </form>
           </div>
-        </div>
+        </Dialog>
       )}
+
     </div>
   );
 }

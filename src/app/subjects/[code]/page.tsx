@@ -1,5 +1,5 @@
 'use client';
-
+export const dynamic = 'force-dynamic';
 import { useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAttendance } from '@/components/AttendanceProvider';

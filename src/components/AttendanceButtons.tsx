@@ -1,5 +1,7 @@
 'use client';
 
+import { motion, useReducedMotion } from 'framer-motion';
+import { CheckIcon, XMarkIcon, MinusIcon } from '@heroicons/react/24/outline';
 import { AttendanceStatus } from '@/lib/types';
 
 interface Props {
@@ -8,66 +10,23 @@ interface Props {
   compact?: boolean;
 }
 
-const BUTTONS: { label: string; emoji: string; value: AttendanceStatus; class: string }[] = [
-  { label: 'Present', emoji: '✅', value: 'PRESENT', class: 'btn-present' },
-  { label: 'Absent', emoji: '❌', value: 'ABSENT', class: 'btn-absent' },
-  { label: 'Cancelled', emoji: '🚫', value: 'CANCELLED', class: 'btn-cancelled' },
+const buttons = [
+  { label: 'Present', value: 'PRESENT' as const, icon: CheckIcon },
+  { label: 'Absent', value: 'ABSENT' as const, icon: XMarkIcon },
+  { label: 'Cancelled', value: 'CANCELLED' as const, icon: MinusIcon },
 ];
 
 export default function AttendanceButtons({ status, onMark, compact }: Props) {
+  const reduced = useReducedMotion();
   return (
-    <div className="attendance-3d-group" style={{ gap: compact ? '0.75rem' : '1rem' }}>
-      {BUTTONS.map(btn => {
-        const isActive = status === btn.value;
-        return (
-          <button
-            key={btn.value}
-            onClick={(e) => {
-              e.stopPropagation();
-              onMark(isActive ? 'UNMARKED' : btn.value);
-            }}
-            className={`attendance-3d-btn ${btn.class} ${isActive ? 'active' : ''}`}
-            title={isActive ? `Unmark ${btn.label}` : `Mark ${btn.label}`}
-            aria-label={btn.label}
-            aria-pressed={isActive}
-            style={{ 
-              width: compact ? '72px' : '80px', 
-              height: compact ? '72px' : '80px',
-              minWidth: '56px',
-              minHeight: '56px',
-              touchAction: 'manipulation',
-              WebkitTapHighlightColor: 'transparent'
-            }}
-          >
-            <span 
-              className="emoji-3d" 
-              style={{ 
-                fontSize: compact ? '2rem' : '2.5rem',
-                lineHeight: 1,
-                display: 'block',
-                transform: isActive ? 'translateZ(40px) scale(1.3)' : 'translateZ(0)',
-                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                filter: isActive ? 'drop-shadow(0 0 20px currentColor)' : 'none',
-                fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", sans-serif',
-                textRendering: 'optimizeLegibility',
-              }}
-            >
-              {btn.emoji}
-            </span>
-            <span className="label" style={{ 
-              fontSize: '0.55rem',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              opacity: isActive ? 1 : 0.7,
-              transform: 'translateZ(10px)',
-              transition: 'opacity 0.2s'
-            }}>
-              {btn.label.slice(0, 3).toUpperCase()}
-            </span>
-          </button>
-        );
-      })}
+    <div className={`attendance-actions${compact ? ' is-compact' : ''}`} role="group" aria-label="Mark attendance">
+      {buttons.map(({ label, value, icon: Icon }) => (
+        <motion.button whileTap={reduced ? undefined : { scale: .86 }} transition={{ type: 'spring', stiffness: 480, damping: 20 }} type="button" key={value} className={`attendance-action status-${value.toLowerCase()}`} aria-label={status === value ? `Unmark ${label}` : `Mark ${label}`} aria-pressed={status === value} title={label}
+          onClick={(event) => { event.stopPropagation(); onMark(status === value ? 'UNMARKED' : value); }}>
+          <motion.span className="attendance-icon" key={`${value}-${status === value}`} initial={reduced ? false : { scale: .65, rotate: -12 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 400, damping: 16 }}><Icon aria-hidden="true" /></motion.span>
+          {!compact && <span>{label}</span>}
+        </motion.button>
+      ))}
     </div>
   );
 }

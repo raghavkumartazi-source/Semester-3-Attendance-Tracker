@@ -1,3 +1,6 @@
+import { SEMESTER_START, SEMESTER_END } from './config';
+import { differenceInCalendarDays, parseISO } from 'date-fns';
+
 export const timeUtils = {
   getGreeting: (): string => {
     const hour = new Date().getHours();
@@ -12,13 +15,11 @@ export const timeUtils = {
   },
 
   getSemesterProgress: (): { currentDay: number; totalDays: number; percentage: number } => {
-    // 23 July 2026 -> 27 November 2026
-    const start = new Date(2026, 6, 23); // month is 0-indexed, 6=July
-    const end = new Date(2026, 10, 27); // 10=November
+    const start = parseISO(SEMESTER_START);
+    const end = parseISO(SEMESTER_END);
     const today = new Date();
-
-    const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    const currentDay = Math.ceil((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const totalDays = differenceInCalendarDays(end, start) + 1;
+    const currentDay = differenceInCalendarDays(today, start) + 1;
 
     const clampedDay = Math.max(0, Math.min(currentDay, totalDays));
     const percentage = (clampedDay / totalDays) * 100;

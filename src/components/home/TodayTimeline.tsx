@@ -1,216 +1,99 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { ArrowUpRightIcon, CalendarDaysIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { useAttendance } from '../AttendanceProvider';
 import { useWorkSessions } from '../WorkSessionProvider';
 import { useTasks } from '../TaskProvider';
-import { SUBJECTS, DAY_NAMES } from '@/lib/config';
+import { SUBJECTS } from '@/lib/config';
 import { timeUtils } from '@/lib/timeUtils';
 import AttendanceButtons from '../AttendanceButtons';
-import { Session, WorkSession, Task } from '@/lib/types';
 import { generateSmartPlan, SuggestedPlan } from '@/lib/plannerAlgorithm';
 import { SmartPlanReviewSheet } from './SmartPlanReviewSheet';
 
-type TimelineEvent = {
-  type: 'CLASS' | 'WORK';
-  id: string;
-  startString: string;
-  startTotal: number;
-  endTotal: number;
-  classData?: Session;
-  workData?: WorkSession;
-  taskData?: Task;
-};
+const statusLabels = { PRESENT: 'Present', ABSENT: 'Absent', CANCELLED: 'Cancelled', UNMARKED: 'Mark attendance' };
+const minutes = (time: string) => { const [h, m] = time.split(':').map(Number); return h * 60 + m; };
 
 export function TodayTimeline() {
-  const { sessions: classSessions, updateSessionStatus } = useAttendance();
-  const { sessions: workSessions, updateSession: updateWorkSession } = useWorkSessions();
+  const { sessions: classes, updateSessionStatus } = useAttendance();
+  const { sessions: work, updateSession } = useWorkSessions();
   const { tasks } = useTasks();
-  
-  const [currentMinutes, setCurrentMinutes] = useState(0);
-  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
-  const [dayName, setDayName] = useState('');
-  
-  const [planToReview, setPlanToReview] = useState<SuggestedPlan | null>(null);
-
+  const [clock, setClock] = useState(() => new Date());
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const reduced = useReducedMotion();
+  const [plan, setPlan] = useState<SuggestedPlan | null>(null);
   useEffect(() => {
-    // Initial setup
-    const today = new Date().getDay();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDayName(DAY_NAMES[today] || '');
+    const timer = setInterval(() => setClock(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
-    const update = () => {
-      setCurrentMinutes(timeUtils.getCurrentMinutes());
-      
-      const d = new Date();
-      const localDate = timeUtils.getLocalISODate(d);
-      
-      const classEvents: TimelineEvent[] = classSessions
-        .filter(s => s.date === localDate)
-        .map(s => {
-          const [h, m] = s.startTime.split(':').map(Number);
-          const startTotal = h * 60 + m;
-          const endTotal = startTotal + (s.classType === 'Lab' ? 120 : 60);
-          return {
-            type: 'CLASS',
-            id: `class-${s.id}`,
-            startString: s.startTime,
-            startTotal,
-            endTotal,
-            classData: s
-          };
-        });
-
-      const workEvents: TimelineEvent[] = workSessions
-        .filter(s => s.planned_start.startsWith(localDate) && !s.deleted_at && s.status !== 'CANCELLED')
-        .map(s => {
-          const start = new Date(s.planned_start);
-          const end = new Date(s.planned_end);
-          const startTotal = start.getHours() * 60 + start.getMinutes();
-          const endTotal = end.getHours() * 60 + end.getMinutes();
-          return {
-            type: 'WORK',
-            id: `work-${s.id}`,
-            startString: start.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-            startTotal,
-            endTotal,
-            workData: s,
-            taskData: tasks.find(t => t.id === s.task_id)
-          };
-        });
-      
-      const combined = [...classEvents, ...workEvents].sort((a, b) => a.startTotal - b.startTotal);
-      setTimelineEvents(combined);
-    };
-
-    update();
-    const interval = setInterval(update, 60000);
-    return () => clearInterval(interval);
-  }, [classSessions, workSessions, tasks]);
+  const today = timeUtils.getLocalISODate(clock);
+  const displayedDate = selectedDate ?? today;
+  const weekStart = new Date(clock);
+  weekStart.setDate(clock.getDate() - (clock.getDay() + 6) % 7);
+  const week = Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(weekStart);
+    day.setDate(weekStart.getDate() + index);
+    return { date: timeUtils.getLocalISODate(day), number: day.getDate(), label: day.toLocaleDateString('en-GB', { weekday: 'short' }), full: day.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) };
+  });
+  const current = clock.getHours() * 60 + clock.getMinutes();
+  const events = [
+    ...classes.filter(s => s.date === displayedDate).map(s => ({ id: s.id, start: minutes(s.startTime), end: minutes(s.endTime), time: `${s.startTime} – ${s.endTime}`, classSession: s, workSession: null })),
+    ...work.filter(s => timeUtils.getLocalISODate(new Date(s.planned_start)) === displayedDate && !s.deleted_at && s.status !== 'CANCELLED').map(s => {
+      const start = new Date(s.planned_start), end = new Date(s.planned_end);
+      return { id: s.id, start: start.getHours() * 60 + start.getMinutes(), end: end.getHours() * 60 + end.getMinutes(), time: `${start.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} – ${end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`, classSession: null, workSession: s };
+    })
+  ].sort((a, b) => a.start - b.start);
 
   return (
-    <div className="mb-6 animate-fade-in-up stagger-2">
-      <div className="flex items-center justify-between mb-4 px-1">
-        <h2 className="text-[11px] font-bold text-white/60 uppercase tracking-widest">
-          Today&apos;s Timeline
-        </h2>
-        <span className="text-[10px] font-bold text-white/40 tracking-wider uppercase">{dayName}</span>
+    <section>
+      <div className="section-heading"><h2>{displayedDate === today ? "Today’s schedule" : new Date(`${displayedDate}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}</h2><Link href="/schedule" className="section-link">Full week<ArrowUpRightIcon aria-hidden="true" /></Link></div>
+      <div className="week-strip" role="group" aria-label="Choose a day this week">
+        {week.map(day => <button type="button" key={day.date} aria-label={day.full} aria-pressed={displayedDate === day.date} aria-current={day.date === today ? 'date' : undefined} className={`week-day${displayedDate === day.date ? ' selected' : ''}`} onClick={() => setSelectedDate(day.date === today ? null : day.date)}>
+          {displayedDate === day.date && <motion.span className="week-selection" layoutId="selected-schedule-day" transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 380, damping: 30 }} />}
+          <span>{day.label}</span><strong>{day.number}</strong><i className={classes.some(s => s.date === day.date) ? 'has-classes' : ''} />
+        </button>)}
       </div>
-
-      {timelineEvents.length === 0 ? (
-        <div className="glass-surface rounded-[18px] p-6 text-center">
-          <p className="text-sm font-medium text-white/40">No timeline events today</p>
-        </div>
+      <AnimatePresence mode="wait" initial={false}>
+      <motion.div key={displayedDate} initial={reduced ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={reduced ? undefined : { opacity: 0, y: -5 }} transition={{ duration: .18 }}>
+      {events.length === 0 ? (
+        <div className="empty-state"><CalendarDaysIcon aria-hidden="true" /><p>No classes or study sessions this day.</p><p>A good day to catch up or take a break.</p></div>
       ) : (
-        <div className="space-y-3 relative">
-          <div className="absolute left-[20px] top-4 bottom-4 w-px bg-white/10 z-0" />
-          
-          {timelineEvents.map((event, i) => {
-            const isNow = currentMinutes >= event.startTotal && currentMinutes <= event.endTotal;
-            const isPast = currentMinutes > event.endTotal;
-
-            if (event.type === 'CLASS' && event.classData) {
-              const session = event.classData;
-              const subject = SUBJECTS.find(s => s.code === session.subjectCode);
-
-              return (
-                <div key={event.id} className={`animate-slide-in-right stagger-${Math.min(i + 3, 8)} flex items-center relative z-10 ${isPast ? 'opacity-60' : ''}`}>
-                  <div className={`w-[40px] flex justify-center shrink-0`}>
-                    <div className={`w-2.5 h-2.5 rounded-full outline outline-4 outline-[#040406] ${
-                      isNow ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,1)]' :
-                      session.status === 'PRESENT' ? 'bg-emerald-500' :
-                      session.status === 'ABSENT' ? 'bg-amber-500' :
-                      session.status === 'CANCELLED' ? 'bg-zinc-500' :
-                      'bg-white/20'
-                    }`} />
-                  </div>
-                  
-                  <div className={`flex-1 glass-elevated rounded-[18px] px-4 py-3 relative overflow-hidden transition-all duration-300 ${isNow ? 'border-red-500/20 bg-red-500/5' : ''}`}>
-                    {isNow && <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)] z-20" />}
-                    <div className="flex items-center justify-between z-10 relative">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-zinc-200 tracking-wide drop-shadow-sm">{session.subjectCode}</span>
-                          {isNow && <span className="text-[9px] rounded-full border px-1.5 py-0.5 font-bold bg-red-500/20 text-red-300 border-red-500/30">NOW</span>}
-                        </div>
-                        <p className="mt-0.5 text-[11px] font-medium text-white/50 truncate">{event.startString} · {subject?.name}</p>
-                      </div>
-                      <div className="shrink-0 ml-3">
-                        <AttendanceButtons status={session.status} onMark={(status) => updateSessionStatus(session.id, status)} compact />
-                      </div>
-                    </div>
+        <div className="timeline-list">
+          {events.map((event, index) => {
+            const s = event.classSession;
+            const isNow = displayedDate === today && current >= event.start && current < event.end;
+            const task = event.workSession ? tasks.find(t => t.id === event.workSession?.task_id) : null;
+            return (
+              <motion.article key={event.id} data-status={s?.status} initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .35, delay: index * .045 }} className={`timeline-row${isNow ? ' is-now' : ''}`}>
+                <div className="timeline-row-top">
+                  <div className="min-w-0">
+                    <div className="timeline-time">{event.time}{isNow && <span className="now-label">Now</span>}</div>
+                    <h3 className="timeline-title">{s ? SUBJECTS.find(sub => sub.code === s.subjectCode)?.name ?? s.subjectCode : task?.title ?? 'Study session'}</h3>
+                    <p className="timeline-meta">{s ? `${s.subjectCode} · ${s.classType}` : 'Planned focus time'}</p>
                   </div>
                 </div>
-              );
-            } else if (event.type === 'WORK' && event.workData && event.taskData) {
-              const session = event.workData;
-              const task = event.taskData;
-              const duration = event.endTotal - event.startTotal;
-              
-              return (
-                <div key={event.id} className={`animate-slide-in-right stagger-${Math.min(i + 3, 8)} flex items-center relative z-10 ${isPast ? 'opacity-60' : ''}`}>
-                  <div className={`w-[40px] flex justify-center shrink-0`}>
-                    <div className={`w-2.5 h-2.5 rounded-full outline outline-4 outline-[#040406] ${
-                      isNow ? 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,1)]' :
-                      session.status === 'COMPLETED' ? 'bg-indigo-400' :
-                      session.status === 'CANCELLED' ? 'bg-white/10' :
-                      'bg-indigo-500/50'
-                    }`} />
-                  </div>
-                  
-                  <div className={`flex-1 glass-surface rounded-[18px] px-4 py-3 relative overflow-hidden transition-all duration-300 border border-indigo-500/10 ${isNow ? 'border-indigo-500/30 bg-indigo-500/5' : ''}`}>
-                    {isNow && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.8)] z-20" />}
-                    <div className="flex items-center justify-between z-10 relative">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-indigo-300 tracking-wide drop-shadow-sm truncate pr-2">{task.title}</span>
-                          {isNow && <span className="text-[9px] rounded-full border px-1.5 py-0.5 font-bold bg-indigo-500/20 text-indigo-300 border-indigo-500/30">NOW</span>}
-                        </div>
-                        <p className="mt-0.5 text-[11px] font-medium text-indigo-200/50 truncate">
-                          {event.startString} · Planned Work ({duration}m)
-                        </p>
-                      </div>
-                      <div className="shrink-0 ml-3 flex gap-1">
-                        {session.status !== 'COMPLETED' && (
-                          <button onClick={() => updateWorkSession(session.id, { status: 'COMPLETED' })} className="p-1.5 rounded-md text-white/30 hover:bg-indigo-500/20 hover:text-indigo-400 transition-colors">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                          </button>
-                        )}
-                        {session.status !== 'CANCELLED' && (
-                          <button onClick={() => updateWorkSession(session.id, { status: 'CANCELLED' })} className="p-1.5 rounded-md text-white/30 hover:bg-red-500/20 hover:text-red-400 transition-colors">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                          </button>
-                        )}
-                      </div>
+                {s ? (
+                  <div className="timeline-marking"><AnimatePresence mode="wait" initial={false}><motion.span key={s.status} initial={reduced ? false : { opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: .15 }}>{statusLabels[s.status]}</motion.span></AnimatePresence><AttendanceButtons status={s.status} onMark={status => updateSessionStatus(s.id, status)} compact /></div>
+                ) : event.workSession && (
+                  <div className="timeline-marking"><span>{event.workSession.status === 'COMPLETED' ? 'Completed' : 'Ready when you are'}</span>
+                    <div className="flex gap-2">
+                      {event.workSession.status !== 'COMPLETED' && <button className="ink-btn px-3 py-2 text-xs" onClick={() => updateSession(event.id, { status: 'COMPLETED' })}>Complete</button>}
+                      <button className="ink-btn-ghost px-3 py-2 text-xs" onClick={() => updateSession(event.id, { status: 'CANCELLED' })}>Cancel</button>
                     </div>
                   </div>
-                </div>
-              );
-            }
-            return null;
+                )}
+              </motion.article>
+            );
           })}
         </div>
       )}
-      
-      <div className="mt-4">
-        <button 
-          onClick={() => {
-            const plan = generateSmartPlan(tasks, classSessions, workSessions);
-            setPlanToReview(plan);
-          }}
-          className="w-full py-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-emerald-500/20 transition-colors flex items-center justify-center gap-2"
-        >
-          <span>✨ Smart Plan My Workload</span>
-        </button>
-      </div>
-
-      {planToReview && (
-        <SmartPlanReviewSheet 
-          plan={planToReview} 
-          tasks={tasks}
-          onClose={() => setPlanToReview(null)} 
-        />
-      )}
-    </div>
+      </motion.div>
+      </AnimatePresence>
+      {displayedDate === today && <motion.button whileTap={reduced ? undefined : { scale: .97 }} className="plan-action mt-3 w-full flex items-center justify-center gap-2 py-3 text-sm" onClick={() => setPlan(generateSmartPlan(tasks, classes, work))}><SparklesIcon className="w-4 h-4" aria-hidden="true" /> Plan my study time</motion.button>}
+      {plan && <SmartPlanReviewSheet plan={plan} tasks={tasks} onClose={() => setPlan(null)} />}
+    </section>
   );
 }

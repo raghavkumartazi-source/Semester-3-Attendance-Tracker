@@ -10,7 +10,7 @@ import BottomNav from '@/components/BottomNav';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import PageTransition from '@/components/PageTransition';
 import { CelebrationLayer } from '@/components/CelebrationBurst';
-import BackgroundFX from '@/components/BackgroundFX';
+import AppHeader from '@/components/AppHeader';
 
 const outfit = Outfit({ subsets: ['latin'] });
 
@@ -32,10 +32,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   viewportFit: 'cover',
-  themeColor: '#050508',
+  themeColor: '#0b0c14',
 };
 
 export default function RootLayout({
@@ -45,30 +43,30 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${outfit.className} bg-[#050508] text-white antialiased min-h-dvh relative overflow-x-hidden selection:bg-white/20`}>
+      <body className={`${outfit.className} antialiased`}>
+        <div className="ambient-backdrop" aria-hidden="true"><div className="ambient-glow" /><div className="ambient-grid" /></div>
+        <a className="skip-link" href="#main-content">Skip to content</a>
+        <AppHeader />
 
         <ErrorBoundary>
           <AttendanceProvider>
-            <BackgroundFX />
             <WorkSessionProvider>
               <TaskProvider>
                 <MarksProvider>
                   <PlannerProvider>
-                    <div className="relative flex flex-col min-h-dvh">
-                      <main className="flex-1 mx-auto px-4 pt-safe pb-28 min-h-0">
-                        <PageTransition>
-                          {children}
-                        </PageTransition>
-                      </main>
-                      <BottomNav />
-                      <CelebrationLayer />
-                    </div>
+                    <main id="main-content" className="app-main" tabIndex={-1}>
+                      <PageTransition>
+                        {children}
+                      </PageTransition>
+                    </main>
+                    <CelebrationLayer />
                   </PlannerProvider>
                 </MarksProvider>
               </TaskProvider>
             </WorkSessionProvider>
           </AttendanceProvider>
         </ErrorBoundary>
+        <BottomNav />
       </body>
     </html>
   );
