@@ -8,6 +8,7 @@ import { parseDate, formatDate } from '@/lib/sessions';
 import Link from 'next/link';
 import StatusPopover from './StatusPopover';
 import { getStatusCellClass, STATUS_DISPLAY } from '@/lib/uiUtils';
+import { SUBJECT_COLORS } from '@/lib/theme';
 
 interface Props {
   subjects: Subject[];
@@ -319,11 +320,14 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
             else statusClass = 'border-red-500/20 bg-red-500/10 text-red-400 shadow-[inset_0_1px_1px_rgba(239,68,68,0.15)]';
           }
 
+          const accentColor = SUBJECT_COLORS[row.subject.code] || '#a8aabf';
+
           return (
             <Link 
               key={row.subject.code}
               href={`/subjects/${encodeURIComponent(row.subject.code)}`}
-              className="block glass-elevated rounded-[22px] p-4 sm:p-5 active:scale-[0.98] transition-transform"
+              className="block glass-elevated rounded-[22px] p-4 sm:p-5 active:scale-[0.98] transition-transform relative overflow-hidden"
+              style={{ '--subject-accent': accentColor } as React.CSSProperties}
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1 min-w-0 pr-4">
@@ -357,6 +361,23 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
                   </span>
                 </div>
               </div>
+
+              {/* Subject color progress bar */}
+              {row.stats.percentage !== null && (
+                <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-white/[0.03]">
+                  <div 
+                    className="h-full progress-bar-fill transition-all duration-500 ease-out"
+                    style={{ 
+                      width: `${row.stats.percentage}%`,
+                      backgroundColor: row.stats.level === 'SAFE' ? accentColor : 
+                        row.stats.level === 'WARNING' ? '#f59e0bb3' : 
+                        row.stats.level === 'DANGER' ? '#ef4444b3' : accentColor,
+                      boxShadow: `0 0 10px ${row.stats.level === 'SAFE' ? accentColor : row.stats.level === 'WARNING' ? 'rgba(245,158,11,0.5)' : 'rgba(239,68,68,0.5)'}`,
+                      opacity: 0.8,
+                    }}
+                  />
+                </div>
+              )}
             </Link>
           );
         })}

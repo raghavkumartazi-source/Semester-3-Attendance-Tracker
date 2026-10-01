@@ -5,9 +5,18 @@ import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } fro
 
 export function AnimatedNumber({ value, decimals = 0 }: { value: number; decimals?: number }) {
   const reduced = useReducedMotion();
-  const count = useSpring(0, { stiffness: 65, damping: 22 });
+  const count = useSpring(0, { stiffness: 80, damping: 20 });
   const display = useTransform(count, n => n.toFixed(decimals));
-  useEffect(() => { if (reduced) count.jump(value); else count.set(value); }, [count, reduced, value]);
+  
+  useEffect(() => { 
+    if (reduced) {
+      count.jump(value);
+    } else {
+      count.jump(0);
+      setTimeout(() => count.set(value), 50); // Small delay to let the UI mount before starting the animation
+    }
+  }, [count, reduced, value]);
+  
   return <><span className="sr-only">{value.toFixed(decimals)}</span><motion.span aria-hidden="true">{display}</motion.span></>;
 }
 

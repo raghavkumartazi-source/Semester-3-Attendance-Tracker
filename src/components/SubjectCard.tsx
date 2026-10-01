@@ -39,10 +39,34 @@ export default function SubjectCard({ subject, attendance }: Props) {
               {subject.name}
             </p>
           </div>
-          <div className="ml-3 text-right">
-            <p className={`text-2xl font-bold tabular-nums drop-shadow-md ${getStatusColor(level)}`}>
-              {formatPercentage(percentage)}
-            </p>
+          <div className="ml-3 text-right relative flex items-center justify-center w-14 h-14 shrink-0">
+            {level !== 'NO_DATA' && percentage !== null ? (
+              <>
+                <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 44 44">
+                  <circle cx="22" cy="22" r="19" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="3.5" />
+                  <circle 
+                    cx="22" cy="22" r="19" 
+                    fill="none" 
+                    stroke={level === 'SAFE' ? accentColor : level === 'WARNING' ? '#f59e0b' : '#ef4444'} 
+                    strokeWidth="3.5" 
+                    strokeDasharray="119.38" 
+                    strokeDashoffset={119.38 - (percentage / 100) * 119.38} 
+                    strokeLinecap="round"
+                    style={{
+                      filter: `drop-shadow(0 0 3px ${level === 'SAFE' ? accentColor : level === 'WARNING' ? '#f59e0b' : '#ef4444'}80)`,
+                      transition: 'stroke-dashoffset 1.2s cubic-bezier(0.22, 1, 0.36, 1)'
+                    }}
+                  />
+                </svg>
+                <p className={`relative z-10 text-[14px] font-bold tabular-nums drop-shadow-md ${getStatusColor(level)}`}>
+                  {Math.round(percentage)}<span className="text-[10px] opacity-60">%</span>
+                </p>
+              </>
+            ) : (
+              <p className={`text-2xl font-bold tabular-nums drop-shadow-md ${getStatusColor(level)}`}>
+                —
+              </p>
+            )}
           </div>
         </div>
 
@@ -80,26 +104,7 @@ export default function SubjectCard({ subject, attendance }: Props) {
           </div>
         </div>
 
-        {/* Progress bar with subject accent */}
-        {level !== 'NO_DATA' && percentage !== null && (
-          <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-white/[0.03]">
-            <div 
-              className={`h-full progress-bar-fill ${
-                level === 'SAFE' ? 'shadow-[0_0_10px_rgba(16,185,129,0.5)]' :
-                level === 'WARNING' ? 'shadow-[0_0_10px_rgba(245,158,11,0.5)]' :
-                level === 'DANGER' ? 'shadow-[0_0_10px_rgba(239,68,68,0.5)]' :
-                ''
-              }`}
-              style={{ 
-                width: `${percentage}%`,
-                backgroundColor: level === 'SAFE' ? accentColor : 
-                  level === 'WARNING' ? '#f59e0bb3' : 
-                  level === 'DANGER' ? '#ef4444b3' : accentColor,
-                opacity: 0.7,
-              }}
-            />
-          </div>
-        )}
+
       </div>
     </Link>
   );
