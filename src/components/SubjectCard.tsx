@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Subject, SubjectAttendance } from '@/lib/types';
 import { formatPercentage, getStatusColor, getStatusLabel } from '@/lib/calculations';
+import { SUBJECT_COLORS } from '@/lib/theme';
 
 interface Props {
   subject: Subject;
@@ -11,18 +12,27 @@ interface Props {
 
 export default function SubjectCard({ subject, attendance }: Props) {
   const { percentage, present, totalConducted, level, canBunk, needToAttend } = attendance;
+  const accentColor = SUBJECT_COLORS[subject.code] || '#a8aabf';
 
   return (
     <Link href={`/subjects/${subject.code}`}>
-      <div className={`group glass-elevated rounded-[22px] p-5 transition-all duration-300 active:scale-[0.98] relative overflow-hidden ${
-        level === 'SAFE' ? 'border-emerald-500/15 hover:border-emerald-500/30' :
-        level === 'WARNING' ? 'border-amber-500/15 hover:border-amber-500/30' :
-        level === 'DANGER' ? 'border-red-500/15 hover:border-red-500/30' :
-        ''
-      }`}>
+      <div
+        className={`group glass-elevated rounded-[22px] p-5 transition-all duration-300 active:scale-[0.98] relative overflow-hidden ${
+          level === 'SAFE' ? 'border-emerald-500/15 hover:border-emerald-500/30' :
+          level === 'WARNING' ? 'border-amber-500/15 hover:border-amber-500/30' :
+          level === 'DANGER' ? 'border-red-500/15 hover:border-red-500/30' :
+          ''
+        }`}
+        style={{ '--subject-accent': accentColor } as React.CSSProperties}
+      >
+        {/* Subject accent glow in top-right corner */}
+        <div
+          className="absolute -right-8 -top-8 w-24 h-24 rounded-full opacity-[0.08] blur-xl pointer-events-none transition-opacity duration-300 group-hover:opacity-[0.15]"
+          style={{ background: accentColor }}
+        />
         <div className="flex items-start justify-between relative z-10">
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold tracking-widest text-white/60 uppercase">
+            <p className="text-[11px] font-semibold tracking-widest uppercase" style={{ color: accentColor }}>
               {subject.code}
             </p>
             <p className="mt-0.5 text-sm font-medium text-zinc-100 truncate">
@@ -70,17 +80,23 @@ export default function SubjectCard({ subject, attendance }: Props) {
           </div>
         </div>
 
-        {/* Mini progress bar */}
+        {/* Progress bar with subject accent */}
         {level !== 'NO_DATA' && percentage !== null && (
           <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-white/[0.03]">
             <div 
               className={`h-full progress-bar-fill ${
-                level === 'SAFE' ? 'bg-emerald-500/70 shadow-[0_0_10px_rgba(16,185,129,0.5)]' :
-                level === 'WARNING' ? 'bg-amber-500/70 shadow-[0_0_10px_rgba(245,158,11,0.5)]' :
-                level === 'DANGER' ? 'bg-red-500/70 shadow-[0_0_10px_rgba(239,68,68,0.5)]' :
-                'bg-white/20'
+                level === 'SAFE' ? 'shadow-[0_0_10px_rgba(16,185,129,0.5)]' :
+                level === 'WARNING' ? 'shadow-[0_0_10px_rgba(245,158,11,0.5)]' :
+                level === 'DANGER' ? 'shadow-[0_0_10px_rgba(239,68,68,0.5)]' :
+                ''
               }`}
-              style={{ width: `${percentage}%` }}
+              style={{ 
+                width: `${percentage}%`,
+                backgroundColor: level === 'SAFE' ? accentColor : 
+                  level === 'WARNING' ? '#f59e0bb3' : 
+                  level === 'DANGER' ? '#ef4444b3' : accentColor,
+                opacity: 0.7,
+              }}
             />
           </div>
         )}
@@ -88,3 +104,4 @@ export default function SubjectCard({ subject, attendance }: Props) {
     </Link>
   );
 }
+

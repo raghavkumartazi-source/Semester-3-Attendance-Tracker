@@ -33,7 +33,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#0b0c14',
+  themeColor: '#08090e',
 };
 
 export default function RootLayout({
@@ -44,7 +44,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${outfit.className} antialiased`}>
-        <div className="ambient-backdrop" aria-hidden="true"><div className="ambient-glow" /><div className="ambient-grid" /></div>
+        <div className="ambient-backdrop" aria-hidden="true"><div className="ambient-glow" /><div className="ambient-grid" /><div className="shooting-star" /><div className="shooting-star" /><div className="shooting-star" /><div className="shooting-star" /></div>
         <a className="skip-link" href="#main-content">Skip to content</a>
         <AppHeader />
 

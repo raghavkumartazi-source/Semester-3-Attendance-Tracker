@@ -105,11 +105,9 @@ export default function PlannerPage() {
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500 relative">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-semibold text-white tracking-tight">
-          Exam Planner
-        </h1>
-        <p className="text-zinc-400 mt-1">Make time for revision, one subject at a time.</p>
+      <div className="page-header" style={{ marginBottom: 0 }}>
+        <h1>Exam Planner</h1>
+        <p className="page-subtitle">Make time for revision, one subject at a time.</p>
       </div>
 
       {/* Subject Selector */}

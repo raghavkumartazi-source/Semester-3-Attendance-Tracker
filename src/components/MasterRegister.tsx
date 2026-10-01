@@ -123,9 +123,9 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
     <div className="space-y-4 pb-12 md:pb-0">
       {/* Controls & Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-1">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Attendance</h1>
-          <p className="text-[11px] text-white/50 font-medium mt-0.5">Your subjects, attendance and room to miss a class.</p>
+        <div className="page-header">
+          <h1>Attendance</h1>
+          <p className="page-subtitle">Your subjects, attendance and room to miss a class.</p>
         </div>
         <div className="glass-floating rounded-[18px] hidden md:flex items-center justify-between w-full sm:w-auto gap-1 p-1.5 overflow-hidden flex-nowrap">
           <button onClick={scrollToStart} className="glass-control rounded-[12px] px-3 py-2 text-[10px] font-bold text-white/70 hover:text-white tracking-wide truncate flex-1 sm:flex-none">

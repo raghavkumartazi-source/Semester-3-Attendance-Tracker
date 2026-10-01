@@ -272,9 +272,9 @@ export default function MarksPage() {
     <div className="max-w-lg mx-auto pb-24 space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight gradient-text">Semester Scorecard</h1>
-          <p className="text-sm text-white/50 mt-1">Marks & Grade Tracker</p>
+        <div className="page-header" style={{ marginBottom: 0 }}>
+          <h1>Semester Scorecard</h1>
+          <p className="page-subtitle">Marks & Grade Tracker</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -613,7 +613,7 @@ export default function MarksPage() {
       {/* Add/Edit Component Modal */}
       {(showAddComponent || editingComponent) && (
         <Dialog label={editingComponent ? 'Edit component' : 'Add component'} onClose={() => { setShowAddComponent(false); setEditingComponent(null); resetForm(); }}>
-          <div className="relative w-full max-w-md bg-[#171925] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] border-t border-white/15 slide-up">
+          <div className="relative w-full max-w-md bg-[#111320] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] border-t border-white/15 slide-up">
             <h3 className="text-lg font-bold text-white mb-6">{editingComponent ? 'Edit Component' : 'Add Component'}</h3>
             <form onSubmit={submitComponent} className="space-y-4 max-h-[60dvh] overflow-y-auto">
               <div>
@@ -747,7 +747,7 @@ export default function MarksPage() {
       {/* Grade Config Modal */}
       {showGradeConfig && (
         <Dialog label={'Grade configuration'} onClose={() => { setShowGradeConfig(false); }}>
-          <div className="relative w-full max-w-md bg-[#171925] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] border-t border-white/15 slide-up max-h-[80vh] overflow-y-auto">
+          <div className="relative w-full max-w-md bg-[#111320] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] border-t border-white/15 slide-up max-h-[80vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-white mb-6">Grade Boundaries for {selectedSubject}</h3>
             <p className="text-sm text-white/50 mb-6">IIT BHU grading schema. Adjust if your department uses different boundaries.</p>
             <form onSubmit={submitGradeConfig} className="space-y-3 max-h-[60dvh] overflow-y-auto">
@@ -809,7 +809,7 @@ export default function MarksPage() {
       {/* Scenario Modal */}
       {showScenario && (
         <Dialog label={editingScenario ? 'Edit scenario' : 'New scenario'} onClose={() => { setShowScenario(false); setEditingScenario(null); setScenarioName(''); setScenarioAssumptions({}); }}>
-          <div className="relative w-full max-w-md bg-[#171925] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] border-t border-white/15 slide-up max-h-[80vh] overflow-y-auto">
+          <div className="relative w-full max-w-md bg-[#111320] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] border-t border-white/15 slide-up max-h-[80vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-white mb-4">{editingScenario ? 'Edit Scenario' : 'New What-If Scenario'}</h3>
             <form onSubmit={submitScenario} className="space-y-4 max-h-[60dvh] overflow-y-auto">
               <div>

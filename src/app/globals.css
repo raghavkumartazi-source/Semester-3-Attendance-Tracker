@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #0b0c14;
-  --color-bg-elevated: #171925;
-  --color-surface: #171925;
-  --color-border: #2a2d41;
+  --color-bg: #08090e;
+  --color-bg-elevated: #111320;
+  --color-surface: #111320;
+  --color-border: #1e2035;
   --font-display: "Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-body: "Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: "SFMono-Regular", Consolas, monospace;
@@ -12,21 +12,21 @@
 
 :root {
   color-scheme: dark;
-  --bg: #0b0c14;
-  --bg-elevated: #171925;
-  --fg: #f3f3fa;
-  --fg-muted: #b0b2c5;
-  --fg-subtle: #9396af;
+  --bg: #08090e;
+  --bg-elevated: #111320;
+  --fg: #eeeef6;
+  --fg-muted: #a8aabf;
+  --fg-subtle: #7d7f98;
   --accent: #d0f5a2;
-  --border: #2a2d41;
+  --border: #1e2035;
   --success: #b0e995;
   --warning: #edbd97;
   --danger: #ffa0af;
   --info: #a3bfff;
-  --glass-bg: #171925;
-  --glass-bg-hover: #25283b;
-  --glass-border: #2a2d41;
-  --glass-border-bright: #656480;
+  --glass-bg: #111320;
+  --glass-bg-hover: #1a1d30;
+  --glass-border: #1e2035;
+  --glass-border-bright: #4a4c66;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -40,7 +40,7 @@ input, select, textarea { color: var(--fg); accent-color: var(--accent); }
 select option { background: var(--bg-elevated); }
 input::placeholder, textarea::placeholder { color: var(--fg-subtle); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
-::selection { background: #d0f5a2; color: #0b0c14; }
+::selection { background: #d0f5a2; color: #08090e; }
 h1, h2, h3 { text-wrap: balance; }
 h1 { line-height: 1.15; }
 
@@ -189,12 +189,97 @@ input.glass-control, textarea.glass-control, select.glass-control { background: 
 .glass-panel { border-radius: 18px; }
 .summary-card { transition: border-color 150ms; }
 
-/* Midnight / lime. Depth is local to cards so fixed sheets and the dock stay anchored. */
-body { isolation: isolate; background: #0b0c14; }
+/* Dark obsidian + stars. */
+body { isolation: isolate; background: #08090e; }
 .ambient-backdrop { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
-.ambient-glow { position: absolute; width: 100%; height: 100%; background: radial-gradient(ellipse 70% 55% at 95% 8%, #6550b929, transparent 75%), radial-gradient(ellipse 70% 50% at 0% 62%, #273a6326, transparent 80%); animation: ambient-drift 18s ease-in-out infinite alternate; }
-.ambient-grid { position: absolute; inset: 0; opacity: .12; background-image: radial-gradient(#a8a5ca60 .6px, transparent .6px); background-size: 20px 20px; mask-image: linear-gradient(#000, transparent 65%); -webkit-mask-image: linear-gradient(#000, transparent 65%); }
-@keyframes ambient-drift { to { transform: translate3d(3%, -2%, 0) scale(1.06); opacity: .65; } }
+.ambient-glow {
+  position: absolute; width: 100%; height: 100%;
+  background:
+    radial-gradient(ellipse 60% 45% at 80% 15%, #1a153812, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 15% 70%, #0f152412, transparent 70%);
+}
+/* Three star layers at different sizes/speeds for parallax depth */
+.ambient-grid {
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 10% 20%, #ffffff, transparent),
+    radial-gradient(1px 1px at 25% 55%, #ffffffcc, transparent),
+    radial-gradient(1px 1px at 40% 10%, #ffffff99, transparent),
+    radial-gradient(1px 1px at 55% 80%, #ffffff, transparent),
+    radial-gradient(1px 1px at 70% 35%, #ffffffcc, transparent),
+    radial-gradient(1px 1px at 85% 65%, #ffffff99, transparent),
+    radial-gradient(1px 1px at 95% 5%, #ffffff, transparent),
+    radial-gradient(1px 1px at 5% 90%, #ffffffcc, transparent),
+    radial-gradient(1px 1px at 33% 43%, #ffffff88, transparent),
+    radial-gradient(1px 1px at 78% 12%, #ffffff, transparent),
+    radial-gradient(1px 1px at 62% 72%, #ffffffaa, transparent),
+    radial-gradient(1px 1px at 18% 38%, #ffffff77, transparent),
+    radial-gradient(1.5px 1.5px at 48% 28%, #ffffffdd, transparent),
+    radial-gradient(1.5px 1.5px at 88% 48%, #ffffff, transparent),
+    radial-gradient(1.5px 1.5px at 8% 68%, #ffffffbb, transparent);
+  background-size: 250px 250px;
+  animation: stars-twinkle 6s ease-in-out infinite alternate;
+}
+.ambient-backdrop::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(.6px .6px at 15% 25%, #ffffff66, transparent),
+    radial-gradient(.6px .6px at 35% 60%, #ffffff55, transparent),
+    radial-gradient(.6px .6px at 58% 15%, #ffffff44, transparent),
+    radial-gradient(.6px .6px at 72% 75%, #ffffff55, transparent),
+    radial-gradient(.6px .6px at 90% 40%, #ffffff44, transparent),
+    radial-gradient(.6px .6px at 5% 85%, #ffffff66, transparent),
+    radial-gradient(.6px .6px at 44% 50%, #ffffff33, transparent),
+    radial-gradient(.6px .6px at 82% 8%, #ffffff55, transparent),
+    radial-gradient(.6px .6px at 28% 92%, #ffffff44, transparent),
+    radial-gradient(.6px .6px at 66% 33%, #ffffff33, transparent);
+  background-size: 400px 400px;
+  animation: stars-drift 30s linear infinite;
+}
+.ambient-backdrop::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(2px 2px at 20% 30%, #d0f5a222, transparent),
+    radial-gradient(2px 2px at 65% 50%, #a3bfff22, transparent),
+    radial-gradient(2px 2px at 80% 15%, #d0f5a218, transparent),
+    radial-gradient(2px 2px at 45% 85%, #a3bfff18, transparent),
+    radial-gradient(2px 2px at 10% 60%, #d0f5a215, transparent);
+  background-size: 600px 600px;
+  animation: stars-twinkle 8s ease-in-out infinite alternate-reverse;
+}
+@keyframes stars-twinkle { 0% { opacity: .7; } 50% { opacity: 1; } 100% { opacity: .6; } }
+@keyframes stars-drift { to { transform: translate3d(-20px, -15px, 0); } }
+
+/* Shooting stars — diagonal streaks that appear at staggered intervals */
+.shooting-star {
+  position: absolute;
+  width: 100px; height: 1px;
+  background: linear-gradient(90deg, #ffffff00, #ffffffcc 40%, #ffffff);
+  border-radius: 1px;
+  opacity: 0;
+  transform: rotate(-35deg);
+  filter: drop-shadow(0 0 3px #ffffffaa);
+  animation: shoot 1.2s ease-out infinite;
+}
+.shooting-star:nth-child(1) { top: 12%; left: 70%; animation-delay: 0s; animation-duration: 1s; width: 80px; }
+.shooting-star:nth-child(2) { top: 35%; left: 45%; animation-delay: 4.5s; animation-duration: 1.3s; width: 120px; transform: rotate(-40deg); }
+.shooting-star:nth-child(3) { top: 8%; left: 20%; animation-delay: 9s; animation-duration: 0.9s; width: 60px; transform: rotate(-30deg); }
+.shooting-star:nth-child(4) { top: 55%; left: 85%; animation-delay: 14s; animation-duration: 1.1s; width: 90px; transform: rotate(-38deg); }
+@keyframes shoot {
+  0% { opacity: 0; transform: rotate(-35deg) translateX(0); }
+  5% { opacity: 1; }
+  15% { opacity: 1; }
+  30% { opacity: 0; transform: rotate(-35deg) translateX(300px); }
+  100% { opacity: 0; transform: rotate(-35deg) translateX(300px); }
+}
+
+/* Consistent page header used across subpages */
+.page-header { margin-bottom: 24px; animation: page-header-in 500ms cubic-bezier(.22, 1, .36, 1) both; }
+.page-header h1 { font-size: clamp(24px, 2.8vw, 32px); font-weight: 600; letter-spacing: -.8px; line-height: 1.15; color: var(--fg); }
+.page-header .page-subtitle { font-size: 13px; color: var(--fg-subtle); margin-top: 4px; }
+@keyframes page-header-in { from { opacity: 0; translate: 0 14px; } to { opacity: 1; translate: 0 0; } }
 .app-header { background: transparent; border: none; }
 .app-header-inner { max-width: 1060px; padding: 20px 26px 10px; }
 .app-brand { font-size: 21px; letter-spacing: -.8px; gap: 10px; line-height: 1.1; }
@@ -281,7 +366,7 @@ body { isolation: isolate; background: #0b0c14; }
 
 /* Class cards: time, subject and touch controls have separate, readable rows. */
 .timeline-list { gap: 12px; }
-.timeline-row { position: relative; padding: 17px; border-radius: 22px; border: 1px solid #ffffff0d; border-top-color: #ffffff1d; background: linear-gradient(135deg, #202233, #171925); box-shadow: inset 0 1px 0 #ffffff03, 0 5px 14px #0003; transition: border-color 250ms, background 250ms; }
+.timeline-row { position: relative; padding: 17px; border-radius: 22px; border: 1px solid #ffffff0d; border-top-color: #ffffff1d; background: linear-gradient(135deg, #191b2c, #111320); box-shadow: inset 0 1px 0 #ffffff03, 0 5px 14px #0003; transition: border-color 250ms, background 250ms; }
 .timeline-row.is-now { border-color: #cff5a24d; background: linear-gradient(120deg, #27302a, #1b2025); }
 .timeline-row[data-status="PRESENT"] { border-color: #c5f59d30; }
 .timeline-row[data-status="ABSENT"] { border-color: #ff9ba433; }
@@ -301,7 +386,7 @@ body { isolation: isolate; background: #0b0c14; }
 .plan-action:hover { background: linear-gradient(120deg, #e1ffbd, #c9eb9b); }
 
 /* The dock never sits in an animated ancestor. Its highlight moves between tabs. */
-.bottom-nav { padding: 8px max(12px, env(safe-area-inset-left, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(transparent, #0b0c14dd 90%); }
+.bottom-nav { padding: 8px max(12px, env(safe-area-inset-left, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(transparent, #08090edd 90%); }
 .bottom-nav-inner { position: relative; max-width: 520px; padding: 6px; background: linear-gradient(145deg, #2c2d42e8, #1a1c2de8); backdrop-filter: blur(24px) saturate(140%); -webkit-backdrop-filter: blur(24px) saturate(140%); border: 1px solid #ffffff20; border-top-color: #ffffff35; border-radius: 27px; box-shadow: inset 0 1px 0 #ffffff12, 0 12px 35px #0008, 0 2px 5px #0006; }
 .nav-item { position: relative; min-height: 60px; border-radius: 21px; gap: 3px; color: #9a9cb2; font-size: 10px; font-weight: 400; isolation: isolate; }
 .nav-item.is-active, .nav-item:hover, .nav-item.is-active:hover { background: transparent; }

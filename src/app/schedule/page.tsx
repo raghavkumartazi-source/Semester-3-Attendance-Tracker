@@ -21,7 +21,9 @@ export default function SchedulePage() {
 
   return (
     <div className="max-w-lg mx-auto space-y-8 pb-24">
-      <h1 className="text-2xl font-extrabold tracking-tight gradient-text animate-fade-in-up stagger-1 px-1">Weekly Schedule</h1>
+      <div className="page-header animate-fade-in-up stagger-1 px-1">
+        <h1>Weekly Schedule</h1>
+      </div>
 
       {WEEKDAYS.map(day => {
         const daySlots = TIMETABLE

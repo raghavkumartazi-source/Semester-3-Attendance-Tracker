@@ -66,9 +66,9 @@ export default function TasksDashboard() {
     <div className="max-w-lg mx-auto pb-4 relative">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Tasks</h1>
-          <p className="text-[13px] text-white/50 font-medium mt-1">{todayDateStr}</p>
+        <div className="page-header" style={{ marginBottom: 0 }}>
+          <h1>Tasks</h1>
+          <p className="page-subtitle">{todayDateStr}</p>
         </div>
         <button 
           onClick={() => {
@@ -214,7 +214,7 @@ export default function TasksDashboard() {
       {taskToDelete && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center animate-fade-in-up" style={{ animationDuration: '0.2s' }}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setTaskToDelete(undefined)} />
-          <div className="relative w-full max-w-sm bg-[#171925] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-2xl border border-white/10 slide-up">
+          <div className="relative w-full max-w-sm bg-[#111320] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-2xl border border-white/10 slide-up">
             <h3 className="text-lg font-bold text-white mb-2">Delete Task?</h3>
             <p className="text-sm text-white/60 mb-6">Are you sure you want to delete &quot;{taskToDelete.title}&quot;?</p>
             <div className="flex gap-3">
