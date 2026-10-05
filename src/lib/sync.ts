@@ -32,28 +32,9 @@ export const syncRepo = {
 
   /**
    * Sync a single session change to the cloud.
-   * If status is UNMARKED, it deletes the record.
+   * UNMARKED with a timestamp is a tombstone that clears other devices.
    */
   async syncSingleSession(userId: string, session: Session): Promise<void> {
-    if (session.status === 'UNMARKED') {
-      const { error } = await supabase
-        .from('attendance_records')
-        .delete()
-        .eq('user_id', userId)
-        .eq('session_id', session.id);
-      
-      if (error) {
-        console.warn('Supabase delete failed:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
-        throw error;
-      }
-      return;
-    }
-
     const { error } = await supabase
       .from('attendance_records')
       .upsert({
@@ -61,7 +42,7 @@ export const syncRepo = {
         session_id: session.id,
         status: session.status,
         updated_at: new Date(session.updatedAt || Date.now()).toISOString(),
-      });
+      }, { onConflict: 'user_id,session_id' });
 
     if (error) {
       console.warn('Supabase upsert failed:', {
@@ -79,7 +60,7 @@ export const syncRepo = {
    */
   async uploadLocalRecords(userId: string, sessions: Session[]): Promise<void> {
     const recordsToUpload = sessions
-      .filter(s => s.status !== 'UNMARKED')
+      .filter(s => s.status !== 'UNMARKED' || !!s.updatedAt)
       .map(s => ({
         user_id: userId,
         session_id: s.id,
@@ -91,7 +72,7 @@ export const syncRepo = {
 
     const { error } = await supabase
       .from('attendance_records')
-      .upsert(recordsToUpload);
+      .upsert(recordsToUpload, { onConflict: 'user_id,session_id' });
 
     if (error) {
       console.warn('Supabase bulk upload failed:', {

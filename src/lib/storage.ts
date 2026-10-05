@@ -1,3 +1,4 @@
+import { accountStorageKey } from './accountStorage';
 import { Session } from './types';
 import { generateSemesterSessions } from './sessions';
 
@@ -12,7 +13,9 @@ export interface StorageData {
  * Clean storage abstraction layer.
  * All localStorage interaction is confined here.
  */
-export const storage = {
+export function createStorage(ownerId: string | null) {
+const STORAGE_KEY_SCOPED = accountStorageKey(STORAGE_KEY, ownerId);
+const storage = {
   /**
    * Load sessions from localStorage.
    * On first load, generates the semester schedule.
@@ -23,7 +26,7 @@ export const storage = {
     const freshSessions = generateSemesterSessions();
     
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(STORAGE_KEY_SCOPED);
       if (!raw) {
         this.save(freshSessions);
         return freshSessions;
@@ -32,27 +35,13 @@ export const storage = {
       const data: StorageData = JSON.parse(raw);
       const savedSessions = data.sessions || [];
       
-      // Map existing non-unmarked statuses and collect extra sessions
-      const savedStatusMap = new Map<string, Session['status']>();
-      const extraSessions: Session[] = [];
-      
-      for (const s of savedSessions) {
-        if (s.isExtra) {
-          extraSessions.push(s);
-        } else if (s.status && s.status !== 'UNMARKED') {
-          savedStatusMap.set(s.id, s.status);
-        }
-      }
-      
-      // Merge into fresh timetable
+      const saved = new Map(savedSessions.map(session => [session.id, session]));
+      const extraSessions = savedSessions.filter(session => session.isExtra);
       const mergedSessions = freshSessions.map(session => {
-        const savedStatus = savedStatusMap.get(session.id);
-        if (savedStatus) {
-          return { ...session, status: savedStatus };
-        }
-        return session;
+        const previous = saved.get(session.id);
+        return previous ? { ...session, status: previous.status, updatedAt: previous.updatedAt } : session;
       });
-      
+
       return [...mergedSessions, ...extraSessions];
     } catch {
       this.save(freshSessions);
@@ -70,7 +59,7 @@ export const storage = {
       sessions,
       version: 2,
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(STORAGE_KEY_SCOPED, JSON.stringify(data));
   },
 
   /**
@@ -107,3 +96,8 @@ export const storage = {
     }
   },
 };
+
+return storage;
+}
+
+export const storage = createStorage(null);

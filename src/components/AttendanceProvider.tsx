@@ -1,8 +1,8 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, ReactNode } from 'react';
 import { Session, AttendanceStatus } from '@/lib/types';
-import { storage } from '@/lib/storage';
+import { createStorage } from '@/lib/storage';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { syncRepo, CloudRecord } from '@/lib/sync';
@@ -31,10 +31,31 @@ interface AttendanceContextType {
 const AttendanceContext = createContext<AttendanceContextType | null>(null);
 
 export function AttendanceProvider({ children }: { children: ReactNode }) {
+  const [auth, setAuth] = useState<{ ready: boolean; user: User | null }>({ ready: false, user: null });
+  useEffect(() => {
+    let active = true;
+    let authEventReceived = false;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      authEventReceived = true;
+      if (active) setAuth({ ready: true, user: session?.user ?? null });
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (active && !authEventReceived) setAuth({ ready: true, user: session?.user ?? null });
+    }).catch(() => {
+      if (active && !authEventReceived) setAuth({ ready: true, user: null });
+    });
+    return () => { active = false; subscription.unsubscribe(); };
+  }, []);
+  if (!auth.ready) return <p role="status">Loading your workspace…</p>;
+  return <AccountAttendanceProvider key={auth.user?.id ?? 'guest'} user={auth.user}>{children}</AccountAttendanceProvider>;
+}
+
+function AccountAttendanceProvider({ children, user }: { children: ReactNode; user: User | null }) {
+  const storage = useMemo(() => createStorage(user?.id ?? null), [user?.id]);
+  const active = useRef(true);
+  useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
-  
-  const [user, setUser] = useState<User | null>(null);
   const [syncStatus, setSyncStatus] = useState<'Synced' | 'Syncing' | 'Offline' | 'Error'>('Offline');
   const [syncError, setSyncError] = useState<string>('');
   const [lastSynced, setLastSynced] = useState<Date | undefined>();
@@ -53,30 +74,19 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSessions(loaded);
     setIsLoaded(true);
-  }, []);
-
-  // 2. Auth State Listener
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  }, [storage]);
 
   // 3. Full Sync Logic
-  const performFullSync = useCallback(async (currentUser: User, currentSessions: Session[]) => {
+  const performFullSync = useCallback(async (currentUser: User) => {
     setSyncStatus('Syncing');
     
     try {
       const cloudRecords = await syncRepo.fetchCloudRecords(currentUser.id);
       
+      if (!active.current) return;
       let changed = false;
-      const newSessions = [...currentSessions];
+      // Re-read after the network response so offline edits made during the request survive.
+      const newSessions = storage.load();
       const cloudMap = new Map<string, CloudRecord>();
       cloudRecords.forEach(cr => cloudMap.set(cr.session_id, cr));
       
@@ -121,7 +131,7 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
       
       // Upload Local records that are missing in cloud or newer
       const recordsToUpload = newSessions.filter(s => {
-        if (s.status === 'UNMARKED') return false;
+        if (s.status === 'UNMARKED' && !s.updatedAt) return false;
         const cloud = cloudMap.get(s.id);
         if (!cloud) return true; 
         const cloudDate = new Date(cloud.updated_at).getTime();
@@ -133,10 +143,12 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
         await syncRepo.uploadLocalRecords(currentUser.id, recordsToUpload);
       }
       
+      if (!active.current) return;
       setSyncStatus('Synced');
       setSyncError('');
       setLastSynced(new Date());
     } catch (e) {
+      if (!active.current) return;
       console.warn('Full sync failed:', e);
       const error = e as { message?: string };
       if (typeof navigator !== 'undefined' && navigator.onLine) {
@@ -146,23 +158,23 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
         setSyncStatus('Offline');
       }
     }
-  }, []);
+  }, [storage]);
 
   // 4. Trigger Full Sync on Login or Focus
   useEffect(() => {
     if (user && isLoaded) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      performFullSync(user, sessions);
+      performFullSync(user);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, isLoaded]); // Deliberately omitted 'sessions' to prevent loop on every local change
 
   useEffect(() => {
     const handleFocus = () => {
-      if (user && isLoaded) performFullSync(user, sessions);
+      if (user && isLoaded) performFullSync(user);
     };
     const handleOnline = () => {
-      if (user && isLoaded) performFullSync(user, sessions);
+      if (user && isLoaded) performFullSync(user);
     };
     const handleOffline = () => setSyncStatus('Offline');
     
@@ -179,12 +191,13 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
 
   const syncNow = useCallback(async () => {
     if (user && isLoaded) {
-      await performFullSync(user, sessions);
+      await performFullSync(user);
     }
-  }, [user, isLoaded, sessions, performFullSync]);
+  }, [user, isLoaded, performFullSync]);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) { setSyncStatus("Error"); setSyncError(error.message); return; }
     setSyncStatus('Offline');
     setLastSynced(undefined);
   }, []);
@@ -236,7 +249,7 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
         'tap'
       );
     }
-  }, [user]);
+  }, [user, storage]);
 
   const addSession = useCallback((session: Session) => {
     const now = new Date().toISOString();
@@ -259,34 +272,51 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
       }
       return updated;
     });
-  }, [user]);
+  }, [user, storage]);
 
   const resetAll = useCallback(async (clearCloud: boolean = false) => {
-    const fresh = storage.reset();
+    const now = new Date().toISOString();
+    const fresh = storage.load().map(session => ({ ...session, status: 'UNMARKED' as const, updatedAt: now }));
+    storage.save(fresh);
     setSessions(fresh);
     if (user && clearCloud) {
-       setSyncStatus('Syncing');
-       await supabase.from('attendance_records').delete().eq('user_id', user.id);
-       setSyncStatus('Synced');
-       setLastSynced(new Date());
+      setSyncStatus('Syncing');
+      try {
+        // Include cloud-only extras, and retain tombstones so another device cannot restore marks.
+        const cloud = await syncRepo.fetchCloudRecords(user.id);
+        if (!active.current) return;
+        const missing = cloud.filter(record => !fresh.some(session => session.id === record.session_id))
+          .map(record => parseExtraSessionId(record.session_id)).filter((session): session is Session => !!session)
+          .map(session => ({ ...session, status: 'UNMARKED' as const, updatedAt: now }));
+        const cleared = [...fresh, ...missing];
+        storage.save(cleared);
+        setSessions(cleared);
+        await syncRepo.uploadLocalRecords(user.id, cleared);
+        if (!active.current) return;
+        setSyncStatus('Synced');
+        setLastSynced(new Date());
+      } catch (error) {
+        setSyncStatus('Error');
+        setSyncError(error instanceof Error ? error.message : 'Reset could not sync. Try Sync now.');
+      }
     }
-  }, [user]);
+  }, [user, storage]);
 
   const exportData = useCallback(() => {
     return storage.exportData(sessions);
-  }, [sessions]);
+  }, [sessions, storage]);
 
   const importDataFn = useCallback((json: string): boolean => {
     const result = storage.importData(json);
     if (result) {
       setSessions(result);
       if (user) {
-         performFullSync(user, result);
+         performFullSync(user);
       }
       return true;
     }
     return false;
-  }, [user, performFullSync]);
+  }, [user, performFullSync, storage]);
 
   return (
     <AttendanceContext.Provider value={{

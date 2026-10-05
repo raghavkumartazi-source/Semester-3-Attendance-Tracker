@@ -1,8 +1,8 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { MarkComponent, SubjectGradeConfig, GradeScenario, SubjectMarksSummary, OverallGradeSummary } from '@/lib/types';
-import { marksStorage } from '@/lib/marksStorage';
+import { createMarksStorage } from '@/lib/marksStorage';
 import { marksSync } from '@/lib/marksSync';
 import { calculateSubjectMarksSummary, calculateOverallGradeSummary } from '@/lib/calculations';
 import { useAttendance } from './AttendanceProvider';
@@ -34,6 +34,7 @@ export function MarksProvider({ children }: { children: ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
   
   const { user, isLoaded: authLoaded } = useAttendance();
+  const marksStorage = useMemo(() => createMarksStorage(user?.id ?? null), [user?.id]);
   const [syncStatus, setSyncStatus] = useState<'Synced' | 'Syncing' | 'Offline' | 'Error'>('Offline');
   const [syncError, setSyncError] = useState<string>('');
 
@@ -46,7 +47,7 @@ export function MarksProvider({ children }: { children: ReactNode }) {
     setGradeConfigs(loadedConfigs);
     setScenarios(loadedScenarios);
     setIsLoaded(true);
-  }, []);
+  }, [marksStorage]);
 
   const performFullSync = useCallback(async () => {
     if (!user) return;
@@ -61,7 +62,7 @@ export function MarksProvider({ children }: { children: ReactNode }) {
       
       // Merge cloud into local
       let changed = false;
-      const newComponents = [...components];
+      const newComponents = marksStorage.loadComponents();
       const cloudCompMap = new Map(cloudComponents.map(c => [c.id, c]));
       
       for (let i = 0; i < newComponents.length; i++) {
@@ -80,7 +81,7 @@ export function MarksProvider({ children }: { children: ReactNode }) {
         }
       }
       
-      const newConfigs = [...gradeConfigs];
+      const newConfigs = marksStorage.loadGradeConfigs();
       const cloudConfigMap = new Map(cloudConfigs.map(c => [c.id, c]));
       for (let i = 0; i < newConfigs.length; i++) {
         const local = newConfigs[i];
@@ -97,7 +98,7 @@ export function MarksProvider({ children }: { children: ReactNode }) {
         }
       }
       
-      const newScenarios = [...scenarios];
+      const newScenarios = marksStorage.loadScenarios();
       const cloudScenarioMap = new Map(cloudScenarios.map(s => [s.id, s]));
       for (let i = 0; i < newScenarios.length; i++) {
         const local = newScenarios[i];
@@ -156,7 +157,7 @@ export function MarksProvider({ children }: { children: ReactNode }) {
         setSyncStatus('Offline');
       }
     }
-  }, [user, components, gradeConfigs, scenarios]);
+  }, [user, marksStorage]);
 
   useEffect(() => {
     if (user && isLoaded && authLoaded) {
@@ -205,7 +206,7 @@ export function MarksProvider({ children }: { children: ReactNode }) {
       }
       return updated;
     });
-  }, [user]);
+  }, [user, marksStorage]);
 
   const updateComponent = useCallback((componentId: string, updates: Partial<MarkComponent>) => {
     const now = new Date().toISOString();
@@ -225,7 +226,7 @@ export function MarksProvider({ children }: { children: ReactNode }) {
       }
       return updated;
     });
-  }, [user]);
+  }, [user, marksStorage]);
 
   const deleteComponent = useCallback((componentId: string) => {
     const now = new Date().toISOString();
@@ -245,7 +246,7 @@ export function MarksProvider({ children }: { children: ReactNode }) {
       }
       return updated;
     });
-  }, [user]);
+  }, [user, marksStorage]);
 
   const upsertGradeConfig = useCallback((payload: Omit<SubjectGradeConfig, 'id' | 'created_at' | 'updated_at'>) => {
     const now = new Date().toISOString();
@@ -273,7 +274,7 @@ export function MarksProvider({ children }: { children: ReactNode }) {
       }
       return updated;
     });
-  }, [user]);
+  }, [user, marksStorage]);
 
   const addScenario = useCallback((payload: Omit<GradeScenario, 'id' | 'created_at' | 'updated_at'>) => {
     const now = new Date().toISOString();
@@ -298,7 +299,7 @@ export function MarksProvider({ children }: { children: ReactNode }) {
       }
       return updated;
     });
-  }, [user]);
+  }, [user, marksStorage]);
 
   const updateScenario = useCallback((scenarioId: string, updates: Partial<GradeScenario>) => {
     const now = new Date().toISOString();
@@ -318,7 +319,7 @@ export function MarksProvider({ children }: { children: ReactNode }) {
       }
       return updated;
     });
-  }, [user]);
+  }, [user, marksStorage]);
 
   const deleteScenario = useCallback((scenarioId: string) => {
     const now = new Date().toISOString();
@@ -338,7 +339,7 @@ export function MarksProvider({ children }: { children: ReactNode }) {
       }
       return updated;
     });
-  }, [user]);
+  }, [user, marksStorage]);
 
 
   const getSubjectSummary = useCallback((subjectCode: string): SubjectMarksSummary | null => {

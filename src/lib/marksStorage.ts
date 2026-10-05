@@ -1,13 +1,15 @@
+import { accountStorageKey } from './accountStorage';
 import { MarkComponent, SubjectGradeConfig, GradeScenario } from '@/lib/types';
 
 const COMPONENTS_KEY = 'marks_components_v1';
 const CONFIGS_KEY = 'marks_grade_configs_v1';
 const SCENARIOS_KEY = 'marks_scenarios_v1';
 
+export function createMarksStorage(ownerId: string | null) {
 function loadJSON<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
   try {
-    const data = localStorage.getItem(key);
+    const data = localStorage.getItem(accountStorageKey(key, ownerId));
     return data ? JSON.parse(data) : fallback;
   } catch {
     return fallback;
@@ -16,10 +18,10 @@ function loadJSON<T>(key: string, fallback: T): T {
 
 function saveJSON(key: string, data: unknown): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(key, JSON.stringify(data));
+  localStorage.setItem(accountStorageKey(key, ownerId), JSON.stringify(data));
 }
 
-export const marksStorage = {
+return {
   loadComponents: (): MarkComponent[] => loadJSON<MarkComponent[]>(COMPONENTS_KEY, []),
   saveComponents: (components: MarkComponent[]) => saveJSON(COMPONENTS_KEY, components),
   
@@ -57,3 +59,7 @@ export const marksStorage = {
     }
   },
 };
+
+}
+
+export const marksStorage = createMarksStorage(null);
