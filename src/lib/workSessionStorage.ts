@@ -1,12 +1,15 @@
+import { accountStorageKey } from './accountStorage';
 import { WorkSession } from './types';
 
 const STORAGE_KEY = 'semester_os_work_sessions';
 
-export const workSessionStorage = {
+export function createWorkSessionStorage(ownerId: string | null) {
+const STORAGE_KEY_SCOPED = accountStorageKey(STORAGE_KEY, ownerId);
+const workSessionStorage = {
   load: (): WorkSession[] => {
     if (typeof window === 'undefined') return [];
     try {
-      const data = localStorage.getItem(STORAGE_KEY);
+      const data = localStorage.getItem(STORAGE_KEY_SCOPED);
       return data ? JSON.parse(data) : [];
     } catch (e) {
       console.error('Failed to load sessions from local storage', e);
@@ -17,7 +20,7 @@ export const workSessionStorage = {
   save: (sessions: WorkSession[]): void => {
     if (typeof window === 'undefined') return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+      localStorage.setItem(STORAGE_KEY_SCOPED, JSON.stringify(sessions));
     } catch (e) {
       console.error('Failed to save sessions to local storage', e);
     }
@@ -25,7 +28,7 @@ export const workSessionStorage = {
 
   reset: (): WorkSession[] => {
     if (typeof window === 'undefined') return [];
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_KEY_SCOPED);
     return [];
   },
   
@@ -52,3 +55,8 @@ export const workSessionStorage = {
     }
   }
 };
+
+return workSessionStorage;
+}
+
+export const workSessionStorage = createWorkSessionStorage(null);

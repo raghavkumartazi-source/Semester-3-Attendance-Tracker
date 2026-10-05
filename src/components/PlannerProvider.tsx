@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { 
   SyllabusTopic, 
   TopicCoverage, 
@@ -12,7 +12,7 @@ import {
   PlannerConfig,
   ReverseCountdownPlan
 } from '@/lib/types';
-import { plannerStorage } from '@/lib/plannerStorage';
+import { createPlannerStorage } from '@/lib/plannerStorage';
 import { plannerSync } from '@/lib/plannerSync';
 import { useAttendance } from './AttendanceProvider';
 import { 
@@ -91,6 +91,7 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
   
   const { user, isLoaded: authLoaded } = useAttendance();
+  const plannerStorage = useMemo(() => createPlannerStorage(user?.id ?? null), [user?.id]);
   const [syncStatus, setSyncStatus] = useState<'Synced' | 'Syncing' | 'Offline' | 'Error'>('Offline');
   const [syncError, setSyncError] = useState<string>('');
 
@@ -105,7 +106,7 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
     setStudySessions(plannerStorage.loadStudySessions());
     setPlannerConfigs(plannerStorage.loadPlannerConfigs());
     setIsLoaded(true);
-  }, []);
+  }, [plannerStorage]);
 
   const performFullSync = useCallback(async () => {
     if (!user) return;
@@ -155,14 +156,14 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
         return { items: newLocal, cloudMap, changed };
       };
       
-      const topicMerge = merge(topics, cloudTopics, setTopics);
-      const coverageMerge = merge(coverage, cloudCoverage, setCoverage);
-      const examMerge = merge(exams, cloudExams, setExams);
-      const paperMerge = merge(pastPapers, cloudPapers, setPastPapers);
-      const practiceMerge = merge(practice, cloudPractice, setPractice);
-      const planMerge = merge(dailyPlans, cloudPlans, setDailyPlans);
-      const sessionMerge = merge(studySessions, cloudSessions, setStudySessions);
-      const configMerge = merge(plannerConfigs, cloudConfigs, setPlannerConfigs);
+      const topicMerge = merge(plannerStorage.loadTopics(), cloudTopics, setTopics);
+      const coverageMerge = merge(plannerStorage.loadCoverage(), cloudCoverage, setCoverage);
+      const examMerge = merge(plannerStorage.loadExams(), cloudExams, setExams);
+      const paperMerge = merge(plannerStorage.loadPastPapers(), cloudPapers, setPastPapers);
+      const practiceMerge = merge(plannerStorage.loadPractice(), cloudPractice, setPractice);
+      const planMerge = merge(plannerStorage.loadDailyPlans(), cloudPlans, setDailyPlans);
+      const sessionMerge = merge(plannerStorage.loadStudySessions(), cloudSessions, setStudySessions);
+      const configMerge = merge(plannerStorage.loadPlannerConfigs(), cloudConfigs, setPlannerConfigs);
       
       const anyChanged = topicMerge.changed || coverageMerge.changed || examMerge.changed || 
                         paperMerge.changed || practiceMerge.changed || planMerge.changed || 
@@ -212,7 +213,7 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
         setSyncStatus('Offline');
       }
     }
-  }, [user, topics, coverage, exams, pastPapers, practice, dailyPlans, studySessions, plannerConfigs]);
+  }, [user, plannerStorage]);
 
   useEffect(() => {
     if (user && isLoaded && authLoaded) {
@@ -321,15 +322,15 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
     const now = new Date().toISOString();
     const newTopic: SyllabusTopic = { ...payload, id: crypto.randomUUID(), created_at: now, updated_at: now };
     withSync(topics, setTopics, plannerStorage.saveTopics, plannerSync.syncSingleTopic, newTopic);
-  }, [topics, withSync]);
+  }, [topics, withSync, plannerStorage]);
 
   const updateTopic = useCallback((topicId: string, updates: Partial<SyllabusTopic>) => {
     updateWithSync(topics, setTopics, plannerStorage.saveTopics, plannerSync.syncSingleTopic, topicId, updates);
-  }, [topics, updateWithSync]);
+  }, [topics, updateWithSync, plannerStorage]);
 
   const deleteTopic = useCallback((topicId: string) => {
     deleteWithSync(topics, setTopics, plannerStorage.saveTopics, plannerSync.syncSingleTopic, topicId);
-  }, [topics, deleteWithSync]);
+  }, [topics, deleteWithSync, plannerStorage]);
 
   // Coverage
   const upsertCoverage = useCallback((payload: Omit<TopicCoverage, 'id' | 'created_at' | 'updated_at'>) => {
@@ -353,74 +354,74 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
       }
       return updated;
     });
-  }, [user]);
+  }, [user, plannerStorage]);
 
   // Exams
   const addExam = useCallback((payload: Omit<ExamSchedule, 'id' | 'created_at' | 'updated_at'>) => {
     const now = new Date().toISOString();
     const newExam: ExamSchedule = { ...payload, id: crypto.randomUUID(), created_at: now, updated_at: now };
     withSync(exams, setExams, plannerStorage.saveExams, plannerSync.syncSingleExam, newExam);
-  }, [exams, withSync]);
+  }, [exams, withSync, plannerStorage]);
 
   const updateExam = useCallback((examId: string, updates: Partial<ExamSchedule>) => {
     updateWithSync(exams, setExams, plannerStorage.saveExams, plannerSync.syncSingleExam, examId, updates);
-  }, [exams, updateWithSync]);
+  }, [exams, updateWithSync, plannerStorage]);
 
   const deleteExam = useCallback((examId: string) => {
     deleteWithSync(exams, setExams, plannerStorage.saveExams, plannerSync.syncSingleExam, examId);
-  }, [exams, deleteWithSync]);
+  }, [exams, deleteWithSync, plannerStorage]);
 
   // Past Papers
   const addPastPaper = useCallback((payload: Omit<PastPaper, 'id' | 'created_at'>) => {
     const now = new Date().toISOString();
     const newPaper: PastPaper = { ...payload, id: crypto.randomUUID(), created_at: now };
     withSync(pastPapers, setPastPapers, plannerStorage.savePastPapers, plannerSync.syncSinglePastPaper, newPaper);
-  }, [pastPapers, withSync]);
+  }, [pastPapers, withSync, plannerStorage]);
 
   const updatePastPaper = useCallback((paperId: string, updates: Partial<PastPaper>) => {
     updateWithSync(pastPapers, setPastPapers, plannerStorage.savePastPapers, plannerSync.syncSinglePastPaper, paperId, updates);
-  }, [pastPapers, updateWithSync]);
+  }, [pastPapers, updateWithSync, plannerStorage]);
 
   const deletePastPaper = useCallback((paperId: string) => {
     deleteWithSync(pastPapers, setPastPapers, plannerStorage.savePastPapers, plannerSync.syncSinglePastPaper, paperId);
-  }, [pastPapers, deleteWithSync]);
+  }, [pastPapers, deleteWithSync, plannerStorage]);
 
   // Practice
   const addPractice = useCallback((payload: Omit<PaperPractice, 'id' | 'created_at'>) => {
     const now = new Date().toISOString();
     const newPractice: PaperPractice = { ...payload, id: crypto.randomUUID(), created_at: now };
     withSync(practice, setPractice, plannerStorage.savePractice, plannerSync.syncSinglePractice, newPractice);
-  }, [practice, withSync]);
+  }, [practice, withSync, plannerStorage]);
 
   const updatePractice = useCallback((practiceId: string, updates: Partial<PaperPractice>) => {
     updateWithSync(practice, setPractice, plannerStorage.savePractice, plannerSync.syncSinglePractice, practiceId, updates);
-  }, [practice, updateWithSync]);
+  }, [practice, updateWithSync, plannerStorage]);
 
   // Daily Plans
   const addDailyPlan = useCallback((payload: Omit<DailyStudyPlan, 'id' | 'created_at' | 'updated_at'>) => {
     const now = new Date().toISOString();
     const newPlan: DailyStudyPlan = { ...payload, id: crypto.randomUUID(), created_at: now, updated_at: now };
     withSync(dailyPlans, setDailyPlans, plannerStorage.saveDailyPlans, plannerSync.syncSingleDailyPlan, newPlan);
-  }, [dailyPlans, withSync]);
+  }, [dailyPlans, withSync, plannerStorage]);
 
   const updateDailyPlan = useCallback((planId: string, updates: Partial<DailyStudyPlan>) => {
     updateWithSync(dailyPlans, setDailyPlans, plannerStorage.saveDailyPlans, plannerSync.syncSingleDailyPlan, planId, updates);
-  }, [dailyPlans, updateWithSync]);
+  }, [dailyPlans, updateWithSync, plannerStorage]);
 
   const deleteDailyPlan = useCallback((planId: string) => {
     deleteWithSync(dailyPlans, setDailyPlans, plannerStorage.saveDailyPlans, plannerSync.syncSingleDailyPlan, planId);
-  }, [dailyPlans, deleteWithSync]);
+  }, [dailyPlans, deleteWithSync, plannerStorage]);
 
   // Study Sessions
   const addStudySession = useCallback((payload: Omit<StudySession, 'id' | 'created_at'>) => {
     const now = new Date().toISOString();
     const newSession: StudySession = { ...payload, id: crypto.randomUUID(), created_at: now };
     withSync(studySessions, setStudySessions, plannerStorage.saveStudySessions, plannerSync.syncSingleStudySession, newSession);
-  }, [studySessions, withSync]);
+  }, [studySessions, withSync, plannerStorage]);
 
   const updateStudySession = useCallback((sessionId: string, updates: Partial<StudySession>) => {
     updateWithSync(studySessions, setStudySessions, plannerStorage.saveStudySessions, plannerSync.syncSingleStudySession, sessionId, updates);
-  }, [studySessions, updateWithSync]);
+  }, [studySessions, updateWithSync, plannerStorage]);
 
   // Planner Config
   const upsertPlannerConfig = useCallback((payload: Omit<PlannerConfig, 'id' | 'created_at' | 'updated_at'>) => {
@@ -444,7 +445,7 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
       }
       return updated;
     });
-  }, [user]);
+  }, [user, plannerStorage]);
 
   // Computed
   const getReverseCountdownPlan = useCallback((subjectCode: string): ReverseCountdownPlan | null => {

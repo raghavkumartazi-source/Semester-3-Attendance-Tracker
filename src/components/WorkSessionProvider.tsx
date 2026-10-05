@@ -1,8 +1,8 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { WorkSession } from '@/lib/types';
-import { workSessionStorage } from '@/lib/workSessionStorage';
+import { createWorkSessionStorage } from '@/lib/workSessionStorage';
 import { workSessionSync } from '@/lib/workSessionSync';
 import { useAttendance } from './AttendanceProvider';
 
@@ -24,6 +24,7 @@ export function WorkSessionProvider({ children }: { children: ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
   
   const { user, isLoaded: authLoaded } = useAttendance();
+  const workSessionStorage = useMemo(() => createWorkSessionStorage(user?.id ?? null), [user?.id]);
   const [syncStatus, setSyncStatus] = useState<'Synced' | 'Syncing' | 'Offline' | 'Error'>('Offline');
   const [syncError, setSyncError] = useState<string>('');
 
@@ -32,9 +33,9 @@ export function WorkSessionProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSessions(loaded);
     setIsLoaded(true);
-  }, []);
+  }, [workSessionStorage]);
 
-  const performFullSync = useCallback(async (currentSessions: WorkSession[]) => {
+  const performFullSync = useCallback(async () => {
     if (!user) return;
     setSyncStatus('Syncing');
     
@@ -42,7 +43,7 @@ export function WorkSessionProvider({ children }: { children: ReactNode }) {
       const cloudSessions = await workSessionSync.fetchCloudSessions(user.id);
       
       let changed = false;
-      const newSessions = [...currentSessions];
+      const newSessions = workSessionStorage.load();
       const cloudMap = new Map<string, WorkSession>();
       cloudSessions.forEach(cr => cloudMap.set(cr.id, cr));
       
@@ -97,22 +98,22 @@ export function WorkSessionProvider({ children }: { children: ReactNode }) {
         setSyncStatus('Offline');
       }
     }
-  }, [user]);
+  }, [user, workSessionStorage]);
 
   useEffect(() => {
     if (user && isLoaded && authLoaded) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      performFullSync(sessions);
+      performFullSync();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, isLoaded, authLoaded]); 
 
   useEffect(() => {
     const handleFocus = () => {
-      if (user && isLoaded) performFullSync(sessions);
+      if (user && isLoaded) performFullSync();
     };
     const handleOnline = () => {
-      if (user && isLoaded) performFullSync(sessions);
+      if (user && isLoaded) performFullSync();
     };
     const handleOffline = () => setSyncStatus('Offline');
     
@@ -125,7 +126,7 @@ export function WorkSessionProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [user, isLoaded, sessions, performFullSync]);
+  }, [user, isLoaded, performFullSync]);
 
   const addSession = useCallback((payload: Omit<WorkSession, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>) => {
     const now = new Date().toISOString();
@@ -154,7 +155,7 @@ export function WorkSessionProvider({ children }: { children: ReactNode }) {
       }
       return updated;
     });
-  }, [user]);
+  }, [user, workSessionStorage]);
 
   const bulkAddSessions = useCallback(async (payloads: Omit<WorkSession, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>[]): Promise<void> => {
     if (payloads.length === 0) return;
@@ -223,7 +224,7 @@ export function WorkSessionProvider({ children }: { children: ReactNode }) {
         return updated;
       });
     });
-  }, [user]);
+  }, [user, workSessionStorage]);
 
   const updateSession = useCallback((sessionId: string, updates: Partial<WorkSession>) => {
     const now = new Date().toISOString();
@@ -247,7 +248,7 @@ export function WorkSessionProvider({ children }: { children: ReactNode }) {
       }
       return updated;
     });
-  }, [user]);
+  }, [user, workSessionStorage]);
 
   const deleteSession = useCallback((sessionId: string) => {
     const now = new Date().toISOString();
@@ -271,7 +272,7 @@ export function WorkSessionProvider({ children }: { children: ReactNode }) {
       }
       return updated;
     });
-  }, [user]);
+  }, [user, workSessionStorage]);
 
   return (
     <WorkSessionContext.Provider value={{

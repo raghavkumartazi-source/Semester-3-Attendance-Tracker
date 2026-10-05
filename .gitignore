@@ -42,3 +42,5 @@ next-env.d.ts
 
 # npm cache workaround
 .npm-cache/
+
+!.env.local.example

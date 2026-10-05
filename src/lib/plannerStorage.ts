@@ -1,3 +1,4 @@
+import { accountStorageKey } from './accountStorage';
 import { 
   SyllabusTopic, 
   TopicCoverage, 
@@ -20,10 +21,11 @@ const KEYS = {
   plannerConfigs: 'planner_configs_v1',
 } as const;
 
+export function createPlannerStorage(ownerId: string | null) {
 function loadJSON<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
   try {
-    const data = localStorage.getItem(key);
+    const data = localStorage.getItem(accountStorageKey(key, ownerId));
     return data ? JSON.parse(data) : fallback;
   } catch {
     return fallback;
@@ -32,10 +34,10 @@ function loadJSON<T>(key: string, fallback: T): T {
 
 function saveJSON(key: string, data: unknown): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(key, JSON.stringify(data));
+  localStorage.setItem(accountStorageKey(key, ownerId), JSON.stringify(data));
 }
 
-export const plannerStorage = {
+return {
   loadTopics: (): SyllabusTopic[] => loadJSON<SyllabusTopic[]>(KEYS.topics, []),
   saveTopics: (items: SyllabusTopic[]) => saveJSON(KEYS.topics, items),
   
@@ -135,3 +137,7 @@ export const plannerStorage = {
     }
   },
 };
+
+}
+
+export const plannerStorage = createPlannerStorage(null);

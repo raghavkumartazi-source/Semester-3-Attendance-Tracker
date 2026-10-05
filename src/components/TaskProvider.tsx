@@ -1,8 +1,8 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { Task } from '@/lib/types';
-import { taskStorage } from '@/lib/taskStorage';
+import { createTaskStorage } from '@/lib/taskStorage';
 import { taskSync } from '@/lib/taskSync';
 import { emitParticle } from '@/lib/backgroundParticles';
 import { useAttendance } from './AttendanceProvider';
@@ -24,6 +24,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
   
   const { user, isLoaded: authLoaded } = useAttendance();
+  const taskStorage = useMemo(() => createTaskStorage(user?.id ?? null), [user?.id]);
   const [syncStatus, setSyncStatus] = useState<'Synced' | 'Syncing' | 'Offline' | 'Error'>('Offline');
   const [syncError, setSyncError] = useState<string>('');
 
@@ -32,9 +33,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setTasks(loaded);
     setIsLoaded(true);
-  }, []);
+  }, [taskStorage]);
 
-  const performFullSync = useCallback(async (currentTasks: Task[]) => {
+  const performFullSync = useCallback(async () => {
     if (!user) return;
     setSyncStatus('Syncing');
     
@@ -42,7 +43,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       const cloudTasks = await taskSync.fetchCloudTasks(user.id);
       
       let changed = false;
-      const newTasks = [...currentTasks];
+      const newTasks = taskStorage.load();
       const cloudMap = new Map<string, Task>();
       cloudTasks.forEach(cr => cloudMap.set(cr.id, cr));
       
@@ -97,22 +98,22 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         setSyncStatus('Offline');
       }
     }
-  }, [user]);
+  }, [user, taskStorage]);
 
   useEffect(() => {
     if (user && isLoaded && authLoaded) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      performFullSync(tasks);
+      performFullSync();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, isLoaded, authLoaded]); 
 
   useEffect(() => {
     const handleFocus = () => {
-      if (user && isLoaded) performFullSync(tasks);
+      if (user && isLoaded) performFullSync();
     };
     const handleOnline = () => {
-      if (user && isLoaded) performFullSync(tasks);
+      if (user && isLoaded) performFullSync();
     };
     const handleOffline = () => setSyncStatus('Offline');
     
@@ -125,7 +126,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [user, isLoaded, tasks, performFullSync]);
+  }, [user, isLoaded, performFullSync]);
 
   const addTask = useCallback((taskPayload: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>) => {
     const now = new Date().toISOString();
@@ -154,7 +155,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       }
       return updated;
     });
-  }, [user]);
+  }, [user, taskStorage]);
 
   const updateTask = useCallback((taskId: string, updates: Partial<Task>) => {
     const now = new Date().toISOString();
@@ -196,7 +197,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         'complete'
       );
     }
-  }, [user]);
+  }, [user, taskStorage]);
 
   const deleteTask = useCallback((taskId: string) => {
     const now = new Date().toISOString();
@@ -220,7 +221,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       }
       return updated;
     });
-  }, [user]);
+  }, [user, taskStorage]);
 
   return (
     <TaskContext.Provider value={{
