@@ -342,7 +342,7 @@ export function MarksProvider({ children }: { children: ReactNode }) {
 
 
   const getSubjectSummary = useCallback((subjectCode: string): SubjectMarksSummary | null => {
-    const subjectComponents = components.filter(c => c.subject_code === subjectCode);
+    const subjectComponents = components.filter(c => c.subject_code === subjectCode && !c.deleted_at);
     if (subjectComponents.length === 0) return null;
     const gradeConfig = gradeConfigs.find(c => c.subject_code === subjectCode) || null;
     return calculateSubjectMarksSummary(subjectComponents, gradeConfig);
@@ -362,9 +362,9 @@ export function MarksProvider({ children }: { children: ReactNode }) {
 
   return (
     <MarksContext.Provider value={{
-      components,
+      components: components.filter(c => !c.deleted_at),
       gradeConfigs,
-      scenarios,
+      scenarios: scenarios.filter(s => !s.deleted_at),
       addComponent,
       updateComponent,
       deleteComponent,

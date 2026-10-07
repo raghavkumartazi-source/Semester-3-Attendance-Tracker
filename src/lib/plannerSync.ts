@@ -14,6 +14,7 @@ import { supabase } from './supabase';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapTopicFromDB(row: any): SyllabusTopic {
   return {
+    deleted_at: row.deleted_at ?? null,
     id: row.id,
     user_id: row.user_id,
     subject_code: row.subject_code,
@@ -34,6 +35,7 @@ function mapTopicFromDB(row: any): SyllabusTopic {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapCoverageFromDB(row: any): TopicCoverage {
   return {
+    deleted_at: row.deleted_at ?? null,
     id: row.id,
     user_id: row.user_id,
     topic_id: row.topic_id,
@@ -52,6 +54,7 @@ function mapCoverageFromDB(row: any): TopicCoverage {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapExamFromDB(row: any): ExamSchedule {
   return {
+    deleted_at: row.deleted_at ?? null,
     id: row.id,
     user_id: row.user_id,
     subject_code: row.subject_code,
@@ -73,6 +76,7 @@ function mapExamFromDB(row: any): ExamSchedule {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapPaperFromDB(row: any): PastPaper {
   return {
+    deleted_at: row.deleted_at ?? null,
     id: row.id,
     user_id: row.user_id,
     subject_code: row.subject_code,
@@ -93,6 +97,7 @@ function mapPaperFromDB(row: any): PastPaper {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapPracticeFromDB(row: any): PaperPractice {
   return {
+    deleted_at: row.deleted_at ?? null,
     id: row.id,
     user_id: row.user_id,
     paper_id: row.paper_id,
@@ -112,6 +117,7 @@ function mapPracticeFromDB(row: any): PaperPractice {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapPlanFromDB(row: any): DailyStudyPlan {
   return {
+    deleted_at: row.deleted_at ?? null,
     id: row.id,
     user_id: row.user_id,
     plan_date: row.plan_date,
@@ -131,6 +137,7 @@ function mapPlanFromDB(row: any): DailyStudyPlan {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapSessionFromDB(row: any): StudySession {
   return {
+    deleted_at: row.deleted_at ?? null,
     id: row.id,
     user_id: row.user_id,
     session_date: row.session_date,
@@ -152,6 +159,7 @@ function mapSessionFromDB(row: any): StudySession {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapConfigFromDB(row: any): PlannerConfig {
   return {
+    deleted_at: row.deleted_at ?? null,
     id: row.id as string,
     user_id: row.user_id as string,
     subject_code: row.subject_code as string,
@@ -170,6 +178,7 @@ function mapConfigFromDB(row: any): PlannerConfig {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapTopicToDB(topic: SyllabusTopic): any {
   return {
+    deleted_at: topic.deleted_at ?? null,
     id: topic.id,
     user_id: topic.user_id,
     subject_code: topic.subject_code,
@@ -190,6 +199,7 @@ function mapTopicToDB(topic: SyllabusTopic): any {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapCoverageToDB(cov: TopicCoverage): any {
   return {
+    deleted_at: cov.deleted_at ?? null,
     id: cov.id,
     user_id: cov.user_id,
     topic_id: cov.topic_id,
@@ -208,6 +218,7 @@ function mapCoverageToDB(cov: TopicCoverage): any {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapExamToDB(exam: ExamSchedule): any {
   return {
+    deleted_at: exam.deleted_at ?? null,
     id: exam.id,
     user_id: exam.user_id,
     subject_code: exam.subject_code,
@@ -229,6 +240,7 @@ function mapExamToDB(exam: ExamSchedule): any {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapPaperToDB(paper: PastPaper): any {
   return {
+    deleted_at: paper.deleted_at ?? null,
     id: paper.id,
     user_id: paper.user_id,
     subject_code: paper.subject_code,
@@ -248,6 +260,7 @@ function mapPaperToDB(paper: PastPaper): any {
 
 function mapPracticeToDB(practice: PaperPractice) {
   return {
+    deleted_at: practice.deleted_at ?? null,
     id: practice.id,
     user_id: practice.user_id,
     paper_id: practice.paper_id,
@@ -266,6 +279,7 @@ function mapPracticeToDB(practice: PaperPractice) {
 
 function mapPlanToDB(plan: DailyStudyPlan) {
   return {
+    deleted_at: plan.deleted_at ?? null,
     id: plan.id,
     user_id: plan.user_id,
     plan_date: plan.plan_date,
@@ -284,6 +298,7 @@ function mapPlanToDB(plan: DailyStudyPlan) {
 
 function mapSessionToDB(session: StudySession) {
   return {
+    deleted_at: session.deleted_at ?? null,
     id: session.id,
     user_id: session.user_id,
     session_date: session.session_date,
@@ -304,6 +319,7 @@ function mapSessionToDB(session: StudySession) {
 
 function mapConfigToDB(config: PlannerConfig) {
   return {
+    deleted_at: config.deleted_at ?? null,
     id: config.id,
     user_id: config.user_id,
     subject_code: config.subject_code,
@@ -401,97 +417,97 @@ export const plannerSync = {
   },
 
   async uploadLocalTopics(userId: string, topics: SyllabusTopic[]): Promise<void> {
-    const payload = topics.map(mapTopicToDB);
+    const payload = topics.map(item => ({ ...mapTopicToDB(item), user_id: userId }));
     const { error } = await supabase.from('syllabus_topics').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },
 
   async uploadLocalCoverage(userId: string, coverage: TopicCoverage[]): Promise<void> {
-    const payload = coverage.map(mapCoverageToDB);
+    const payload = coverage.map(item => ({ ...mapCoverageToDB(item), user_id: userId }));
     const { error } = await supabase.from('topic_coverage').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },
 
   async uploadLocalExams(userId: string, exams: ExamSchedule[]): Promise<void> {
-    const payload = exams.map(mapExamToDB);
+    const payload = exams.map(item => ({ ...mapExamToDB(item), user_id: userId }));
     const { error } = await supabase.from('exam_schedule').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },
 
   async uploadLocalPastPapers(userId: string, papers: PastPaper[]): Promise<void> {
-    const payload = papers.map(mapPaperToDB);
+    const payload = papers.map(item => ({ ...mapPaperToDB(item), user_id: userId }));
     const { error } = await supabase.from('past_papers').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },
 
   async uploadLocalPractice(userId: string, practice: PaperPractice[]): Promise<void> {
-    const payload = practice.map(mapPracticeToDB);
+    const payload = practice.map(item => ({ ...mapPracticeToDB(item), user_id: userId }));
     const { error } = await supabase.from('paper_practice').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },
 
   async uploadLocalDailyPlans(userId: string, plans: DailyStudyPlan[]): Promise<void> {
-    const payload = plans.map(mapPlanToDB);
+    const payload = plans.map(item => ({ ...mapPlanToDB(item), user_id: userId }));
     const { error } = await supabase.from('daily_study_plan').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },
 
   async uploadLocalStudySessions(userId: string, sessions: StudySession[]): Promise<void> {
-    const payload = sessions.map(mapSessionToDB);
+    const payload = sessions.map(item => ({ ...mapSessionToDB(item), user_id: userId }));
     const { error } = await supabase.from('study_sessions').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },
 
   async uploadLocalPlannerConfigs(userId: string, configs: PlannerConfig[]): Promise<void> {
-    const payload = configs.map(mapConfigToDB);
+    const payload = configs.map(item => ({ ...mapConfigToDB(item), user_id: userId }));
     const { error } = await supabase.from('planner_config').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },
 
   async syncSingleTopic(userId: string, topic: SyllabusTopic): Promise<void> {
-    const payload = mapTopicToDB(topic);
+    const payload = { ...mapTopicToDB(topic), user_id: userId };
     const { error } = await supabase.from('syllabus_topics').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },
 
   async syncSingleCoverage(userId: string, coverage: TopicCoverage): Promise<void> {
-    const payload = mapCoverageToDB(coverage);
+    const payload = { ...mapCoverageToDB(coverage), user_id: userId };
     const { error } = await supabase.from('topic_coverage').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },
 
   async syncSingleExam(userId: string, exam: ExamSchedule): Promise<void> {
-    const payload = mapExamToDB(exam);
+    const payload = { ...mapExamToDB(exam), user_id: userId };
     const { error } = await supabase.from('exam_schedule').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },
 
   async syncSinglePastPaper(userId: string, paper: PastPaper): Promise<void> {
-    const payload = mapPaperToDB(paper);
+    const payload = { ...mapPaperToDB(paper), user_id: userId };
     const { error } = await supabase.from('past_papers').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },
 
   async syncSinglePractice(userId: string, practice: PaperPractice): Promise<void> {
-    const payload = mapPracticeToDB(practice);
+    const payload = { ...mapPracticeToDB(practice), user_id: userId };
     const { error } = await supabase.from('paper_practice').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },
 
   async syncSingleDailyPlan(userId: string, plan: DailyStudyPlan): Promise<void> {
-    const payload = mapPlanToDB(plan);
+    const payload = { ...mapPlanToDB(plan), user_id: userId };
     const { error } = await supabase.from('daily_study_plan').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },
 
   async syncSingleStudySession(userId: string, session: StudySession): Promise<void> {
-    const payload = mapSessionToDB(session);
+    const payload = { ...mapSessionToDB(session), user_id: userId };
     const { error } = await supabase.from('study_sessions').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },
 
   async syncSinglePlannerConfig(userId: string, config: PlannerConfig): Promise<void> {
-    const payload = mapConfigToDB(config);
+    const payload = { ...mapConfigToDB(config), user_id: userId };
     const { error } = await supabase.from('planner_config').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },

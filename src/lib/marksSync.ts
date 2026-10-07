@@ -4,6 +4,7 @@ import { supabase } from './supabase';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapComponentFromDB(row: any): MarkComponent {
   return {
+    deleted_at: row.deleted_at ?? null,
     id: row.id,
     user_id: row.user_id,
     subject_code: row.subject_code,
@@ -23,6 +24,7 @@ function mapComponentFromDB(row: any): MarkComponent {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapConfigFromDB(row: any): SubjectGradeConfig {
   return {
+    deleted_at: row.deleted_at ?? null,
     id: row.id,
     user_id: row.user_id,
     subject_code: row.subject_code,
@@ -42,6 +44,7 @@ function mapConfigFromDB(row: any): SubjectGradeConfig {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapScenarioFromDB(row: any): GradeScenario {
   return {
+    deleted_at: row.deleted_at ?? null,
     id: row.id,
     user_id: row.user_id,
     subject_code: row.subject_code,
@@ -56,6 +59,7 @@ function mapScenarioFromDB(row: any): GradeScenario {
 
 function mapComponentToDB(component: MarkComponent) {
   return {
+    deleted_at: component.deleted_at ?? null,
     id: component.id,
     user_id: component.user_id,
     subject_code: component.subject_code,
@@ -74,6 +78,7 @@ function mapComponentToDB(component: MarkComponent) {
 
 function mapConfigToDB(config: SubjectGradeConfig) {
   return {
+    deleted_at: config.deleted_at ?? null,
     id: config.id,
     user_id: config.user_id,
     subject_code: config.subject_code,
@@ -92,6 +97,7 @@ function mapConfigToDB(config: SubjectGradeConfig) {
 
 function mapScenarioToDB(scenario: GradeScenario) {
   return {
+    deleted_at: scenario.deleted_at ?? null,
     id: scenario.id,
     user_id: scenario.user_id,
     subject_code: scenario.subject_code,
@@ -110,7 +116,6 @@ export const marksSync = {
       .from('marks')
       .select('*')
       .eq('user_id', userId)
-      .is('deleted_at', null)
       .order('created_at', { ascending: true });
     
     if (error) throw error;
@@ -133,7 +138,6 @@ export const marksSync = {
       .from('grade_scenarios')
       .select('*')
       .eq('user_id', userId)
-      .is('deleted_at', null)
       .order('created_at', { ascending: true });
     
     if (error) throw error;
@@ -141,37 +145,37 @@ export const marksSync = {
   },
 
   async uploadLocalComponents(userId: string, components: MarkComponent[]): Promise<void> {
-    const payload = components.map(mapComponentToDB);
+    const payload = components.map(item => ({ ...mapComponentToDB(item), user_id: userId }));
     const { error } = await supabase.from('marks').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },
 
   async uploadLocalGradeConfigs(userId: string, configs: SubjectGradeConfig[]): Promise<void> {
-    const payload = configs.map(mapConfigToDB);
+    const payload = configs.map(item => ({ ...mapConfigToDB(item), user_id: userId }));
     const { error } = await supabase.from('subject_grade_config').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },
 
   async uploadLocalScenarios(userId: string, scenarios: GradeScenario[]): Promise<void> {
-    const payload = scenarios.map(mapScenarioToDB);
+    const payload = scenarios.map(item => ({ ...mapScenarioToDB(item), user_id: userId }));
     const { error } = await supabase.from('grade_scenarios').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },
 
   async syncSingleComponent(userId: string, component: MarkComponent): Promise<void> {
-    const payload = mapComponentToDB(component);
+    const payload = { ...mapComponentToDB(component), user_id: userId };
     const { error } = await supabase.from('marks').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },
 
   async syncSingleGradeConfig(userId: string, config: SubjectGradeConfig): Promise<void> {
-    const payload = mapConfigToDB(config);
+    const payload = { ...mapConfigToDB(config), user_id: userId };
     const { error } = await supabase.from('subject_grade_config').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },
 
   async syncSingleScenario(userId: string, scenario: GradeScenario): Promise<void> {
-    const payload = mapScenarioToDB(scenario);
+    const payload = { ...mapScenarioToDB(scenario), user_id: userId };
     const { error } = await supabase.from('grade_scenarios').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
   },

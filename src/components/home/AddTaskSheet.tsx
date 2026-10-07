@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { SUBJECTS } from '@/lib/config';
 import { TaskType, TaskPriority, Task } from '@/lib/types';
@@ -12,15 +12,46 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
   const { addTask, updateTask } = useTasks();
   const [mounted, setMounted] = useState(false);
   const [showPlanSheet, setShowPlanSheet] = useState(false);
+  const panel = useRef<HTMLDivElement>(null);
+  const close = useRef(onClose);
+  const formId = useId();
+
+  useEffect(() => { close.current = onClose; }, [onClose]);
   
   useEffect(() => {
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     document.body.style.overflow = 'hidden';
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus();
     };
   }, []);
+
+  useEffect(() => {
+    if (!mounted || showPlanSheet) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        close.current();
+      }
+      if (event.key !== 'Tab') return;
+      const controls = Array.from(panel.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href]') ?? []).filter(el => el.getClientRects().length > 0);
+      const first = controls[0], last = controls[controls.length - 1];
+      if (!first) return;
+      if (event.shiftKey && (document.activeElement === first || !panel.current?.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !panel.current?.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [mounted, showPlanSheet]);
 
   const [title, setTitle] = useState(taskToEdit?.title || '');
   const [subjectId, setSubjectId] = useState<string>(taskToEdit?.subject_id || '');
@@ -101,16 +132,16 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
     <div 
       className="fixed inset-0 z-[110] flex sm:items-center items-end justify-center animate-fade-in-up" 
       style={{ animationDuration: '0.2s' }}
-      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
     >
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
         onClick={onClose} 
+        aria-hidden="true"
       />
       
       {/* Modal / Bottom Sheet */}
-      <div className="relative w-full max-w-lg bg-[#111320] sm:rounded-[28px] rounded-t-[28px] shadow-2xl sm:border border-t border-white/10 slide-up flex flex-col max-h-[90dvh] sm:max-h-[min(760px,85dvh)] min-w-0">
+      <div ref={panel} role="dialog" aria-modal="true" aria-labelledby={`${formId}-heading`} className="relative w-full max-w-lg bg-[#111320] sm:rounded-[28px] rounded-t-[28px] shadow-2xl sm:border border-t border-white/10 slide-up flex flex-col max-h-[90dvh] sm:max-h-[min(760px,85dvh)] min-w-0">
         
         {/* Mobile Drag Handle */}
         <div className="sm:hidden absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-white/20 rounded-full" />
@@ -119,8 +150,8 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
           
           {/* Header (Sticky) */}
           <div className="shrink-0 pt-8 sm:pt-6 px-6 pb-4 flex items-center justify-between border-b border-white/5">
-            <h2 className="text-xl font-bold text-white tracking-tight">{taskToEdit ? 'Edit Task' : 'New Task'}</h2>
-            <button type="button" onClick={onClose} aria-label="Close dialog" className="text-white/40 hover:text-white/80 transition-colors p-1 rounded-lg hover:bg-white/5">
+            <h2 id={`${formId}-heading`} className="text-xl font-bold text-white tracking-tight">{taskToEdit ? 'Edit Task' : 'New Task'}</h2>
+            <button type="button" onClick={onClose} aria-label="Close dialog" className="text-white/40 hover:text-white/80 transition-colors p-2.5 rounded-lg hover:bg-white/5">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -133,6 +164,7 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
             <div>
               <input
                 type="text"
+                aria-label="Task title"
                 autoFocus
                 placeholder="What needs to be done?"
                 value={title}
@@ -179,9 +211,10 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
 
             {/* Subject Select */}
             <div>
-              <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Subject (Optional)</label>
+              <label htmlFor={`${formId}-subject`} className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Subject (Optional)</label>
               <div className="relative">
                 <select
+                  id={`${formId}-subject`}
                   value={subjectId}
                   onChange={(e) => setSubjectId(e.target.value)}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500/50 appearance-none text-sm"
@@ -213,9 +246,10 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Type</label>
+                    <label htmlFor={`${formId}-type`} className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Type</label>
                     <div className="relative">
                       <select
+                        id={`${formId}-type`}
                         value={type}
                         onChange={(e) => setType(e.target.value as TaskType)}
                         className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500/50 appearance-none text-sm"
@@ -234,9 +268,10 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
                     </div>
                   </div>
                   <div className="min-w-0">
-                    <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Estimate (Mins)</label>
+                    <label htmlFor={`${formId}-estimate`} className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Estimate (Mins)</label>
                     <input
                       type="number"
+                      id={`${formId}-estimate`}
                       placeholder="e.g. 60"
                       min="1"
                       value={estimatedMinutes}
@@ -248,9 +283,10 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="min-w-0">
-                    <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Due Date</label>
+                    <label htmlFor={`${formId}-date`} className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Due Date</label>
                     <input
                       type="date"
+                      id={`${formId}-date`}
                       value={dueAtMode === 'custom' ? customDate : ''}
                       onChange={(e) => {
                         setDueAtMode('custom');
@@ -260,9 +296,10 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
                     />
                   </div>
                   <div className="min-w-0">
-                    <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Time</label>
+                    <label htmlFor={`${formId}-time`} className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Time</label>
                     <input
                       type="time"
+                      id={`${formId}-time`}
                       value={dueAtMode === 'custom' ? customTime : ''}
                       onChange={(e) => {
                         setDueAtMode('custom');
@@ -274,8 +311,9 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Notes</label>
+                  <label htmlFor={`${formId}-notes`} className="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Notes</label>
                   <textarea
+                    id={`${formId}-notes`}
                     placeholder="Any extra details..."
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}

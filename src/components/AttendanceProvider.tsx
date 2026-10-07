@@ -121,7 +121,7 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
       
       // Upload Local records that are missing in cloud or newer
       const recordsToUpload = newSessions.filter(s => {
-        if (s.status === 'UNMARKED') return false;
+        if (s.status === 'UNMARKED' && !s.updatedAt) return false;
         const cloud = cloudMap.get(s.id);
         if (!cloud) return true; 
         const cloudDate = new Date(cloud.updated_at).getTime();

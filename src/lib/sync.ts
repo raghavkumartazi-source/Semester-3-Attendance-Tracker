@@ -32,28 +32,9 @@ export const syncRepo = {
 
   /**
    * Sync a single session change to the cloud.
-   * If status is UNMARKED, it deletes the record.
+   * UNMARKED is retained with its timestamp so offline undo survives a resync.
    */
   async syncSingleSession(userId: string, session: Session): Promise<void> {
-    if (session.status === 'UNMARKED') {
-      const { error } = await supabase
-        .from('attendance_records')
-        .delete()
-        .eq('user_id', userId)
-        .eq('session_id', session.id);
-      
-      if (error) {
-        console.warn('Supabase delete failed:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
-        throw error;
-      }
-      return;
-    }
-
     const { error } = await supabase
       .from('attendance_records')
       .upsert({
@@ -75,11 +56,11 @@ export const syncRepo = {
   },
 
   /**
-   * Bulk upload local records that aren't UNMARKED.
+   * Upload marked records and timestamped undo records, leaving untouched slots local.
    */
   async uploadLocalRecords(userId: string, sessions: Session[]): Promise<void> {
     const recordsToUpload = sessions
-      .filter(s => s.status !== 'UNMARKED')
+      .filter(s => s.status !== 'UNMARKED' || s.updatedAt)
       .map(s => ({
         user_id: userId,
         session_id: s.id,

@@ -42,3 +42,8 @@ next-env.d.ts
 
 # npm cache workaround
 .npm-cache/
+
+# Local verification artifacts
+.playwright-cli/
+output/playwright/
+supabase/.temp/

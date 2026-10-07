@@ -289,7 +289,7 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
-  const deleteWithSync = useCallback(async <T extends { id: string; user_id?: string; deleted_at?: string }>(
+  const deleteWithSync = useCallback(async <T extends { id: string; user_id?: string; deleted_at?: string | null }>(
     items: T[],
     setter: (items: T[]) => void,
     storageSave: (items: T[]) => void,
@@ -449,16 +449,16 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
   // Computed
   const getReverseCountdownPlan = useCallback((subjectCode: string): ReverseCountdownPlan | null => {
     const config = plannerConfigs.find(c => c.subject_code === subjectCode);
-    const subjectExams = exams.filter(e => e.subject_code === subjectCode);
+    const subjectExams = exams.filter(e => e.subject_code === subjectCode && !e.deleted_at);
     const endsemExam = subjectExams.find(e => e.exam_type === 'ENDSEM');
     
     if (!config || !endsemExam) return null;
     
     return generateReverseCountdownPlan(
       subjectCode,
-      topics,
+      topics.filter(t => !t.deleted_at),
       coverage,
-      exams,
+      exams.filter(e => !e.deleted_at),
       config,
       studySessions
     );
@@ -471,10 +471,10 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
   }, [coverage]);
 
   const getTopicPriority = useCallback((topicId: string): number => {
-    const topic = topics.find(t => t.id === topicId);
+    const topic = topics.find(t => t.id === topicId && !t.deleted_at);
     const cov = coverage.find(c => c.topic_id === topicId);
     const config = topic ? plannerConfigs.find(c => c.subject_code === topic.subject_code) : null;
-    const endsemExam = topic ? exams.find(e => e.subject_code === topic.subject_code && e.exam_type === 'ENDSEM') : null;
+    const endsemExam = topic ? exams.find(e => e.subject_code === topic.subject_code && e.exam_type === 'ENDSEM' && !e.deleted_at) : null;
     
     if (!topic || !config || !endsemExam) return 0;
     
@@ -488,7 +488,7 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
   const getTodayPlan = useCallback((subjectCode?: string): DailyStudyPlan[] => {
     const today = new Date().toISOString().split('T')[0];
     return dailyPlans.filter(p => 
-      p.plan_date === today && 
+      p.plan_date === today && !p.deleted_at &&
       p.status !== 'COMPLETED' && 
       p.status !== 'SKIPPED' &&
       (!subjectCode || p.subject_code === subjectCode)
@@ -500,13 +500,16 @@ export function PlannerProvider({ children }: { children: ReactNode }) {
     const future = new Date(today.getTime() + days * 24 * 60 * 60 * 1000);
     return exams.filter(e => {
       const examDate = new Date(e.exam_date);
-      return examDate >= today && examDate <= future && e.is_confirmed;
+      return !e.deleted_at && examDate >= today && examDate <= future && e.is_confirmed;
     }).sort((a, b) => new Date(a.exam_date).getTime() - new Date(b.exam_date).getTime());
   }, [exams]);
 
   return (
     <PlannerContext.Provider value={{
-      topics, coverage, exams, pastPapers, practice, dailyPlans, studySessions, plannerConfigs,
+      topics: topics.filter(t => !t.deleted_at), coverage,
+      exams: exams.filter(e => !e.deleted_at),
+      pastPapers: pastPapers.filter(p => !p.deleted_at), practice,
+      dailyPlans: dailyPlans.filter(p => !p.deleted_at), studySessions, plannerConfigs,
       addTopic, updateTopic, deleteTopic,
       upsertCoverage,
       addExam, updateExam, deleteExam,

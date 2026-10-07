@@ -2,8 +2,8 @@ import { SEMESTER_START, SEMESTER_END } from './config';
 import { differenceInCalendarDays, parseISO } from 'date-fns';
 
 export const timeUtils = {
-  getGreeting: (): string => {
-    const hour = new Date().getHours();
+  getGreeting: (now: Date = new Date()): string => {
+    const hour = now.getHours();
     if (hour < 12) return 'Good morning';
     if (hour < 17) return 'Good afternoon';
     return 'Good evening';
@@ -14,10 +14,9 @@ export const timeUtils = {
     return date.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' });
   },
 
-  getSemesterProgress: (): { currentDay: number; totalDays: number; percentage: number } => {
+  getSemesterProgress: (today: Date = new Date()): { currentDay: number; totalDays: number; percentage: number } => {
     const start = parseISO(SEMESTER_START);
     const end = parseISO(SEMESTER_END);
-    const today = new Date();
     const totalDays = differenceInCalendarDays(end, start) + 1;
     const currentDay = differenceInCalendarDays(today, start) + 1;
 

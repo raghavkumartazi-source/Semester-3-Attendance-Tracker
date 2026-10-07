@@ -1,5 +1,9 @@
 // Types for the attendance tracker application
 
+interface SoftDeletable {
+  deleted_at?: string | null;
+}
+
 export type AttendanceStatus = 'UNMARKED' | 'PRESENT' | 'ABSENT' | 'CANCELLED';
 
 export type ClassType = 'Lecture' | 'Tutorial' | 'Lab';
@@ -107,7 +111,7 @@ export type MarkComponentType =
   | 'ATTENDANCE' 
   | 'OTHER';
 
-export interface MarkComponent {
+export interface MarkComponent extends SoftDeletable {
   id: string;
   user_id?: string;
   subject_code: string;
@@ -123,7 +127,7 @@ export interface MarkComponent {
   updated_at: string;
 }
 
-export interface SubjectGradeConfig {
+export interface SubjectGradeConfig extends SoftDeletable {
   id: string;
   user_id?: string;
   subject_code: string;
@@ -172,7 +176,7 @@ export interface OverallGradeSummary {
   earned_credits: number;
 }
 
-export interface GradeScenario {
+export interface GradeScenario extends SoftDeletable {
   id: string;
   user_id?: string;
   subject_code: string;
@@ -188,7 +192,7 @@ export interface GradeScenario {
 // EXAM PREPARATION PLANNER TYPES
 // =============================================================================
 
-export interface SyllabusTopic {
+export interface SyllabusTopic extends SoftDeletable {
   id: string;
   user_id?: string;
   subject_code: string;
@@ -207,7 +211,7 @@ export interface SyllabusTopic {
 
 export type CoverageStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COVERED' | 'REVISING' | 'MASTERED';
 
-export interface TopicCoverage {
+export interface TopicCoverage extends SoftDeletable {
   id: string;
   user_id?: string;
   topic_id: string;
@@ -224,7 +228,7 @@ export interface TopicCoverage {
 
 export type ExamType = 'MIDSEM' | 'ENDSEM' | 'QUIZ' | 'LAB_EXAM' | 'VIVA' | 'ASSIGNMENT_DUE';
 
-export interface ExamSchedule {
+export interface ExamSchedule extends SoftDeletable {
   id: string;
   user_id?: string;
   subject_code: string;
@@ -242,7 +246,7 @@ export interface ExamSchedule {
   updated_at: string;
 }
 
-export interface PastPaper {
+export interface PastPaper extends SoftDeletable {
   id: string;
   user_id?: string;
   subject_code: string;
@@ -259,7 +263,7 @@ export interface PastPaper {
   updated_at: string;
 }
 
-export interface PaperPractice {
+export interface PaperPractice extends SoftDeletable {
   id: string;
   user_id?: string;
   paper_id: string;
@@ -278,7 +282,7 @@ export interface PaperPractice {
 export type StudySessionType = 'NEW_TOPIC' | 'REVISION' | 'PRACTICE' | 'MOCK_TEST' | 'DOUBT_CLEARING';
 export type PlanStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'SKIPPED' | 'RESCHEDULED';
 
-export interface DailyStudyPlan {
+export interface DailyStudyPlan extends SoftDeletable {
   id: string;
   user_id?: string;
   plan_date: string; // "YYYY-MM-DD"
@@ -294,7 +298,7 @@ export interface DailyStudyPlan {
   updated_at: string;
 }
 
-export interface StudySession {
+export interface StudySession extends SoftDeletable {
   id: string;
   user_id?: string;
   session_date: string; // "YYYY-MM-DD"
@@ -312,7 +316,7 @@ export interface StudySession {
   updated_at: string;
 }
 
-export interface PlannerConfig {
+export interface PlannerConfig extends SoftDeletable {
   id: string;
   user_id?: string;
   subject_code: string;

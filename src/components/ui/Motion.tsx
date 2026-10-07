@@ -12,8 +12,7 @@ export function AnimatedNumber({ value, decimals = 0 }: { value: number; decimal
     if (reduced) {
       count.jump(value);
     } else {
-      count.jump(0);
-      setTimeout(() => count.set(value), 50); // Small delay to let the UI mount before starting the animation
+      count.set(value);
     }
   }, [count, reduced, value]);
   

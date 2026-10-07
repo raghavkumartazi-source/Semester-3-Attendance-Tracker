@@ -33,28 +33,30 @@ export const storage = {
       const savedSessions = data.sessions || [];
       
       // Map existing non-unmarked statuses and collect extra sessions
-      const savedStatusMap = new Map<string, Session['status']>();
+      const savedStatusMap = new Map<string, Session>();
       const extraSessions: Session[] = [];
       
       for (const s of savedSessions) {
         if (s.isExtra) {
           extraSessions.push(s);
-        } else if (s.status && s.status !== 'UNMARKED') {
-          savedStatusMap.set(s.id, s.status);
+        } else if (s.status && (s.status !== 'UNMARKED' || s.updatedAt)) {
+          savedStatusMap.set(s.id, s);
         }
       }
       
       // Merge into fresh timetable
       const mergedSessions = freshSessions.map(session => {
-        const savedStatus = savedStatusMap.get(session.id);
-        if (savedStatus) {
-          return { ...session, status: savedStatus };
+        const saved = savedStatusMap.get(session.id);
+        if (saved) {
+          return { ...session, status: saved.status, updatedAt: saved.updatedAt };
         }
         return session;
       });
       
       return [...mergedSessions, ...extraSessions];
     } catch {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) localStorage.setItem(`${STORAGE_KEY}-recovery-${Date.now()}`, raw);
       this.save(freshSessions);
       return freshSessions;
     }
