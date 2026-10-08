@@ -1,7 +1,7 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import Dialog from '@/components/Dialog';
 import { motion } from 'framer-motion';
 import { SUBJECTS } from '@/lib/config';
@@ -23,7 +23,8 @@ import {
   ArrowPathIcon,
   SparklesIcon,
   ArrowDownTrayIcon,
-  ArrowUpTrayIcon
+  ArrowUpTrayIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 
@@ -63,6 +64,7 @@ const GRADE_COLORS = {
 };
 
 export default function MarksPage() {
+  const formId = useId();
   const { 
     components, 
     gradeConfigs, 
@@ -288,14 +290,16 @@ export default function MarksPage() {
 
       {/* Subject Selector */}
       <div className="paper-elevated rounded-[20px] p-4">
-        <label className="text-[11px] font-bold text-white/40 uppercase tracking-widest block mb-3">Select Subject</label>
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <p id={`${formId}-subject-selector`} className="text-[11px] font-bold text-white/40 uppercase tracking-widest block mb-3">Select Subject</p>
+        <div role="group" aria-labelledby={`${formId}-subject-selector`} className="flex gap-2 overflow-x-auto pb-1">
           {SUBJECTS.map(subj => {
             const subjSummary = getSubjectSummary(subj.code);
             const isActive = selectedSubject === subj.code;
             return (
               <button
                 key={subj.code}
+                type="button"
+                aria-pressed={isActive}
                 onClick={() => setSelectedSubject(subj.code)}
                 className={`shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 ${
                   isActive 
@@ -614,11 +618,17 @@ export default function MarksPage() {
       {(showAddComponent || editingComponent) && (
         <Dialog label={editingComponent ? 'Edit component' : 'Add component'} onClose={() => { setShowAddComponent(false); setEditingComponent(null); resetForm(); }}>
           <div className="relative w-full max-w-md bg-[#111320] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] border-t border-white/15 slide-up">
-            <h3 className="text-lg font-bold text-white mb-6">{editingComponent ? 'Edit Component' : 'Add Component'}</h3>
+            <div className="flex items-center justify-between gap-3 mb-6">
+              <h3 className="text-lg font-bold text-white">{editingComponent ? 'Edit Component' : 'Add Component'}</h3>
+              <button type="button" aria-label="Close component form" onClick={() => { setShowAddComponent(false); setEditingComponent(null); resetForm(); }} className="ink-btn-ghost flex items-center justify-center shrink-0 w-11 h-11">
+                <XMarkIcon aria-hidden="true" className="w-5 h-5" />
+              </button>
+            </div>
             <form onSubmit={submitComponent} className="space-y-4 max-h-[60dvh] overflow-y-auto">
               <div>
-                <label className="text-sm font-medium text-white/70 block mb-2">Component Type</label>
+                <label htmlFor={`${formId}-component-type`} className="text-sm font-medium text-white/70 block mb-2">Component Type</label>
                 <select
+                  id={`${formId}-component-type`}
                   name="component_type"
                   value={formData.component_type}
                   onChange={handleFormChange}
@@ -631,8 +641,9 @@ export default function MarksPage() {
               </div>
               
               <div>
-                <label className="text-sm font-medium text-white/70 block mb-2">Component Name</label>
+                <label htmlFor={`${formId}-component-name`} className="text-sm font-medium text-white/70 block mb-2">Component Name</label>
                 <input
+                  id={`${formId}-component-name`}
                   name="component_name"
                   type="text"
                   value={formData.component_name}
@@ -645,8 +656,9 @@ export default function MarksPage() {
               
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium text-white/70 block mb-2">Weightage (%)</label>
+                  <label htmlFor={`${formId}-weightage`} className="text-sm font-medium text-white/70 block mb-2">Weightage (%)</label>
                   <input
+                    id={`${formId}-weightage`}
                     name="weightage"
                     type="number"
                     value={formData.weightage}
@@ -659,8 +671,9 @@ export default function MarksPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-white/70 block mb-2">Max Marks</label>
+                  <label htmlFor={`${formId}-max-marks`} className="text-sm font-medium text-white/70 block mb-2">Max Marks</label>
                   <input
+                    id={`${formId}-max-marks`}
                     name="max_marks"
                     type="number"
                     value={formData.max_marks}
@@ -673,8 +686,9 @@ export default function MarksPage() {
               </div>
               
               <div>
-                <label className="text-sm font-medium text-white/70 block mb-2">Marks Scored</label>
+                <label htmlFor={`${formId}-scored`} className="text-sm font-medium text-white/70 block mb-2">Marks Scored</label>
                 <input
+                  id={`${formId}-scored`}
                   name="scored"
                   type="number"
                   value={formData.scored}
@@ -689,8 +703,9 @@ export default function MarksPage() {
               
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium text-white/70 block mb-2">Date</label>
+                  <label htmlFor={`${formId}-date`} className="text-sm font-medium text-white/70 block mb-2">Date</label>
                   <input
+                    id={`${formId}-date`}
                     name="date"
                     type="date"
                     value={formData.date}
@@ -699,8 +714,9 @@ export default function MarksPage() {
                   />
                 </div>
                 <div className="flex items-end">
-                  <label className="flex items-center gap-2 cursor-pointer">
+                  <label htmlFor={`${formId}-published`} className="flex items-center gap-2 cursor-pointer min-h-11">
                     <input
+                      id={`${formId}-published`}
                       name="is_published"
                       type="checkbox"
                       checked={formData.is_published}
@@ -713,8 +729,9 @@ export default function MarksPage() {
               </div>
               
               <div>
-                <label className="text-sm font-medium text-white/70 block mb-2">Notes</label>
+                <label htmlFor={`${formId}-notes`} className="text-sm font-medium text-white/70 block mb-2">Notes</label>
                 <textarea
+                  id={`${formId}-notes`}
                   name="notes"
                   value={formData.notes}
                   onChange={handleFormChange}
@@ -748,7 +765,12 @@ export default function MarksPage() {
       {showGradeConfig && (
         <Dialog label={'Grade configuration'} onClose={() => { setShowGradeConfig(false); }}>
           <div className="relative w-full max-w-md bg-[#111320] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] border-t border-white/15 slide-up max-h-[80vh] overflow-y-auto">
-            <h3 className="text-lg font-bold text-white mb-6">Grade Boundaries for {selectedSubject}</h3>
+            <div className="flex items-center justify-between gap-3 mb-6">
+              <h3 className="text-lg font-bold text-white">Grade Boundaries for {selectedSubject}</h3>
+              <button type="button" aria-label="Close grade configuration" onClick={() => setShowGradeConfig(false)} className="ink-btn-ghost flex items-center justify-center shrink-0 w-11 h-11">
+                <XMarkIcon aria-hidden="true" className="w-5 h-5" />
+              </button>
+            </div>
             <p className="text-sm text-white/50 mb-6">IIT BHU grading schema. Adjust if your department uses different boundaries.</p>
             <form onSubmit={submitGradeConfig} className="space-y-3 max-h-[60dvh] overflow-y-auto">
               {[
@@ -761,8 +783,9 @@ export default function MarksPage() {
                 { key: 'grade_dd_min', label: 'DD (4 pts)', default: 30 },
               ].map(({ key, label, default: def }) => (
                 <div key={key}>
-                  <label className="text-sm font-medium text-white/70 block mb-2">{label} minimum %</label>
+                  <label htmlFor={`${formId}-${key}`} className="text-sm font-medium text-white/70 block mb-2">{label} minimum %</label>
                   <input
+                    id={`${formId}-${key}`}
                     name={key}
                     type="number"
                     value={gradeConfigData[key as keyof typeof gradeConfigData]}
@@ -775,8 +798,9 @@ export default function MarksPage() {
                 </div>
               ))}
               <div>
-                <label className="text-sm font-medium text-white/70 block mb-2">Credits</label>
+                <label htmlFor={`${formId}-credits`} className="text-sm font-medium text-white/70 block mb-2">Credits</label>
                 <input
+                  id={`${formId}-credits`}
                   name="credits"
                   type="number"
                   value={gradeConfigData.credits}
@@ -810,11 +834,17 @@ export default function MarksPage() {
       {showScenario && (
         <Dialog label={editingScenario ? 'Edit scenario' : 'New scenario'} onClose={() => { setShowScenario(false); setEditingScenario(null); setScenarioName(''); setScenarioAssumptions({}); }}>
           <div className="relative w-full max-w-md bg-[#111320] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] border-t border-white/15 slide-up max-h-[80vh] overflow-y-auto">
-            <h3 className="text-lg font-bold text-white mb-4">{editingScenario ? 'Edit Scenario' : 'New What-If Scenario'}</h3>
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <h3 className="text-lg font-bold text-white">{editingScenario ? 'Edit Scenario' : 'New What-If Scenario'}</h3>
+              <button type="button" aria-label="Close scenario form" onClick={() => { setShowScenario(false); setEditingScenario(null); setScenarioName(''); setScenarioAssumptions({}); }} className="ink-btn-ghost flex items-center justify-center shrink-0 w-11 h-11">
+                <XMarkIcon aria-hidden="true" className="w-5 h-5" />
+              </button>
+            </div>
             <form onSubmit={submitScenario} className="space-y-4 max-h-[60dvh] overflow-y-auto">
               <div>
-                <label className="text-sm font-medium text-white/70 block mb-2">Scenario Name</label>
+                <label htmlFor={`${formId}-scenario-name`} className="text-sm font-medium text-white/70 block mb-2">Scenario Name</label>
                 <input
+                  id={`${formId}-scenario-name`}
                   type="text"
                   value={scenarioName}
                   onChange={(e) => setScenarioName(e.target.value)}
@@ -832,13 +862,14 @@ export default function MarksPage() {
                   {pendingComponents.map(comp => (
                     <div key={comp.id} className="glass-surface rounded-xl p-3">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-white">{comp.component_name}</span>
+                        <label htmlFor={`${formId}-assumption-${comp.id}`} className="font-medium text-white">{comp.component_name}<span className="sr-only"> assumed score (%)</span></label>
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${COMPONENT_TYPE_COLORS[comp.component_type]}`}>
                           {COMPONENT_TYPE_LABELS[comp.component_type]}
                         </span>
                       </div>
                       <div className="flex items-center gap-3">
                         <input
+                          id={`${formId}-assumption-${comp.id}`}
                           type="range"
                           min="0"
                           max="100"

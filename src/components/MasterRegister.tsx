@@ -180,7 +180,7 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
           <div className="inline-block min-w-max">
             
             {/* Frosted Header Row */}
-            <div className="sticky top-0 z-30 flex border-b border-white/[0.08]" style={{ background: 'linear-gradient(180deg, rgba(20,22,30,0.92), rgba(16,18,26,0.85))', backdropFilter: 'blur(20px) saturate(150%)' }}>
+            <div className="sticky top-0 z-30 flex border-b border-white/[0.08]" style={{ background: 'var(--bg-elevated)' }}>
               
               {/* Sticky Top-Left Corner (Subject Header) */}
               <div className="sticky left-0 z-40 glass-frozen flex h-14 w-[210px] flex-col justify-end px-4 pb-2">

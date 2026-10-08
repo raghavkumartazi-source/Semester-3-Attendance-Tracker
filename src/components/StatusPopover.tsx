@@ -20,22 +20,23 @@ const STATUS_OPTIONS: { value: AttendanceStatus; label: string; emoji: string }[
   { value: 'UNMARKED', label: 'Unmarked', emoji: '↩️' },
 ];
 
+const STATUS_STYLES: Record<AttendanceStatus, { color: string; background: string }> = {
+  PRESENT: { color: 'var(--success)', background: 'color-mix(in srgb, var(--success) 10%, transparent)' },
+  ABSENT: { color: 'var(--danger)', background: 'color-mix(in srgb, var(--danger) 10%, transparent)' },
+  CANCELLED: { color: 'var(--fg-muted)', background: 'color-mix(in srgb, var(--fg-muted) 9%, transparent)' },
+  UNMARKED: { color: 'var(--fg)', background: 'var(--glass-bg-hover)' },
+};
+
 function getIndicatorClass(status: AttendanceStatus, isSelected: boolean): string {
   switch (status) {
     case 'PRESENT':
-      return isSelected
-        ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]'
-        : 'bg-emerald-500/70';
+      return isSelected ? 'bg-emerald-700' : 'bg-emerald-600/70';
     case 'ABSENT':
-      return isSelected
-        ? 'bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.6)]'
-        : 'bg-red-500/70';
+      return isSelected ? 'bg-red-700' : 'bg-red-600/70';
     case 'CANCELLED':
-      return isSelected
-        ? 'bg-zinc-300 shadow-[0_0_6px_rgba(161,161,170,0.4)]'
-        : 'bg-zinc-500/70';
+      return isSelected ? 'bg-zinc-600' : 'bg-zinc-500/70';
     case 'UNMARKED':
-      return 'bg-transparent border border-white/25';
+      return 'bg-transparent border border-current opacity-60';
   }
 }
 
@@ -156,10 +157,10 @@ export default function StatusPopover({ anchorEl, currentStatus, onSelect, onClo
           visible: { transition: { staggerChildren: 0.04, delayChildren: 0.05 } },
         }}
         style={{
-          background: '#202a23',
-          backdropFilter: 'blur(45px) saturate(200%)',
-          border: '1px solid rgba(255,255,255,0.14)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15)',
+          background: 'var(--bg-elevated)',
+          backdropFilter: 'blur(18px)',
+          border: '1px solid var(--border)',
+          boxShadow: '0 8px 32px #1e202616, 0 2px 8px #1e20260a',
         }}
       >
         {STATUS_OPTIONS.map(({ value, label, emoji }) => {
@@ -184,22 +185,22 @@ export default function StatusPopover({ anchorEl, currentStatus, onSelect, onClo
               className="group flex items-center gap-[10px] rounded-[10px] px-[12px] min-h-11 py-[8px] text-[13px] font-semibold transition-colors duration-100"
               style={{
                 background: isSelected
-                  ? 'rgba(255,255,255,0.09)'
+                  ? STATUS_STYLES[value].background
                   : 'transparent',
                 color: isSelected
-                  ? 'rgba(255,255,255,0.95)'
-                  : 'rgba(255,255,255,0.55)',
+                  ? STATUS_STYLES[value].color
+                  : 'var(--fg-muted)',
               }}
               onMouseEnter={(e) => {
                 if (!isSelected) {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-                  e.currentTarget.style.color = 'rgba(255,255,255,0.85)';
+                  e.currentTarget.style.background = 'var(--glass-bg-hover)';
+                  e.currentTarget.style.color = 'var(--fg)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isSelected) {
                   e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = 'rgba(255,255,255,0.55)';
+                  e.currentTarget.style.color = 'var(--fg-muted)';
                 }
               }}
             >

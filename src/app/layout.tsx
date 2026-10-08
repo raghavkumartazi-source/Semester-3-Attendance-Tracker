@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Outfit } from 'next/font/google';
+import { Manrope } from 'next/font/google';
 import './globals.css';
 import { AttendanceProvider } from '@/components/AttendanceProvider';
 import { TaskProvider } from '@/components/TaskProvider';
@@ -12,7 +12,7 @@ import PageTransition from '@/components/PageTransition';
 import { CelebrationLayer } from '@/components/CelebrationBurst';
 import AppHeader from '@/components/AppHeader';
 
-const outfit = Outfit({ subsets: ['latin'] });
+const manrope = Manrope({ subsets: ['latin'], variable: '--font-ui' });
 
 export const metadata: Metadata = {
   title: '3rd Sem Tracker',
@@ -33,7 +33,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#08090e',
+  themeColor: '#101113',
 };
 
 export default function RootLayout({
@@ -43,8 +43,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${outfit.className} antialiased`}>
-        <div className="ambient-backdrop" aria-hidden="true"><div className="ambient-glow" /><div className="ambient-grid" /><div className="shooting-star" /><div className="shooting-star" /><div className="shooting-star" /><div className="shooting-star" /></div>
+      <body className={`${manrope.className} ${manrope.variable} antialiased`}>
         <a className="skip-link" href="#main-content">Skip to content</a>
         <AppHeader />
 

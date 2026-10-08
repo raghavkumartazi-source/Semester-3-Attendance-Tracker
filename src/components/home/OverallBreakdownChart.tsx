@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useReducedMotion } from 'framer-motion';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { Session } from '@/lib/types';
 import { getOverallStats } from '@/lib/calculations';
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function OverallBreakdownChart({ sessions }: Props) {
+  const reduced = useReducedMotion();
   const data = useMemo(() => getOverallStats(sessions), [sessions]);
 
   if (data.length === 0) {
@@ -19,7 +21,7 @@ export function OverallBreakdownChart({ sessions }: Props) {
   return (
     <div className="glass-panel rounded-2xl p-5 relative overflow-hidden flex items-center justify-between">
       <div className="z-10 relative pl-2">
-        <h3 className="text-[11px] font-bold tracking-widest text-white/60 uppercase mb-4">
+        <h3 className="text-[11px] font-bold tracking-widest text-[color:var(--fg-muted)] uppercase mb-4">
           Status Breakdown
         </h3>
         <div className="space-y-3">
@@ -30,8 +32,8 @@ export function OverallBreakdownChart({ sessions }: Props) {
                 style={{ backgroundColor: entry.color }} 
               />
               <div className="flex flex-col">
-                <span className="text-xs font-bold text-white leading-none">{entry.name}</span>
-                <span className="text-[10px] text-white/50 leading-tight mt-0.5">{entry.value} Classes</span>
+                <span className="text-xs font-bold text-[color:var(--fg)] leading-none">{entry.name}</span>
+                <span className="text-[10px] text-[color:var(--fg-muted)] leading-tight mt-0.5">{entry.value} Classes</span>
               </div>
             </div>
           ))}
@@ -50,6 +52,7 @@ export function OverallBreakdownChart({ sessions }: Props) {
               paddingAngle={5}
               dataKey="value"
               stroke="none"
+              isAnimationActive={!reduced}
               animationBegin={200}
               animationDuration={1000}
             >
@@ -58,16 +61,17 @@ export function OverallBreakdownChart({ sessions }: Props) {
               ))}
             </Pie>
             <Tooltip 
+              isAnimationActive={!reduced}
               contentStyle={{ 
-                backgroundColor: 'rgba(10, 10, 15, 0.9)', 
-                border: '1px solid rgba(255,255,255,0.1)',
+                backgroundColor: 'var(--bg-elevated)',
+                border: '1px solid var(--border)',
                 borderRadius: '12px',
-                color: '#fff',
+                color: 'var(--fg)',
                 fontSize: '12px',
-                backdropFilter: 'blur(10px)',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.4)'
+                boxShadow: '0 4px 14px rgb(30 32 38 / 8%)',
               }}
-              itemStyle={{ color: '#fff', fontWeight: 'bold' }}
+              itemStyle={{ color: 'var(--fg)', fontWeight: 'bold' }}
+              labelStyle={{ color: 'var(--fg-muted)' }}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any, name: any) => [`${value} Classes`, name]}
             />

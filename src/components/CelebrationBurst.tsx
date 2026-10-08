@@ -1,195 +1,53 @@
 'use client';
 
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { animate, createScope } from 'animejs';
 import { AttendanceStatus } from '@/lib/types';
+import './ui/celebration.css';
 
-/* ============================================================
-   CelebrationBurst
-   ------------------------------------------------------------
-   Imperative, decoupled celebration system.
-
-   Usage anywhere in the app:
-     import { triggerCelebration } from '@/components/CelebrationBurst';
-     triggerCelebration('PRESENT', e.clientX, e.clientY);
-
-   Then mount <CelebrationLayer /> once (layout.tsx) so the
-   fixed overlay can render the emoji + particle bursts.
-   ============================================================ */
-
-type CelebrationEvent = {
-  id: number;
-  status: AttendanceStatus;
-  x: number;
-  y: number;
-};
-
+type CelebrationEvent = { id: number; status: AttendanceStatus; x: number; y: number };
 type Listener = (event: CelebrationEvent) => void;
-
-let listeners: Listener[] = [];
+const listeners = new Set<Listener>();
 let eventCounter = 0;
 
-/** Fire a burst at a screen coordinate. Safe to call from any client component. */
+/** A short, quiet confirmation burst shared by attendance controls. */
 export function triggerCelebration(status: AttendanceStatus, x: number, y: number) {
-  if (typeof window === 'undefined') return;
-  const event: CelebrationEvent = { id: ++eventCounter, status, x, y };
-  listeners.forEach((fn) => fn(event));
+  if (typeof window === 'undefined' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const event = { id: ++eventCounter, status, x, y };
+  listeners.forEach(listener => listener(event));
 }
 
-function subscribe(listener: Listener): () => void {
-  listeners.push(listener);
-  return () => {
-    listeners = listeners.filter((fn) => fn !== listener);
-  };
-}
-
-/* ---------- Per-status flavour ---------- */
-
-interface BurstFlavour {
-  emojis: string[];
-  particleColor: string;
-  ringColor: string;
-  particleCount: number;
-}
-
-const FLAVOURS: Record<AttendanceStatus, BurstFlavour> = {
-  PRESENT: {
-    emojis: ['🎉', '✅', '⭐', '🎓', '💫'],
-    particleColor: 'rgb(52, 211, 153)',
-    ringColor: 'rgb(52, 211, 153)',
-    particleCount: 14,
-  },
-  ABSENT: {
-    emojis: ['❌', '😢', '📉', '💔'],
-    particleColor: 'rgb(248, 113, 113)',
-    ringColor: 'rgb(248, 113, 113)',
-    particleCount: 10,
-  },
-  CANCELLED: {
-    emojis: ['🚫', '🛑', '🧹'],
-    particleColor: 'rgb(161, 161, 170)',
-    ringColor: 'rgb(161, 161, 170)',
-    particleCount: 8,
-  },
-  UNMARKED: {
-    emojis: ['↩️'],
-    particleColor: 'rgb(161, 161, 170)',
-    ringColor: 'rgb(161, 161, 170)',
-    particleCount: 6,
-  },
+const colors: Record<AttendanceStatus, string> = {
+  PRESENT: '#3159f5', ABSENT: '#bc344f', CANCELLED: '#90601d', UNMARKED: '#70737c',
 };
 
-function seededRandom(seed: number) {
-  const value = Math.sin(seed * 9999.7) * 10000;
-  return value - Math.floor(value);
-}
-
-function Burst({ event, onDone }: { event: CelebrationEvent; onDone: () => void }) {
-  const flavour = FLAVOURS[event.status];
-  const emojiCount = event.status === 'PRESENT' ? 6 : event.status === 'ABSENT' ? 4 : 3;
-
-  // Pre-compute particle trajectories once per burst
-  const particles = Array.from({ length: flavour.particleCount }, (_, i) => {
-    const angle = (i / flavour.particleCount) * Math.PI * 2 + seededRandom(event.id + i) * 0.5;
-    const distance = 40 + seededRandom(event.id * 3 + i) * 70;
-    return {
-      dx: Math.cos(angle) * distance,
-      dy: Math.sin(angle) * distance - 20, // slight upward bias
-      size: 4 + seededRandom(event.id * 7 + i) * 6,
-    };
-  });
-
-  const emojis = Array.from({ length: emojiCount }, (_, i) => {
-    const angle = -Math.PI / 2 + (i / emojiCount) * Math.PI - Math.PI / 2 + (seededRandom(event.id * 11 + i) - 0.5) * 1.2;
-    const distance = 55 + seededRandom(event.id * 13 + i) * 65;
-    return {
-      char: flavour.emojis[Math.floor(seededRandom(event.id * 17 + i) * flavour.emojis.length)],
-      dx: Math.cos(angle) * distance,
-      dy: Math.sin(angle) * distance - 25,
-      rot: (seededRandom(event.id * 19 + i) - 0.5) * 120,
-      delay: i * 0.04,
-    };
-  });
-
+function Burst({ event, onDone }: { event: CelebrationEvent; onDone: (id: number) => void }) {
+  const root = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const timer = setTimeout(onDone, 1600);
-    return () => clearTimeout(timer);
-  }, [onDone]);
-
-  return (
-    <div
-      className="celebration-layer"
-      style={{ pointerEvents: 'none' }}
-      aria-hidden="true"
-    >
-      {/* Shockwave ring */}
-      <span
-        className="celebration-ring"
-        style={{ left: event.x, top: event.y, color: flavour.ringColor }}
-      />
-
-      {/* Particle dots */}
-      {particles.map((p, i) => (
-        <span
-          key={`p-${i}`}
-          className="celebration-particle"
-          style={
-            {
-              left: event.x,
-              top: event.y,
-              width: p.size,
-              height: p.size,
-              background: flavour.particleColor,
-              boxShadow: `0 0 6px ${flavour.particleColor}`,
-              '--dx': `${p.dx}px`,
-              '--dy': `${p.dy}px`,
-            } as CSSProperties
-          }
-        />
-      ))}
-
-      {/* Flying emojis */}
-      {emojis.map((e, i) => (
-        <span
-          key={`e-${i}`}
-          className="celebration-emoji"
-          style={
-            {
-              left: event.x,
-              top: event.y,
-              marginLeft: '-12px',
-              '--dx': `${e.dx}px`,
-              '--dy': `${e.dy}px`,
-              '--rot': `${e.rot}deg`,
-              animationDelay: `${e.delay}s`,
-            } as CSSProperties
-          }
-        >
-          {e.char}
-        </span>
-      ))}
-    </div>
-  );
+    const scope = createScope({ root }).add(() => {
+      root.current?.querySelectorAll('.confirmation-dot').forEach((dot, index) => {
+        const angle = index * Math.PI / 3 - Math.PI / 2;
+        const distance = 30 + (index % 2) * 9;
+        animate(dot, { x: [0, Math.cos(angle) * distance], y: [0, Math.sin(angle) * distance], opacity: [1, 0], scale: [1, .3], duration: 550, ease: 'out(3)' });
+      });
+      animate('.confirmation-ring', { scale: [1, 3], opacity: [.4, 0], duration: 450, ease: 'out(3)' });
+    });
+    const timer = window.setTimeout(() => onDone(event.id), 600);
+    return () => { window.clearTimeout(timer); scope.revert(); };
+  }, [event, onDone]);
+  return <div ref={root} className="confirmation-burst" style={{ left: event.x, top: event.y, color: colors[event.status] }} aria-hidden="true">
+    <span className="confirmation-ring" />
+    {Array.from({ length: 6 }, (_, index) => <span key={index} className="confirmation-dot" />)}
+  </div>;
 }
 
-/** Mount once near the app root. Renders celebration bursts on demand. */
 export function CelebrationLayer() {
   const [bursts, setBursts] = useState<CelebrationEvent[]>([]);
-
+  const remove = useCallback((id: number) => setBursts(previous => previous.filter(burst => burst.id !== id)), []);
   useEffect(() => {
-    return subscribe((event) => {
-      setBursts((prev) => [...prev, event]);
-    });
+    const listener: Listener = event => setBursts(previous => [...previous.slice(-7), event]);
+    listeners.add(listener);
+    return () => { listeners.delete(listener); };
   }, []);
-
-  return (
-    <>
-      {bursts.map((event) => (
-        <Burst
-          key={event.id}
-          event={event}
-          onDone={() => setBursts((prev) => prev.filter((b) => b.id !== event.id))}
-        />
-      ))}
-    </>
-  );
+  return <div className="confirmation-layer" aria-hidden="true">{bursts.map(event => <Burst key={event.id} event={event} onDone={remove} />)}</div>;
 }

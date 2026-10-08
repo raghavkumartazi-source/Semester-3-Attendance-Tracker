@@ -1,19 +1,19 @@
 /* ============================================================
    lib/theme.ts
    ------------------------------------------------------------
-   Bold 3D theme tokens for the cyberpunk academic interface.
+   Shared subject colors for the semester interface.
    ============================================================ */
 
-/** Subject accent map — bold, cyberpunk colors. */
+/** Subject accents maintain readable contrast on graphite surfaces. */
 export const SUBJECT_COLORS: Record<string, string> = {
-  'EC-201': '#91bfd2',
-  'EC-202': '#91bfd2',
-  'EC-203': '#91bfd2',
-  'EO-201': '#a0d5ad',
-  'EO-103': '#a0d5ad',
-  'MA-201': '#d5bc86',
-  'MO-201': '#d5a5b3',
-  'HLM': '#b7afd5',
+  'EC-201': '#a3b9ff',
+  'EC-202': '#a3b9ff',
+  'EC-203': '#a3b9ff',
+  'EO-201': '#9ad6b6',
+  'EO-103': '#9ad6b6',
+  'MA-201': '#e6bf79',
+  'MO-201': '#f0a6bc',
+  'HLM': '#c5b0ed',
 };
 
 /** Subject emoji map. */

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useReducedMotion } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Session } from '@/lib/types';
 import { getAttendanceTrends } from '@/lib/calculations';
@@ -11,13 +12,14 @@ interface Props {
 }
 
 export function AttendanceTrendChart({ sessions }: Props) {
+  const reduced = useReducedMotion();
   const data = useMemo(() => getAttendanceTrends(sessions), [sessions]);
 
   if (data.length === 0) {
     return (
       <div className="glass-panel rounded-2xl p-6 flex flex-col items-center justify-center text-center h-48">
-        <p className="text-sm font-semibold text-white/50 mb-1">No Data Yet</p>
-        <p className="text-xs text-white/30">Start marking attendance to see trends.</p>
+        <p className="text-sm font-semibold text-[color:var(--fg-muted)] mb-1">No Data Yet</p>
+        <p className="text-xs text-[color:var(--fg-muted)]">Start marking attendance to see trends.</p>
       </div>
     );
   }
@@ -29,10 +31,10 @@ export function AttendanceTrendChart({ sessions }: Props) {
   return (
     <div className="glass-panel rounded-2xl p-5 overflow-hidden relative">
       <div className="mb-4">
-        <h3 className="text-[11px] font-bold tracking-widest text-white/60 uppercase">
+        <h3 className="text-[11px] font-bold tracking-widest text-[color:var(--fg-muted)] uppercase">
           Attendance Trend
         </h3>
-        <p className="text-xl font-bold text-white mt-0.5">
+        <p className="text-xl font-bold text-[color:var(--fg)] mt-0.5">
           {latestPercentage.toFixed(1)}%
         </p>
       </div>
@@ -50,7 +52,7 @@ export function AttendanceTrendChart({ sessions }: Props) {
                 <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis 
               dataKey="date" 
               axisLine={false} 
@@ -62,27 +64,28 @@ export function AttendanceTrendChart({ sessions }: Props) {
                   return val;
                 }
               }}
-              tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 10 }}
+              tick={{ fill: 'var(--fg-muted)', fontSize: 10 }}
               minTickGap={20}
             />
             <YAxis 
               domain={[0, 100]} 
               axisLine={false} 
               tickLine={false}
-              tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 10 }}
+              tick={{ fill: 'var(--fg-muted)', fontSize: 10 }}
               ticks={[0, 50, 75, 100]}
             />
             <Tooltip
+              isAnimationActive={!reduced}
               contentStyle={{ 
-                backgroundColor: 'rgba(10, 10, 15, 0.9)', 
-                border: '1px solid rgba(255,255,255,0.1)',
+                backgroundColor: 'var(--bg-elevated)',
+                border: '1px solid var(--border)',
                 borderRadius: '12px',
-                color: '#fff',
+                color: 'var(--fg)',
                 fontSize: '12px',
-                backdropFilter: 'blur(10px)'
+                boxShadow: '0 4px 14px rgb(30 32 38 / 8%)',
               }}
-              itemStyle={{ color: '#fff', fontWeight: 'bold' }}
-              labelStyle={{ color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}
+              itemStyle={{ color: 'var(--fg)', fontWeight: 'bold' }}
+              labelStyle={{ color: 'var(--fg-muted)', marginBottom: '4px' }}
               labelFormatter={(label) => {
                 try {
                   return format(parseISO(label as string), 'MMMM d, yyyy');
@@ -100,6 +103,7 @@ export function AttendanceTrendChart({ sessions }: Props) {
               strokeWidth={3}
               fillOpacity={1} 
               fill={fillColor} 
+              isAnimationActive={!reduced}
               animationDuration={1500}
             />
           </AreaChart>

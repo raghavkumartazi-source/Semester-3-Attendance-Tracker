@@ -1,9 +1,10 @@
 'use client';
 export const dynamic = 'force-dynamic';
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useId, useState } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { SUBJECTS } from '@/lib/config';
 import { usePlanner } from '@/components/PlannerProvider';
+import Dialog from '@/components/Dialog';
 import { 
   SyllabusTopic, 
   TopicCoverage, 
@@ -43,6 +44,8 @@ const EXAM_TYPE_COLORS: Record<ExamType, string> = {
 };
 
 export default function PlannerPage() {
+  const formId = useId();
+  const reducedMotion = useReducedMotion();
   const { 
     topics, 
     coverage, 
@@ -538,29 +541,22 @@ export default function PlannerPage() {
       {/* Add Exam Modal */}
       <AnimatePresence>
         {showAddExam && (
-          <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center sm:p-4">
+          <Dialog label={editingExam ? 'Edit Exam' : 'Add Exam'} onClose={() => setShowAddExam(false)}>
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              onClick={() => setShowAddExam(false)}
-            />
-            <motion.div
-              initial={{ opacity: 0, y: '100%' }}
+              initial={{ opacity: 0, y: reducedMotion ? 0 : '100%' }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="relative w-full max-w-lg bg-[#12141a] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-white/10 flex flex-col max-h-[90dvh]"
+              exit={{ opacity: 0, y: reducedMotion ? 0 : '100%' }}
+              transition={reducedMotion ? { duration: 0 } : { type: 'spring', damping: 25, stiffness: 200 }}
+              className="relative w-full bg-[#12141a] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-white/10 flex flex-col max-h-[90dvh] overflow-hidden"
             >
               <div className="p-6 border-b border-white/5 shrink-0 flex justify-between items-center">
                 <h3 className="text-xl font-bold text-white/90">{editingExam ? 'Edit Exam' : 'Add Exam'}</h3>
-                <button onClick={() => setShowAddExam(false)} className="p-2 bg-white/5 hover:bg-white/10 rounded-full text-zinc-400 transition-colors">
-                  <XCircleIcon className="w-6 h-6" />
+                <button type="button" aria-label="Close dialog" onClick={() => setShowAddExam(false)} className="min-w-11 min-h-11 grid place-items-center bg-white/5 hover:bg-white/10 rounded-full text-zinc-400 transition-colors">
+                  <XCircleIcon className="w-6 h-6" aria-hidden="true" />
                 </button>
               </div>
               
-              <div className="p-6 overflow-y-auto">
+              <div className="p-6 min-h-0 overflow-y-auto overscroll-contain" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}>
                 <form 
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -585,8 +581,9 @@ export default function PlannerPage() {
                   className="space-y-4"
                 >
                   <div>
-                    <label className="block text-sm text-zinc-400 mb-1">Exam Type</label>
+                    <label htmlFor={`${formId}-exam-type`} className="block text-sm text-zinc-400 mb-1">Exam Type</label>
                     <select 
+                      id={`${formId}-exam-type`}
                       value={examFormData.exam_type}
                       onChange={e => setExamFormData(prev => ({ ...prev, exam_type: e.target.value as ExamType }))}
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500/50"
@@ -598,8 +595,9 @@ export default function PlannerPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm text-zinc-400 mb-1">Exam Name (Optional)</label>
+                    <label htmlFor={`${formId}-exam-name`} className="block text-sm text-zinc-400 mb-1">Exam Name (Optional)</label>
                     <input 
+                      id={`${formId}-exam-name`}
                       type="text"
                       value={examFormData.exam_name}
                       onChange={e => setExamFormData(prev => ({ ...prev, exam_name: e.target.value }))}
@@ -609,8 +607,9 @@ export default function PlannerPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm text-zinc-400 mb-1">Date</label>
+                    <label htmlFor={`${formId}-exam-date`} className="block text-sm text-zinc-400 mb-1">Date</label>
                     <input 
+                      id={`${formId}-exam-date`}
                       type="date"
                       required
                       value={examFormData.exam_date}
@@ -621,8 +620,9 @@ export default function PlannerPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm text-zinc-400 mb-1">Start Time (Optional)</label>
+                      <label htmlFor={`${formId}-exam-start-time`} className="block text-sm text-zinc-400 mb-1">Start Time (Optional)</label>
                       <input 
+                        id={`${formId}-exam-start-time`}
                         type="time"
                         value={examFormData.start_time}
                         onChange={e => setExamFormData(prev => ({ ...prev, start_time: e.target.value }))}
@@ -630,8 +630,9 @@ export default function PlannerPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-zinc-400 mb-1">End Time (Optional)</label>
+                      <label htmlFor={`${formId}-exam-end-time`} className="block text-sm text-zinc-400 mb-1">End Time (Optional)</label>
                       <input 
+                        id={`${formId}-exam-end-time`}
                         type="time"
                         value={examFormData.end_time}
                         onChange={e => setExamFormData(prev => ({ ...prev, end_time: e.target.value }))}
@@ -641,8 +642,9 @@ export default function PlannerPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm text-zinc-400 mb-1">Venue (Optional)</label>
+                    <label htmlFor={`${formId}-exam-venue`} className="block text-sm text-zinc-400 mb-1">Venue (Optional)</label>
                     <input 
+                      id={`${formId}-exam-venue`}
                       type="text"
                       value={examFormData.venue}
                       onChange={e => setExamFormData(prev => ({ ...prev, venue: e.target.value }))}
@@ -653,8 +655,9 @@ export default function PlannerPage() {
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm text-zinc-400 mb-1">Max Marks</label>
+                      <label htmlFor={`${formId}-exam-max-marks`} className="block text-sm text-zinc-400 mb-1">Max Marks</label>
                       <input 
+                        id={`${formId}-exam-max-marks`}
                         type="number"
                         min="0"
                         value={examFormData.max_marks}
@@ -663,8 +666,9 @@ export default function PlannerPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-zinc-400 mb-1">Weightage (%)</label>
+                      <label htmlFor={`${formId}-exam-weightage`} className="block text-sm text-zinc-400 mb-1">Weightage (%)</label>
                       <input 
+                        id={`${formId}-exam-weightage`}
                         type="number"
                         min="0"
                         max="100"
@@ -684,35 +688,28 @@ export default function PlannerPage() {
                 </form>
               </div>
             </motion.div>
-          </div>
+          </Dialog>
         )}
       </AnimatePresence>
       {/* Add Topic Modal */}
       <AnimatePresence>
         {showAddTopic && (
-          <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center sm:p-4">
+          <Dialog label={editingTopic ? 'Edit Topic' : 'Add Topic'} onClose={() => setShowAddTopic(false)}>
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              onClick={() => setShowAddTopic(false)}
-            />
-            <motion.div
-              initial={{ opacity: 0, y: '100%' }}
+              initial={{ opacity: 0, y: reducedMotion ? 0 : '100%' }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="relative w-full max-w-lg bg-[#12141a] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-white/10 flex flex-col max-h-[90dvh]"
+              exit={{ opacity: 0, y: reducedMotion ? 0 : '100%' }}
+              transition={reducedMotion ? { duration: 0 } : { type: 'spring', damping: 25, stiffness: 200 }}
+              className="relative w-full bg-[#12141a] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-white/10 flex flex-col max-h-[90dvh] overflow-hidden"
             >
               <div className="p-6 border-b border-white/5 shrink-0 flex justify-between items-center">
                 <h3 className="text-xl font-bold text-white/90">{editingTopic ? 'Edit Topic' : 'Add Topic'}</h3>
-                <button onClick={() => setShowAddTopic(false)} className="p-2 bg-white/5 hover:bg-white/10 rounded-full text-zinc-400 transition-colors">
-                  <XCircleIcon className="w-6 h-6" />
+                <button type="button" aria-label="Close dialog" onClick={() => setShowAddTopic(false)} className="min-w-11 min-h-11 grid place-items-center bg-white/5 hover:bg-white/10 rounded-full text-zinc-400 transition-colors">
+                  <XCircleIcon className="w-6 h-6" aria-hidden="true" />
                 </button>
               </div>
               
-              <div className="p-6 overflow-y-auto">
+              <div className="p-6 min-h-0 overflow-y-auto overscroll-contain" style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}>
                 <form 
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -741,8 +738,9 @@ export default function PlannerPage() {
                   className="space-y-4"
                 >
                   <div>
-                    <label className="block text-sm text-zinc-400 mb-1">Topic Name</label>
+                    <label htmlFor={`${formId}-topic-name`} className="block text-sm text-zinc-400 mb-1">Topic Name</label>
                     <input 
+                      id={`${formId}-topic-name`}
                       type="text"
                       required
                       value={topicFormData.topic_name}
@@ -752,10 +750,11 @@ export default function PlannerPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 items-end gap-4">
                     <div>
-                      <label className="block text-sm text-zinc-400 mb-1">Topic Code (Optional)</label>
+                      <label htmlFor={`${formId}-topic-code`} className="block text-sm text-zinc-400 mb-1">Topic Code (Optional)</label>
                       <input 
+                        id={`${formId}-topic-code`}
                         type="text"
                         value={topicFormData.topic_code}
                         onChange={e => setTopicFormData(prev => ({ ...prev, topic_code: e.target.value }))}
@@ -764,8 +763,9 @@ export default function PlannerPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-zinc-400 mb-1">Unit Number</label>
+                      <label htmlFor={`${formId}-topic-unit`} className="block text-sm text-zinc-400 mb-1">Unit Number</label>
                       <input 
+                        id={`${formId}-topic-unit`}
                         type="number"
                         min="1"
                         value={topicFormData.unit_number}
@@ -776,10 +776,11 @@ export default function PlannerPage() {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm text-zinc-400 mb-1">Hours</label>
+                      <label htmlFor={`${formId}-topic-hours`} className="block text-sm text-zinc-400 mb-1">Hours</label>
                       <input 
+                        id={`${formId}-topic-hours`}
                         type="number"
                         min="0.5"
                         step="0.5"
@@ -790,8 +791,9 @@ export default function PlannerPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-zinc-400 mb-1">Difficulty (1-5)</label>
+                      <label htmlFor={`${formId}-topic-difficulty`} className="block text-sm text-zinc-400 mb-1">Difficulty (1-5)</label>
                       <input 
+                        id={`${formId}-topic-difficulty`}
                         type="number"
                         min="1"
                         max="5"
@@ -802,8 +804,9 @@ export default function PlannerPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-zinc-400 mb-1">Weightage</label>
+                      <label htmlFor={`${formId}-topic-weightage`} className="block text-sm text-zinc-400 mb-1">Weightage</label>
                       <input 
+                        id={`${formId}-topic-weightage`}
                         type="number"
                         min="0"
                         max="100"
@@ -817,12 +820,12 @@ export default function PlannerPage() {
                   <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white/5">
                     <input
                       type="checkbox"
-                      id="isCore"
+                      id={`${formId}-topic-core`}
                       checked={topicFormData.is_core}
                       onChange={e => setTopicFormData(prev => ({ ...prev, is_core: e.target.checked }))}
                       className="w-5 h-5 rounded border-white/20 bg-white/5 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-[#12141a]"
                     />
-                    <label htmlFor="isCore" className="text-white/90">Mark as Core Topic</label>
+                    <label htmlFor={`${formId}-topic-core`} className="text-white/90">Mark as Core Topic</label>
                   </div>
 
                   <button
@@ -834,7 +837,7 @@ export default function PlannerPage() {
                 </form>
               </div>
             </motion.div>
-          </div>
+          </Dialog>
         )}
       </AnimatePresence>
     </div>

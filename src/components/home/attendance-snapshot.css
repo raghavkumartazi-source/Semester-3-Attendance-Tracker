@@ -1,0 +1,329 @@
+.pulse-attendance-card {
+  min-width: 0;
+  padding: 17px 18px 12px;
+  overflow: hidden;
+  color: var(--fg, #f4f4f6);
+  background: var(--bg-elevated, #191b20);
+  border: 1px solid var(--border, #303238);
+  border-radius: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .09);
+}
+
+.pulse-attendance-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 22px;
+  gap: 12px;
+}
+
+.pulse-attendance-heading h2 {
+  margin: 0;
+  color: var(--fg, #f4f4f6);
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -.03em;
+}
+
+.pulse-register-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-height: 44px;
+  margin-block: -11px;
+  color: var(--fg-muted, #a9adb8);
+  font-size: 11px;
+  transition: color 180ms ease;
+}
+
+.pulse-register-link svg,
+.pulse-attendance-risk svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+
+.pulse-register-link:hover {
+  color: var(--accent, #8098ff);
+}
+
+.pulse-attendance-body {
+  display: grid;
+  grid-template-columns: 148px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.pulse-attendance-gauge {
+  position: relative;
+  width: 148px;
+  height: 124px;
+}
+
+.pulse-attendance-gauge svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.pulse-gauge-track {
+  stroke: var(--border, #303238);
+}
+
+.pulse-gauge-fill {
+  stroke: var(--accent, #8098ff);
+}
+
+.pulse-gauge-target {
+  stroke: var(--fg, #f4f4f6);
+  opacity: .42;
+}
+
+.pulse-gauge-copy {
+  position: absolute;
+  inset: 39px 0 auto;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+.pulse-gauge-copy strong {
+  color: var(--fg, #f4f4f6);
+  font-size: 32px;
+  font-weight: 650;
+  letter-spacing: -.07em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.04;
+}
+
+.pulse-gauge-copy strong small {
+  margin-left: 2px;
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -.04em;
+}
+
+.pulse-gauge-copy > span {
+  margin-top: 5px;
+  color: var(--fg-muted, #a9adb8);
+  font-size: 10px;
+  letter-spacing: -.015em;
+}
+
+.pulse-gauge-target-label {
+  position: absolute;
+  inset: auto 0 1px;
+  color: var(--fg-muted, #a9adb8);
+  font-size: 10px;
+  text-align: center;
+}
+
+.pulse-attendance-details {
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.pulse-attendance-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--accent, #8098ff);
+  font-size: 11px;
+  font-weight: 550;
+  line-height: 1.4;
+}
+
+.pulse-attendance-status i,
+.pulse-attendance-counts dt i,
+.pulse-attendance-risk i {
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.pulse-status-attention {
+  color: #e8b779;
+}
+
+.pulse-attendance-counts {
+  display: flex;
+  gap: 25px;
+  margin: 14px 0 0;
+}
+
+.pulse-attendance-counts dt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--fg-muted, #a9adb8);
+  font-size: 11px;
+}
+
+.pulse-attendance-counts dt .pulse-present-dot {
+  background: var(--accent, #8098ff);
+}
+
+.pulse-attendance-counts dt .pulse-absent-dot {
+  background: var(--fg-subtle, #9398a6);
+}
+
+.pulse-attendance-counts dd {
+  margin: 5px 0 0;
+  color: var(--fg, #f4f4f6);
+  font-size: 22px;
+  font-weight: 550;
+  line-height: 1;
+  letter-spacing: -.045em;
+  font-variant-numeric: tabular-nums;
+}
+
+.pulse-attendance-through {
+  margin: 12px 0 0;
+  color: var(--fg-muted, #a9adb8);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.pulse-history-scrubber {
+  position: relative;
+  padding-bottom: 10px;
+  margin-top: -1px;
+}
+
+.pulse-history-scrubber input {
+  display: block;
+  width: 100%;
+  height: 44px;
+  margin: -4px 0;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  cursor: ew-resize;
+  touch-action: pan-y;
+}
+
+.pulse-history-scrubber input::-webkit-slider-runnable-track {
+  height: 3px;
+  background: var(--border, #303238);
+  border-radius: 4px;
+}
+
+.pulse-history-scrubber input::-moz-range-track {
+  height: 3px;
+  background: var(--border, #303238);
+  border-radius: 4px;
+}
+
+.pulse-history-scrubber input::-webkit-slider-thumb {
+  width: 14px;
+  height: 14px;
+  margin-top: -5.5px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--accent, #8098ff);
+  border: 3px solid var(--bg-elevated, #191b20);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--border, #303238), 0 2px 5px rgba(0, 0, 0, .2);
+}
+
+.pulse-history-scrubber input::-moz-range-thumb {
+  width: 9px;
+  height: 9px;
+  background: var(--accent, #8098ff);
+  border: 3px solid var(--bg-elevated, #191b20);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--border, #303238);
+}
+
+.pulse-history-labels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: -4px;
+  color: var(--fg-muted, #a9adb8);
+  font-size: 10px;
+}
+
+.pulse-history-labels span:nth-child(2) {
+  color: var(--fg-subtle, #9398a6);
+  font-size: 9px;
+}
+
+.pulse-history-empty {
+  min-height: 33px;
+  display: flex;
+  align-items: center;
+  margin: 2px 0 0;
+  color: var(--fg-muted, #a9adb8);
+  font-size: 11px;
+}
+
+.pulse-attendance-footer {
+  border-top: 1px solid var(--border, #303238);
+  padding-top: 9px;
+}
+
+.pulse-attendance-footer > p {
+  margin: 0;
+  color: var(--fg-muted, #a9adb8);
+  font-size: 10px;
+  line-height: 19px;
+}
+
+.pulse-attendance-risk {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  margin-block: -12.5px;
+  color: #e8b779;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.pulse-attendance-risk > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.pulse-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+.pulse-register-link:focus-visible,
+.pulse-attendance-risk:focus-visible,
+.pulse-history-scrubber input:focus-visible {
+  outline: 2px solid var(--accent, #8098ff);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+@media (max-width: 359px) {
+  .pulse-attendance-card { padding-inline: 15px; }
+  .pulse-attendance-body { grid-template-columns: 133px minmax(0, 1fr); gap: 10px; }
+  .pulse-attendance-gauge { width: 133px; }
+  .pulse-attendance-counts { gap: 15px; }
+  .pulse-attendance-status { font-size: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-register-link { transition: none; }
+}

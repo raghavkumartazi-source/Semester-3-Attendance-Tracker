@@ -1,0 +1,83 @@
+.v2-dock {
+  position: fixed;
+  z-index: 50;
+  left: calc((100% + env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) / 2);
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  width: min(480px, calc(100% - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+  transform: translateX(-50%);
+  padding: 0;
+  transition: opacity 160ms ease, visibility 160ms ease;
+}
+
+.v2-dock-inner {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  position: relative;
+  isolation: isolate;
+  padding: 5px;
+  border-radius: 28px;
+  border: 1px solid #ffffff28;
+  background: #1e2026;
+  box-shadow: 0 10px 30px #0006, 0 2px 6px #0004, inset 0 1px 0 #ffffff0c;
+}
+
+.v2-dock-plate {
+  position: absolute;
+  z-index: -1;
+  top: 5px;
+  left: 5px;
+  bottom: 5px;
+  width: calc((100% - 10px) / 5);
+  border-radius: 22px;
+  background: #3159f5;
+  box-shadow: inset 0 1px 0 #ffffff26, 0 3px 8px #0002;
+  transform: translateX(calc(var(--dock-index, 0) * 100%));
+  pointer-events: none;
+}
+
+.v2-dock:not(.has-active-tab) .v2-dock-plate { visibility: hidden; opacity: 0; }
+
+.v2-dock-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 54px;
+  padding: 5px 0;
+  border-radius: 22px;
+  text-decoration: none;
+  color: #b4b6c2;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: color 150ms ease;
+}
+
+.v2-dock-item.is-current { color: #fff; }
+.v2-dock-item:hover { color: #fff; }
+.v2-dock-item:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+.v2-dock-icon { display: block; width: 21px; height: 21px; transform-origin: 50% 70%; }
+.v2-dock-icon svg { display: block; width: 100%; height: 100%; stroke-width: 1.8; }
+.v2-dock-label { font-size: 11px; font-weight: 600; line-height: 1.2; letter-spacing: -.12px; white-space: nowrap; }
+
+.v2-page-scene { min-width: 0; }
+.v2-page-scene > :not(.dashboard) { animation: none; }
+
+@media (max-width: 359px) {
+  .v2-dock { width: calc(100% - 16px); }
+  .v2-dock-label { font-size: 10px; }
+}
+
+@media (max-width: 767px) {
+  html:has(input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="color"]):focus, textarea:focus, select:focus) .v2-dock { opacity: 0; visibility: hidden; pointer-events: none; }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .v2-dock { bottom: calc(6px + env(safe-area-inset-bottom, 0px)); }
+  .v2-dock-item { min-height: 48px; gap: 2px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v2-dock, .v2-dock-item { transition: none; }
+}

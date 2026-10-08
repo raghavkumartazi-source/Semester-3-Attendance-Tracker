@@ -1,0 +1,5 @@
+.confirmation-layer { position: fixed; inset: 0; z-index: 120; pointer-events: none; overflow: hidden; }
+.confirmation-burst { position: absolute; width: 0; height: 0; }
+.confirmation-dot { position: absolute; width: 5px; height: 5px; border-radius: 50%; margin: -2.5px; background: currentColor; }
+.confirmation-ring { position: absolute; width: 18px; height: 18px; border: 1px solid currentColor; border-radius: 50%; margin: -9px; opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .confirmation-layer { display: none; } }

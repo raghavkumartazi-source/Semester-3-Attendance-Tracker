@@ -1,34 +1,24 @@
 'use client';
 
-import Link from 'next/link';
-import { motion, useReducedMotion } from 'framer-motion';
+import { useEffect, useRef } from 'react';
+import { animate, createScope, stagger } from 'animejs';
 import { timeUtils } from '@/lib/timeUtils';
-import { AnimatedNumber, TiltCard } from '../ui/Motion';
 
 export function TodayHeader({ now }: { now: Date }) {
-  const reduced = useReducedMotion();
-  const progress = timeUtils.getSemesterProgress(now);
+  const root = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const scope = createScope({ root, mediaQueries: { reduced: '(prefers-reduced-motion: reduce)' } }).add(self => {
+      if (!self || self.matches.reduced) return;
+      animate('.day-heading-line', { y: [22, 0], opacity: [.25, 1], duration: 750, delay: stagger(90), ease: 'out(4)' });
+      animate('.day-heading-star', { rotate: [-90, 0], scale: [.5, 1], duration: 1000, ease: 'outElastic(1, .7)' });
+    });
+    return () => scope.revert();
+  }, []);
   return (
-    <div className="today-intro compact-intro">
-      <div className="intro-copy">
-        <p className="greeting-eyebrow">{timeUtils.getGreeting(now)} <span className="greeting-spark" aria-hidden="true">✦</span></p>
-        <h1>Your day, <em>in focus.</em></h1>
-        <p className="intro-date">{now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })}<span aria-hidden="true">·</span>Day {progress.currentDay}</p>
-      </div>
-      <Link href="/planner" className="intro-progress" aria-label={`Semester ${Math.round(progress.percentage)} percent complete. Open exam planner`}>
-        <TiltCard className="mini-orbit">
-          <div className="orbital-body" aria-hidden="true">
-            <div className="orbital-edge" />
-            <svg className="orbital-ring" viewBox="0 0 160 160">
-              <defs><linearGradient id="semester-ring" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#e5ffb0" /><stop offset=".5" stopColor="#b6ed79" /><stop offset="1" stopColor="#68a64a" /></linearGradient></defs>
-              <circle cx="80" cy="80" r="63" fill="none" stroke="#343551" strokeWidth="13" />
-              <motion.circle cx="80" cy="80" r="63" fill="none" stroke="url(#semester-ring)" strokeWidth="13" strokeLinecap="round" pathLength="100" strokeDasharray="100" initial={reduced ? false : { strokeDashoffset: 100 }} animate={{ strokeDashoffset: 100 - progress.percentage }} transition={{ duration: 1.2, ease: [.22, 1, .36, 1] }} />
-            </svg>
-            <div className="orbital-center"><strong><AnimatedNumber value={progress.percentage} /><small>%</small></strong></div>
-          </div>
-        </TiltCard>
-        <span className="intro-progress-label">Semester</span>
-      </Link>
-    </div>
+    <header ref={root} className="day-intro">
+      <div className="day-dateline"><span>{now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</span><span className="day-term">Semester III <i aria-hidden="true" /></span></div>
+      <h1><span className="day-heading-line">Make room</span><span className="day-heading-line">for <em>progress.</em><svg className="day-heading-star" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 0 24 14 36 6 28 18 40 20 26 24 34 36 22 28 20 40 16 26 4 34 12 22 0 20 14 16 6 4 18 12Z" fill="currentColor" /></svg></span></h1>
+      <p>{timeUtils.getGreeting(now)}. A little focus goes a long way.</p>
+    </header>
   );
 }
