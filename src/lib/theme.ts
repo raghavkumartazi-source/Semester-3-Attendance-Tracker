@@ -4,16 +4,16 @@
    Shared subject colors for the semester interface.
    ============================================================ */
 
-/** Subject accents maintain readable contrast on graphite surfaces. */
+/** Subject accents keep their identity within the After Hours palette. */
 export const SUBJECT_COLORS: Record<string, string> = {
-  'EC-201': '#a3b9ff',
-  'EC-202': '#a3b9ff',
-  'EC-203': '#a3b9ff',
-  'EO-201': '#9ad6b6',
-  'EO-103': '#9ad6b6',
-  'MA-201': '#e6bf79',
-  'MO-201': '#f0a6bc',
-  'HLM': '#c5b0ed',
+  'EC-201': '#eab5b1',
+  'EC-202': '#d8a7c8',
+  'EC-203': '#c5b0d8',
+  'EO-201': '#add5ce',
+  'EO-103': '#bad8c7',
+  'MA-201': '#eec39f',
+  'MO-201': '#dfaab6',
+  'HLM': '#d4c1e5',
 };
 
 /** Subject emoji map. */

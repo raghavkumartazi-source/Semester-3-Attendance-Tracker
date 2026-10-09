@@ -1,0 +1,97 @@
+.liquid-button {
+  --liquid-x: 50%;
+  --liquid-y: 30%;
+  --liquid-rx: 0deg;
+  --liquid-ry: 0deg;
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 12px 20px;
+  gap: 8px;
+  border: 0;
+  border-radius: 18px;
+  color: #442b39;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: .01em;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: color 180ms ease;
+}
+
+.liquid-button--full { width: 100%; }
+.liquid-button__shell {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(155deg, #fce0ce 0%, #edbbad 34%, #db9b93 71%, #d48f8b 100%);
+  border: 1px solid rgb(255 227 211 / 70%);
+  box-shadow: inset 0 1px 1px rgb(255 245 226 / 84%), inset 0 -3px 5px rgb(100 48 68 / 17%), 0 5px 0 #8b52604d, 0 9px 22px #10091035;
+  overflow: hidden;
+  transform: perspective(650px) rotateX(var(--liquid-rx)) rotateY(var(--liquid-ry));
+  transition: transform 250ms cubic-bezier(.2,.8,.2,1), box-shadow 250ms ease;
+  backface-visibility: visible;
+}
+
+.liquid-button__caustic {
+  position: absolute;
+  inset: -60%;
+  background: radial-gradient(ellipse at var(--liquid-x) var(--liquid-y), #fff7e6b0 0%, #fff7e620 17%, transparent 42%), conic-gradient(from 220deg at 48% 45%, transparent 0 34%, #fff4e65c 42%, transparent 50% 76%, #a8577530 86%, transparent 95%);
+  transform: rotate(-12deg);
+  transition: filter 300ms ease;
+}
+
+.liquid-button__glint {
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  top: 3px;
+  height: 40%;
+  border-top: 1px solid rgb(255 249 230 / 78%);
+  border-radius: 50%;
+  background: linear-gradient(#fff9e624, transparent);
+  opacity: .85;
+}
+
+.liquid-button__effects { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; pointer-events: none; }
+.liquid-button__ripple { position: absolute; left: 50%; top: 50%; width: 240px; height: 240px; border: 1px solid rgb(255 238 208 / 75%); border-radius: 50%; box-shadow: 0 0 0 8px #fff1d919, 0 0 0 16px #fff1d91a, inset 0 0 18px #fff1d934; opacity: 0; }
+.liquid-button__stars { display: block; width: 100%; height: 100%; opacity: .9; }
+.liquid-button__label { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: inherit; z-index: 1; }
+.liquid-button__label > svg { flex-shrink: 0; width: 18px; height: 18px; }
+
+.liquid-button:hover .liquid-button__shell,
+.liquid-button:focus-visible .liquid-button__shell {
+  transform: perspective(650px) translateY(-2px) rotateX(var(--liquid-rx)) rotateY(var(--liquid-ry));
+  box-shadow: inset 0 1px 1px rgb(255 245 226 / 84%), inset 0 -3px 5px rgb(100 48 68 / 17%), 0 7px 0 #8b526038, 0 14px 25px #10091040;
+}
+.liquid-button:focus-visible { outline: 2px solid #f4cfb8; outline-offset: 5px; }
+.liquid-button:disabled,
+.liquid-button[aria-disabled="true"] { opacity: .48; cursor: not-allowed; }
+.liquid-button:disabled .liquid-button__shell { transform: none; }
+
+.liquid-button--quiet { color: #f3dfd6; }
+.liquid-button--quiet .liquid-button__shell { background: linear-gradient(145deg, #6c4658, #462d3e 43%, #352532); border-color: #9e677a70; box-shadow: inset 0 1px 1px #f8cfbc40, inset 0 -3px 4px #120a1850, 0 4px 0 #110b1650, 0 9px 20px #10091038; }
+.liquid-button--quiet .liquid-button__caustic { opacity: .3; }
+.liquid-button--quiet .liquid-button__glint { opacity: .35; }
+.liquid-button--starfield { color: #f3dfd6; border-radius: 20px; }
+.liquid-button--starfield .liquid-button__shell { background: radial-gradient(ellipse at var(--liquid-x) 0%, #70414f80, transparent 70%), linear-gradient(150deg, #462d3e, #271c29); border-color: #b274806b; box-shadow: inset 0 1px 1px #f8cfbc36, inset 0 -1px 2px #140b1b, 0 5px 0 #160e1b55, 0 8px 20px #10091038; }
+.liquid-button--starfield .liquid-button__caustic { opacity: .12; }
+.liquid-button--starfield .liquid-button__glint { opacity: .2; }
+.liquid-button--quiet:hover .liquid-button__shell,
+.liquid-button--starfield:hover .liquid-button__shell { box-shadow: inset 0 1px 1px #f8cfbc60, inset 0 -3px 4px #120a1850, 0 6px 0 #110b1640, 0 11px 25px #10091050, 0 0 20px #d68f9020; }
+.liquid-button:is(:disabled, [aria-disabled="true"]) .liquid-button__shell { transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-button, .liquid-button__shell, .liquid-button__caustic { transition: none; }
+  .liquid-button:hover .liquid-button__shell, .liquid-button:focus-visible .liquid-button__shell { transform: none; }
+}

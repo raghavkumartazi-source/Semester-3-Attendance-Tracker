@@ -1,5 +1,7 @@
 'use client';
 
+import { LiquidButton } from '../ui/LiquidButton';
+
 import { useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
@@ -97,7 +99,7 @@ export function TodayTimeline({ now }: { now: Date }) {
           )}
         </motion.div>
       </AnimatePresence>
-      {displayedDate === today && <motion.button whileTap={reduced ? undefined : { scale: .97 }} className="plan-action mt-3 w-full flex items-center justify-center gap-2 py-3 text-sm" onClick={() => setPlan(generateSmartPlan(tasks, classes, work))}><SparklesIcon className="w-4 h-4" aria-hidden="true" /> Plan my study time</motion.button>}
+      {displayedDate === today && <LiquidButton variant="starfield" fullWidth className="plan-action mt-3" onClick={() => setPlan(generateSmartPlan(tasks, classes, work))}><SparklesIcon className="w-4 h-4" aria-hidden="true" /> Plan my study time</LiquidButton>}
       {plan && <SmartPlanReviewSheet plan={plan} tasks={tasks} onClose={() => setPlan(null)} />}
     </section>
   );

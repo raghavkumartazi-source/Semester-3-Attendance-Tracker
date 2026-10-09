@@ -6,6 +6,8 @@ import { Task } from '@/lib/types';
 import { timeUtils } from '@/lib/timeUtils';
 import { TaskItem } from './TaskItem';
 import { AddTaskSheet } from '../home/AddTaskSheet';
+import Dialog from '../Dialog';
+import { LiquidButton } from '../ui/LiquidButton';
 
 export default function TasksDashboard() {
   const { tasks, updateTask, deleteTask } = useTasks();
@@ -70,17 +72,18 @@ export default function TasksDashboard() {
           <h1>Tasks</h1>
           <p className="page-subtitle">{todayDateStr}</p>
         </div>
-        <button 
+        <LiquidButton variant="starfield"
           onClick={() => {
             setTaskToEdit(undefined);
             setIsAddSheetOpen(true);
           }}
-          aria-label="Add task" className="w-11 h-11 rounded-[14px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center hover:bg-emerald-500/20 active:scale-90 transition-all shadow-[0_0_15px_rgba(16,185,129,0.15)]"
+          aria-label="Add task" className="task-add-action"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
           </svg>
-        </button>
+          <span>New task</span>
+        </LiquidButton>
       </div>
 
       {/* Overview */}
@@ -108,7 +111,7 @@ export default function TasksDashboard() {
         <div className="empty-state mb-6">
           <h2 className="text-lg text-white">A clear list. A fresh start.</h2>
           <p>Add an assignment, a study goal or something you want to finish.</p>
-          <button type="button" className="ink-btn px-5 py-3 mt-5" onClick={() => { setTaskToEdit(undefined); setIsAddSheetOpen(true); }}>Add your first task</button>
+          <LiquidButton type="button" className="mt-5" onClick={() => { setTaskToEdit(undefined); setIsAddSheetOpen(true); }}>Add your first task</LiquidButton>
         </div>
       )}
 
@@ -212,9 +215,8 @@ export default function TasksDashboard() {
       )}
 
       {taskToDelete && (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center animate-fade-in-up" style={{ animationDuration: '0.2s' }}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setTaskToDelete(undefined)} />
-          <div className="relative w-full max-w-sm bg-[#111320] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-2xl border border-white/10 slide-up">
+        <Dialog label="Delete task" onClose={() => setTaskToDelete(undefined)}>
+          <div className="relative w-full max-w-sm mx-auto bg-[#111320] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-2xl border border-white/10 slide-up">
             <h3 className="text-lg font-bold text-white mb-2">Delete Task?</h3>
             <p className="text-sm text-white/60 mb-6">Are you sure you want to delete &quot;{taskToDelete.title}&quot;?</p>
             <div className="flex gap-3">
@@ -235,7 +237,7 @@ export default function TasksDashboard() {
               </button>
             </div>
           </div>
-        </div>
+        </Dialog>
       )}
     </div>
   );

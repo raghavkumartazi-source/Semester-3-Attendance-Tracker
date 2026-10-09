@@ -1,6 +1,7 @@
 'use client';
 
-import { useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Task } from '@/lib/types';
 import { timeUtils } from '@/lib/timeUtils';
 import { SUBJECTS } from '@/lib/config';
@@ -10,6 +11,23 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: { task: Task, o
   const [menuOpen, setMenuOpen] = useState(false);
   const menuId = useId();
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, right: 20 });
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    menuRef.current?.querySelector<HTMLButtonElement>('button')?.focus({ preventScroll: true });
+    const closeForViewportChange = () => {
+      setMenuOpen(false);
+      menuButtonRef.current?.focus({ preventScroll: true });
+    };
+    window.addEventListener('resize', closeForViewportChange);
+    window.addEventListener('scroll', closeForViewportChange, true);
+    return () => {
+      window.removeEventListener('resize', closeForViewportChange);
+      window.removeEventListener('scroll', closeForViewportChange, true);
+    };
+  }, [menuOpen]);
   const isOverdue = timeUtils.isOverdue(task.due_at);
   const isToday = timeUtils.isToday(task.due_at);
   const isTomorrow = timeUtils.isTomorrow(task.due_at);
@@ -113,6 +131,14 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: { task: Task, o
           aria-controls={menuOpen ? menuId : undefined}
           onClick={(e) => {
             e.stopPropagation();
+            if (!menuOpen) {
+              const bounds = e.currentTarget.getBoundingClientRect();
+              const menuWidth = Math.min(160, window.innerWidth - 40);
+              setMenuPosition({
+                top: bounds.bottom + 94 <= window.innerHeight - 12 ? bounds.bottom + 4 : Math.max(12, bounds.top - 94),
+                right: Math.max(20, Math.min(window.innerWidth - menuWidth - 20, window.innerWidth - bounds.right)),
+              });
+            }
             setMenuOpen(!menuOpen);
           }}
           className="w-11 h-11 flex items-center justify-center text-white/50 hover:text-white/80 transition-colors rounded-xl hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
@@ -122,14 +148,20 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: { task: Task, o
           </svg>
         </button>
 
-        {menuOpen && (
+        {menuOpen && createPortal(
           <>
-            <button type="button" tabIndex={-1} aria-label="Close task actions" className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-            <div id={menuId} role="group" aria-label={`Actions for ${task.title}`} className="absolute right-0 top-full mt-1 w-40 max-w-[calc(100vw-40px)] bg-[#1a1d24] border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in-up" style={{ animationDuration: '0.15s' }}>
+            <button type="button" tabIndex={-1} aria-label="Close task actions" className="fixed inset-0 z-40" onPointerDown={event => event.preventDefault()} onClick={() => {
+              setMenuOpen(false);
+              menuButtonRef.current?.focus({ preventScroll: true });
+            }} />
+            <div ref={menuRef} id={menuId} role="group" aria-label={`Actions for ${task.title}`} className="fixed w-40 max-w-[calc(100vw-40px)] bg-[#1a1d24] border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in-up" style={{ ...menuPosition, animationDuration: '0.15s' }} onBlur={event => {
+              if (!event.currentTarget.contains(event.relatedTarget)) setMenuOpen(false);
+            }}>
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
+                  menuButtonRef.current?.focus({ preventScroll: true });
                   setMenuOpen(false);
                   onEdit();
                 }}
@@ -141,6 +173,7 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: { task: Task, o
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
+                  menuButtonRef.current?.focus({ preventScroll: true });
                   setMenuOpen(false);
                   onDelete();
                 }}
@@ -149,7 +182,7 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: { task: Task, o
                 Delete
               </button>
             </div>
-          </>
+          </>, document.body
         )}
       </div>
     </div>

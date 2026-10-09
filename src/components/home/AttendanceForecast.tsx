@@ -4,6 +4,7 @@ import { Subject, Session } from '@/lib/types';
 import { getSubjectAttendance, calculateStatus, getStatusColor } from '@/lib/calculations';
 import { useMemo } from 'react';
 import { SEMESTER_END } from '@/lib/config';
+import { timeUtils } from '@/lib/timeUtils';
 
 interface Props {
   subjects: Subject[];
@@ -11,12 +12,13 @@ interface Props {
 }
 
 export default function AttendanceForecast({ subjects, sessions }: Props) {
+  const today = timeUtils.getLocalISODate();
   const forecasts = useMemo(() => {
     return subjects.map(subject => {
-      const subjectSessions = sessions.filter(s => s.subjectCode === subject.code);
+      const subjectSessions = sessions.filter(s => s.subjectCode === subject.code && s.date <= today);
       const stats = getSubjectAttendance(subjectSessions);
       const unmarkedCount = sessions.filter(
-        s => s.subjectCode === subject.code && s.status === 'UNMARKED'
+        s => s.subjectCode === subject.code && s.date >= today && s.status === 'UNMARKED'
       ).length;
       
       const totalFuture = stats.totalConducted + unmarkedCount;
@@ -43,7 +45,7 @@ export default function AttendanceForecast({ subjects, sessions }: Props) {
         trendStatus: calculateStatus(trendCasePresent, totalFuture - trendCasePresent)
       };
     }).filter(f => f.unmarkedCount > 0);
-  }, [subjects, sessions]);
+  }, [subjects, sessions, today]);
 
   if (forecasts.length === 0) return null;
 
@@ -59,7 +61,7 @@ export default function AttendanceForecast({ subjects, sessions }: Props) {
       <div className="grid grid-cols-1 gap-3">
         {forecasts.map(f => {
           const statusColor = getStatusColor(f.trendStatus);
-          const currentPercentage = f.stats.percentage ?? 0;
+          const currentPercentage = f.stats.percentage;
           
           return (
             <div key={f.subject.code} className="glass-elevated rounded-[18px] p-4 relative overflow-hidden group">
@@ -70,15 +72,16 @@ export default function AttendanceForecast({ subjects, sessions }: Props) {
                   <h3 className="text-sm font-bold text-white drop-shadow-sm flex items-center gap-2">
                     {f.subject.code}
                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                      currentPercentage === null ? 'bg-white/5 text-white/60' :
                       f.trendStatus === 'SAFE' ? 'bg-emerald-500/10 text-emerald-400' :
                       f.trendStatus === 'WARNING' ? 'bg-amber-500/10 text-amber-400' :
                       'bg-red-500/10 text-red-400'
                     }`}>
-                      {f.trendCase}% Projected
+                      {currentPercentage === null ? 'Awaiting records' : `${f.trendCase}% Projected`}
                     </span>
                   </h3>
                   <p className="text-[11px] text-white/50 mt-1">
-                    At your current rate ({currentPercentage}%), you will end the semester at {f.trendCase}%.
+                    {currentPercentage === null ? 'Mark a class to start your attendance projection.' : `If you keep your current rate (${Math.round(currentPercentage)}%), your projected attendance is ${f.trendCase}%.`}
                   </p>
                 </div>
               </div>
@@ -97,6 +100,7 @@ export default function AttendanceForecast({ subjects, sessions }: Props) {
           );
         })}
       </div>
+      <p className="text-xs text-white/50">Scenarios use remaining unmarked classes from today onward.</p>
     </div>
   );
 }

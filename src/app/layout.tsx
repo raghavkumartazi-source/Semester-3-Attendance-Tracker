@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Manrope } from 'next/font/google';
+import { DM_Sans, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import { AttendanceProvider } from '@/components/AttendanceProvider';
 import { TaskProvider } from '@/components/TaskProvider';
@@ -11,8 +11,10 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import PageTransition from '@/components/PageTransition';
 import { CelebrationLayer } from '@/components/CelebrationBurst';
 import AppHeader from '@/components/AppHeader';
+import { AfterHoursBackdrop } from '@/components/ui/AfterHoursBackdrop';
 
-const manrope = Manrope({ subsets: ['latin'], variable: '--font-ui' });
+const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-ui' });
+const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-heading' });
 
 export const metadata: Metadata = {
   title: '3rd Sem Tracker',
@@ -33,7 +35,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#101113',
+  themeColor: '#211820',
 };
 
 export default function RootLayout({
@@ -43,7 +45,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${manrope.className} ${manrope.variable} antialiased`}>
+      <body className={`${dmSans.className} ${dmSans.variable} ${spaceGrotesk.variable} antialiased`}>
+        <AfterHoursBackdrop />
         <a className="skip-link" href="#main-content">Skip to content</a>
         <AppHeader />
 

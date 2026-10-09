@@ -1,87 +1,80 @@
 'use client';
 
+import { useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
+import { motion, useInView, useReducedMotion } from 'framer-motion';
 import { useAttendance } from '@/components/AttendanceProvider';
-import { Session } from '@/lib/types';
-import { motion } from 'framer-motion';
+import { SUBJECTS } from '@/lib/config';
+import { timeUtils } from '@/lib/timeUtils';
+import { attendanceHeatmap, chartDate, dateLabel, type HeatmapDay } from '../charts/attendance-chart-data';
+import '../charts/attendance-charts.css';
+
+const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const ease = [.22, 1, .36, 1] as const;
+
+function dayDescription(day: HeatmapDay) {
+  return `${dateLabel(day.date, true)}. ${day.present} present, ${day.absent} absent${day.cancelled ? `, ${day.cancelled} cancelled` : ''}${day.unmarked ? `, ${day.unmarked} unmarked` : ''}.`;
+}
 
 export function AttendanceHeatmap() {
   const { sessions } = useAttendance();
+  const root = useRef<HTMLElement>(null);
+  const visible = useInView(root, { amount: .15 });
+  const revealed = useInView(root, { once: true, amount: .15 });
+  const reduced = useReducedMotion();
+  const id = useId().replace(/:/g, '');
+  const [range, setRange] = useState(90);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [hoveredDate, setHoveredDate] = useState<string | null>(null);
+  const [hoveredLevel, setHoveredLevel] = useState<number | null>(null);
+  const today = timeUtils.getLocalISODate();
+  const { cells, columns, start } = useMemo(() => attendanceHeatmap(sessions, today, range), [sessions, today, range]);
+  const lastRecorded = cells.filter(day => day.inRange && day.present + day.absent > 0).at(-1);
+  const current = cells.find(day => day.inRange && day.date === (hoveredDate ?? selectedDate ?? lastRecorded?.date ?? today)) ?? cells.find(day => day.date === today)!;
+  const activeDate = hoveredDate ?? selectedDate;
+  const totalPresent = cells.reduce((sum, day) => sum + day.present, 0);
+  const totalAbsent = cells.reduce((sum, day) => sum + day.absent, 0);
+  const recordedDays = cells.filter(day => day.present + day.absent > 0).length;
+  const monthLabels = cells.filter(day => day.inRange && (day.date === start || chartDate(day.date).getDate() === 1)).map(day => ({ column: day.column, label: chartDate(day.date).toLocaleDateString('en-IN', { month: 'short' }) }));
+  const daySessions = sessions.filter(session => session.date === current.date && (session.status === 'PRESENT' || session.status === 'ABSENT'));
+  const keyboardSelect = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const offset: Record<string, number> = { ArrowLeft: -7, ArrowRight: 7, ArrowUp: -1, ArrowDown: 1 };
+    let next = event.key === 'Home' ? cells.findIndex(day => day.inRange) : event.key === 'End' ? cells.findLastIndex(day => day.inRange) : index + (offset[event.key] ?? 0);
+    if (!(event.key in offset) && event.key !== 'Home' && event.key !== 'End') return;
+    event.preventDefault();
+    next = Math.max(0, Math.min(cells.length - 1, next));
+    while (next >= 0 && next < cells.length && !cells[next].inRange) next += next < index ? -1 : 1;
+    if (!cells[next]?.inRange) return;
+    setHoveredDate(null);
+    setSelectedDate(cells[next].date);
+    root.current?.querySelector<HTMLButtonElement>(`[data-date="${cells[next].date}"]`)?.focus();
+  };
 
-  if (!sessions || sessions.length === 0) return null;
-
-  // Generate the last 90 days
-  const today = new Date();
-  const days = [];
-  for (let i = 89; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    days.push(d.toISOString().split('T')[0]);
-  }
-
-  // Group by date
-  const byDate: Record<string, Session[]> = {};
-  for (const s of sessions) {
-    if (!byDate[s.date]) byDate[s.date] = [];
-    byDate[s.date].push(s);
-  }
-
-  return (
-    <div className="glass-panel p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-semibold tracking-wide text-zinc-300 uppercase">Consistency</h2>
-        <span className="text-xs text-zinc-500 font-medium">Last 90 days</span>
-      </div>
-      
-      <div className="flex gap-1 flex-wrap">
-        {days.map((dateStr, i) => {
-          const daySessions = byDate[dateStr] || [];
-          let color = 'bg-white/5 border border-white/5'; // default/no class
-
-          if (daySessions.length > 0) {
-            let hasAbsent = false;
-            let hasPresent = false;
-            let hasCancelled = false;
-
-            for (const s of daySessions) {
-              if (s.status === 'ABSENT') hasAbsent = true;
-              else if (s.status === 'PRESENT') hasPresent = true;
-              else if (s.status === 'CANCELLED') hasCancelled = true;
-            }
-
-            if (hasAbsent && hasPresent) {
-              color = 'bg-amber-500/80 border border-amber-400/50'; // mixed
-            } else if (hasAbsent) {
-              color = 'bg-red-500/80 border border-red-400/50';
-            } else if (hasPresent) {
-              color = 'bg-emerald-500/80 border border-emerald-400/50';
-            } else if (hasCancelled) {
-              color = 'bg-zinc-500/80 border border-zinc-400/50';
-            } else {
-              color = 'bg-white/10 border border-white/10'; // unmarked
-            }
-          }
-
-          return (
-            <motion.div
-              key={dateStr}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.005 }}
-              className={`w-[14px] h-[14px] rounded-sm ${color} relative group cursor-pointer`}
-            >
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-max px-2 py-1 bg-zinc-800 text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                {new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              </div>
-            </motion.div>
-          );
+  return <section ref={root} className="after-chart-card after-heatmap-card" aria-labelledby={`${id}-title`}>
+    <div className="after-chart-heading"><div><span className="after-chart-eyebrow">One day at a time</span><h3 id={`${id}-title`}>Consistency</h3></div><span className="after-chart-badge">{recordedDays} recorded {recordedDays === 1 ? 'day' : 'days'}</span></div>
+    <div className="after-heatmap-summary"><p><strong>{totalPresent + totalAbsent ? `${totalPresent}/${totalPresent + totalAbsent}` : '—'}</strong><span>classes attended in view</span></p><div className="after-chart-ranges after-heatmap-ranges" aria-label="Heatmap date range">{[30, 90].map(days => <button type="button" key={days} aria-pressed={range === days} onClick={() => { setRange(days); setSelectedDate(null); setHoveredDate(null); }}>
+      {range === days && <motion.span className="after-range-active" layoutId={`${id}-range`} transition={{ duration: reduced ? 0 : .28, ease }} />}<span>{days}D</span>
+    </button>)}</div></div>
+    <div className="after-heatmap-layout" style={{ '--heatmap-columns': columns } as CSSProperties}>
+      <div className="after-heatmap-months" aria-hidden="true">{monthLabels.map((month, index) => <span key={index} style={{ gridColumn: `${month.column + 1} / span ${Math.min(3, columns - month.column)}` }}>{month.label}</span>)}</div>
+      <div className="after-heatmap-weekdays" aria-hidden="true">{weekdays.map((day, index) => <span key={day} className={index > 4 ? 'is-weekend' : ''}>{day}</span>)}</div>
+      <div className="after-heatmap-cells" role="group" aria-label={`Daily attendance from ${dateLabel(start)} to ${dateLabel(today)}. Use arrow keys to move between dates.`} onPointerLeave={() => setHoveredDate(null)}>
+        {cells.map((day, index) => {
+          const isActive = hoveredLevel === null && activeDate === day.date;
+          const dimmed = hoveredLevel !== null ? hoveredLevel !== day.level : activeDate !== null && !isActive;
+          return day.inRange ? <motion.button type="button" key={day.date} data-date={day.date} className={`after-heatmap-cell after-heatmap-level-${day.level}${isActive ? ' is-selected' : ''}${day.row > 4 ? ' is-weekend' : ''}`}
+            aria-label={dayDescription(day)} aria-pressed={selectedDate === day.date} tabIndex={day.date === (selectedDate ?? lastRecorded?.date ?? today) ? 0 : -1}
+            initial={false} animate={{ opacity: reduced || revealed ? dimmed ? .34 : 1 : 0, scale: isActive && !reduced ? 1.12 : 1 }}
+            transition={{ duration: reduced || !visible ? 0 : .45, delay: !reduced && visible && !activeDate && hoveredLevel === null && revealed ? day.column * .019 + day.row * .013 : 0, ease }}
+            onPointerEnter={event => { if (event.pointerType === 'mouse') setHoveredDate(day.date); }} onFocus={() => { setHoveredDate(null); setSelectedDate(day.date); }} onClick={() => setSelectedDate(day.date)} onKeyDown={event => keyboardSelect(event, index)} />
+            : <span key={day.date} className="after-heatmap-ghost" aria-hidden="true" />;
         })}
       </div>
-      <div className="flex items-center gap-4 mt-4 text-[10px] text-zinc-400 uppercase font-medium">
-        <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-sm bg-white/5 border border-white/5" /> None</div>
-        <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-sm bg-emerald-500/80" /> Present</div>
-        <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-sm bg-amber-500/80" /> Mixed</div>
-        <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-sm bg-red-500/80" /> Absent</div>
-      </div>
     </div>
-  );
+    <div className="after-heatmap-legend" aria-label="Cell colors show the share of attended classes"><span><i className="after-heatmap-level-0" />No record</span><div onPointerLeave={() => setHoveredLevel(null)}><span>Missed</span>{[1, 2, 3, 4].map(level => <button type="button" key={level} className={`after-heatmap-level-${level}`} aria-label={['', 'All marked classes missed', 'Fewer than half attended', 'At least half attended', 'All marked classes attended'][level]} onPointerEnter={() => setHoveredLevel(level)} onFocus={() => setHoveredLevel(level)} onBlur={() => setHoveredLevel(null)} onClick={() => setHoveredLevel(hoveredLevel === level ? null : level)} aria-pressed={hoveredLevel === level} />)}<span>Attended</span></div></div>
+    <div className="after-heatmap-preview" aria-live="polite" aria-atomic="true">
+      <div className="after-heatmap-preview-heading"><strong>{dateLabel(current.date)}</strong><span>{current.present + current.absent ? `${current.present} present · ${current.absent} absent` : current.cancelled ? `${current.cancelled} cancelled${current.unmarked ? ` · ${current.unmarked} unmarked` : ''}` : current.unmarked ? `${current.unmarked} unmarked` : 'No classes recorded'}</span></div>
+      {daySessions.length ? <div className="after-heatmap-subjects">{daySessions.map(session => <span key={session.id}><i className={session.status === 'ABSENT' ? 'is-absent' : ''} />{SUBJECTS.find(subject => subject.code === session.subjectCode)?.shortName ?? session.subjectCode}<small>{session.status === 'PRESENT' ? 'Present' : 'Absent'}</small></span>)}</div> : <p>{current.unmarked ? 'Mark the classes from this day to add to your history.' : current.cancelled ? 'Cancelled classes are excluded from attendance.' : 'Only recorded classes add color to your calendar.'}</p>}
+    </div>
+    <p className="after-chart-note">Tap a day to see its classes.{!recordedDays && ' Your first record starts the picture.'}</p>
+  </section>;
 }

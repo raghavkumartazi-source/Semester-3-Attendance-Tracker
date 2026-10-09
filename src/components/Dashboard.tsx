@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ArrowUpRightIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { BookOpenIcon, CheckCircleIcon, ChartBarIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { AnimatedNumber, Reveal } from './ui/Motion';
 import { useAttendance } from './AttendanceProvider';
 import { useTasks } from './TaskProvider';
@@ -19,7 +19,8 @@ import { AttendanceTrendChart } from './home/AttendanceTrendChart';
 import { OverallBreakdownChart } from './home/OverallBreakdownChart';
 import { MarksGlanceWidget } from './home/MarksGlanceWidget';
 import { PlannerGlanceWidget } from './home/PlannerGlanceWidget';
-import { NextClass } from './home/NextClass';
+import { TodayProgress } from './home/TodayProgress';
+import { getOverallAttendance } from '@/lib/calculations';
 
 export default function Dashboard() {
   const { isLoaded, sessions } = useAttendance();
@@ -35,25 +36,37 @@ export default function Dashboard() {
   const classes = sessions.filter(s => s.date === today && s.status !== 'CANCELLED');
   const marked = classes.filter(s => s.status !== 'UNMARKED').length;
   const remaining = tasks.filter(t => !t.completed && !t.deleted_at).length;
-  const semester = timeUtils.getSemesterProgress(clock);
+  const overall = getOverallAttendance(sessions.filter(session => session.date <= today));
 
   return (
     <div className="dashboard">
       <TodayHeader now={clock} />
-      <Reveal className="daily-metrics">
-        <Link href="/schedule"><strong><AnimatedNumber value={classes.length} /></strong><span>classes today<small>{marked} recorded</small></span><ArrowUpRightIcon aria-hidden="true" /></Link>
-        <Link href="/tasks"><strong><AnimatedNumber value={remaining} /></strong><span>on your list<small>{remaining ? 'One step at a time' : 'A fresh start'}</small></span><ArrowUpRightIcon aria-hidden="true" /></Link>
-        <Link href="/planner"><strong><AnimatedNumber value={semester.percentage} /><small>%</small></strong><span>semester<small>Day {semester.currentDay}</small></span><ArrowUpRightIcon aria-hidden="true" /></Link>
+      <Reveal className="summary-grid" delay={.08}>
+        <Link href="/subjects" className="summary-card summary-peach" data-page-reveal>
+          <span className="summary-label"><BookOpenIcon aria-hidden="true" /> Today’s classes</span>
+          <strong className="summary-value"><AnimatedNumber value={classes.length} /><small>today</small></strong>
+          <span className="summary-caption">{marked} of {classes.length} marked</span>
+        </Link>
+        <Link href="/tasks" className="summary-card summary-lilac" data-page-reveal>
+          <span className="summary-label"><CheckCircleIcon aria-hidden="true" /> Open tasks</span>
+          <strong className="summary-value"><AnimatedNumber value={remaining} /><small>to do</small></strong>
+          <span className="summary-caption">{remaining ? 'Keep things moving' : 'All caught up'}</span>
+        </Link>
+        <Link href="/subjects" className="summary-card summary-rose" data-page-reveal>
+          <span className="summary-label"><ChartBarIcon aria-hidden="true" /> Attendance</span>
+          <strong className="summary-value">{overall.percentage === null ? '—' : <AnimatedNumber value={overall.percentage} />}<small>{overall.percentage === null ? '' : '%'}</small></strong>
+          <span className="summary-caption">75% minimum</span>
+        </Link>
       </Reveal>
       <div className="dashboard-columns">
         <div className="dashboard-column">
-          <NextClass now={clock} />
           <Reveal delay={.08}><TodayTimeline now={clock} /></Reveal>
+          <Reveal><HomeTaskSummary /></Reveal>
+          <Reveal><TodayProgress /></Reveal>
         </div>
         <div className="dashboard-column">
           <AttendanceSnapshot />
           <Reveal className="glance-grid"><MarksGlanceWidget /><PlannerGlanceWidget /></Reveal>
-          <Reveal><HomeTaskSummary /></Reveal>
         </div>
       </div>
       <details className="insights">

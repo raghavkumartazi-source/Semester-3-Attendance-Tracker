@@ -1,83 +1,105 @@
-.v2-dock {
+/* Original floating dock proportions, recolored for After Hours. */
+.bottom-nav.after-hours-dock {
   position: fixed;
   z-index: 50;
-  left: calc((100% + env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) / 2);
-  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-  width: min(480px, calc(100% - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
-  transform: translateX(-50%);
-  padding: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 8px max(12px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+  pointer-events: none;
+  background: linear-gradient(transparent, #211820c9 90%);
   transition: opacity 160ms ease, visibility 160ms ease;
 }
 
-.v2-dock-inner {
+.after-hours-dock .bottom-nav-inner {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   position: relative;
   isolation: isolate;
-  padding: 5px;
-  border-radius: 28px;
-  border: 1px solid #ffffff28;
-  background: #1e2026;
-  box-shadow: 0 10px 30px #0006, 0 2px 6px #0004, inset 0 1px 0 #ffffff0c;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 6px;
+  border-radius: 27px;
+  border: 1px solid #f4e7df28;
+  border-top-color: #f4e7df40;
+  background: linear-gradient(145deg, #48313fe8, #30222ee8);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  box-shadow: inset 0 1px 0 #f4e7df12, 0 12px 35px #10081166, 0 2px 5px #10081144;
+  pointer-events: auto;
 }
 
-.v2-dock-plate {
+.after-hours-dock .nav-active-surface {
   position: absolute;
-  z-index: -1;
-  top: 5px;
-  left: 5px;
-  bottom: 5px;
-  width: calc((100% - 10px) / 5);
-  border-radius: 22px;
-  background: #3159f5;
-  box-shadow: inset 0 1px 0 #ffffff26, 0 3px 8px #0002;
+  z-index: 0;
+  top: 6px;
+  left: 6px;
+  bottom: 6px;
+  width: calc((100% - 12px) / 5);
+  border-radius: 19px;
+  border: 1px solid #f4e7df25;
+  border-top-color: #f4e7df42;
+  background: linear-gradient(145deg, #f4e7df1f, #f4e7df0b);
+  box-shadow: inset 0 1px 0 #f4e7df14, 0 4px 12px #10081126;
   transform: translateX(calc(var(--dock-index, 0) * 100%));
   pointer-events: none;
 }
 
-.v2-dock:not(.has-active-tab) .v2-dock-plate { visibility: hidden; opacity: 0; }
+.after-hours-dock:not(.has-active-tab) .nav-active-surface { visibility: hidden; }
 
-.v2-dock-item {
+.after-hours-dock .nav-item {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 4px;
+  position: relative;
+  z-index: 1;
   min-width: 0;
-  min-height: 54px;
-  padding: 5px 0;
-  border-radius: 22px;
+  min-height: 60px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 4px 0;
+  border-radius: 21px;
+  color: #c5aeb9;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 500;
   text-decoration: none;
-  color: #b4b6c2;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   transition: color 150ms ease;
 }
 
-.v2-dock-item.is-current { color: #fff; }
-.v2-dock-item:hover { color: #fff; }
-.v2-dock-item:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
-.v2-dock-icon { display: block; width: 21px; height: 21px; transform-origin: 50% 70%; }
-.v2-dock-icon svg { display: block; width: 100%; height: 100%; stroke-width: 1.8; }
-.v2-dock-label { font-size: 11px; font-weight: 600; line-height: 1.2; letter-spacing: -.12px; white-space: nowrap; }
+.after-hours-dock .nav-item.is-active,
+.after-hours-dock .nav-item.is-active:hover { color: #f4e7df; background: transparent; }
+.after-hours-dock .nav-item:hover { color: #f4e7df; background: transparent; }
+.after-hours-dock .nav-item:focus-visible { outline: 2px solid #efaca1; outline-offset: 1px; }
+.after-hours-dock .nav-icon { display: grid; place-items: center; position: relative; top: 0; width: 36px; height: 25px; transition: top 240ms cubic-bezier(.2, .8, .2, 1); }
+.after-hours-dock .nav-item.is-active .nav-icon { top: -2px; }
+.after-hours-dock .nav-icon-motion { display: block; width: 21px; height: 21px; transform-origin: 50% 70%; }
+.after-hours-dock .nav-icon svg { display: block; width: 21px; height: 21px; stroke-width: 1.7; }
+.after-hours-dock .nav-item.is-active svg { stroke-width: 2; }
+.after-hours-dock .nav-label { position: relative; font-size: 11px; line-height: 1.2; letter-spacing: -.1px; white-space: nowrap; }
+.after-hours-dock .nav-active-dot { position: absolute; top: 4px; right: 12px; width: 3px; height: 3px; border-radius: 50%; background: #efaca1; box-shadow: 0 0 6px #efaca14d; }
 
-.v2-page-scene { min-width: 0; }
-.v2-page-scene > :not(.dashboard) { animation: none; }
+.after-hours-page-scene { min-width: 0; }
+/* Disable legacy route-root animation: fixed overlays must retain the viewport. */
+.after-hours-page-scene > :not(.dashboard) { animation: none; }
 
 @media (max-width: 359px) {
-  .v2-dock { width: calc(100% - 16px); }
-  .v2-dock-label { font-size: 10px; }
+  .bottom-nav.after-hours-dock { padding-left: 8px; padding-right: 8px; }
+  .after-hours-dock .nav-label { font-size: 10px; }
 }
 
 @media (max-width: 767px) {
-  html:has(input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="color"]):focus, textarea:focus, select:focus) .v2-dock { opacity: 0; visibility: hidden; pointer-events: none; }
+  html:has(input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="color"]):focus, textarea:focus, select:focus) .bottom-nav.after-hours-dock { opacity: 0; visibility: hidden; pointer-events: none; }
+  html:has(input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="color"]):focus, textarea:focus, select:focus) .after-hours-dock .bottom-nav-inner { pointer-events: none; }
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
-  .v2-dock { bottom: calc(6px + env(safe-area-inset-bottom, 0px)); }
-  .v2-dock-item { min-height: 48px; gap: 2px; }
+  .bottom-nav.after-hours-dock { padding-bottom: calc(5px + env(safe-area-inset-bottom, 0px)); }
+  .after-hours-dock .nav-item { min-height: 46px; gap: 2px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .v2-dock, .v2-dock-item { transition: none; }
+  .bottom-nav.after-hours-dock, .after-hours-dock .nav-item, .after-hours-dock .nav-icon { transition: none; }
 }

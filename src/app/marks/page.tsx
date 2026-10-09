@@ -1,4 +1,6 @@
 'use client';
+
+import { LiquidButton } from '@/components/ui/LiquidButton';
 export const dynamic = 'force-dynamic';
 
 import { useId, useState } from 'react';
@@ -348,7 +350,7 @@ export default function MarksPage() {
           <CalculatorIcon aria-hidden="true" />
           <h2 className="text-lg text-white">Start your scorecard</h2>
           <p>Add a quiz, assignment or exam for {SUBJECTS.find(s => s.code === selectedSubject)?.shortName}.</p>
-          <button type="button" onClick={() => { resetForm(); setShowAddComponent(true); }} className="ink-btn mt-5 px-5 py-3">Add first component</button>
+          <LiquidButton type="button" onClick={() => { resetForm(); setShowAddComponent(true); }} className="mt-5">Add first component</LiquidButton>
         </div>
       )}
 
@@ -366,7 +368,7 @@ export default function MarksPage() {
             <div className="relative z-10">
               <div className="flex items-start justify-between mb-6">
                 <div>
-                  <h2 className="text-lg font-bold text-white">{summary.subject_code} \u2014 {summary.subject_name}</h2>
+                  <h2 className="text-lg font-bold text-white">{summary.subject_code} — {summary.subject_name}</h2>
                   <p className="text-sm text-white/50 mt-1">Weightage: {summary.total_weightage.toFixed(1)}% total</p>
                 </div>
                 {summary.current_grade && (
@@ -376,7 +378,7 @@ export default function MarksPage() {
                       <span className="text-2xl font-bold">{summary.current_grade}</span>
                       <span className="text-sm font-medium">({summary.current_percentage?.toFixed(1)}%)</span>
                     </span>
-                    <p className="text-xs text-white/40 mt-1">{getGradePoints(summary.current_grade)} grade points \u00d7 {summary.credits} credits</p>
+                    <p className="text-xs text-white/40 mt-1">{getGradePoints(summary.current_grade)} grade points × {summary.credits} credits</p>
                   </div>
                 )}
               </div>
@@ -450,30 +452,34 @@ export default function MarksPage() {
                   {scenarios.filter(s => s.subject_code === selectedSubject).map(scenario => (
                     <motion.div
                       key={scenario.id}
-                      className="paper-surface rounded-xl p-4 flex items-center justify-between group"
+                      className="paper-surface rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 sm:flex-nowrap group"
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.1 }}
                     >
-                      <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${GRADE_COLORS[scenario.projected_grade || 'F']}`}>
+                      <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+                        <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center ${GRADE_COLORS[scenario.projected_grade || 'F']}`}>
                           <span className="text-lg font-bold">{scenario.projected_grade || 'F'}</span>
                         </div>
-                        <div>
-                          <p className="font-medium text-white">{scenario.name}</p>
+                        <div className="min-w-0">
+                          <p className="font-medium text-white [overflow-wrap:anywhere]">{scenario.name}</p>
                           <p className="text-sm text-white/50">{scenario.projected_final_percentage?.toFixed(1) ?? '--'}% projected</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex w-full shrink-0 items-center justify-end gap-2 sm:w-auto">
                         <button
+                          type="button"
+                          aria-label={`Edit scenario ${scenario.name}`}
                           onClick={() => editScenario(scenario)}
-                          className="ink-btn-ghost p-2 hover:bg-white/10"
+                          className="ink-btn-ghost min-w-11 min-h-11 grid place-items-center p-2 hover:bg-white/10"
                         >
                           <PencilIcon className="w-4 h-4" />
                         </button>
                         <button
+                          type="button"
+                          aria-label={`Delete scenario ${scenario.name}`}
                           onClick={() => confirmDeleteScenario(scenario)}
-                          className="ink-btn-ghost p-2 hover:bg-red-500/10 hover:text-red-400"
+                          className="ink-btn-ghost min-w-11 min-h-11 grid place-items-center p-2 hover:bg-red-500/10 hover:text-red-400"
                         >
                           <TrashIcon className="w-4 h-4" />
                         </button>
@@ -523,12 +529,12 @@ export default function MarksPage() {
                   <CalculatorIcon className="w-5 h-5 text-blue-400" />
                   Assessment Components
                 </h2>
-                <button
+                <LiquidButton
                   onClick={() => { resetForm(); setEditingComponent(null); setShowAddComponent(true); }}
-                  className="ink-btn px-4 py-2 text-sm font-medium flex items-center gap-2"
+                  className="assessment-add-action"
                 >
                   <PlusIcon className="w-4 h-4" /> Add Component
-                </button>
+                </LiquidButton>
               </div>
 
               {subjectComponents.length === 0 ? (
@@ -542,23 +548,23 @@ export default function MarksPage() {
                   {subjectComponents.map((component, index) => (
                     <motion.div
                       key={component.id}
-                      className="paper-surface rounded-xl p-4 flex items-center gap-4 group"
+                      className="paper-surface rounded-xl p-4 flex flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4 group"
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
                     >
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${COMPONENT_TYPE_COLORS[component.component_type]}`}>
+                      <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center ${COMPONENT_TYPE_COLORS[component.component_type]}`}>
                         <span className="text-sm font-bold">{component.component_type.charAt(0)}</span>
                       </div>
                       
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-medium text-white truncate pr-2">{component.component_name}</h3>
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${COMPONENT_TYPE_COLORS[component.component_type]}`}>
+                      <div className="flex-1 min-w-0 basis-[calc(100%-56px)] sm:basis-auto">
+                        <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+                          <h3 className="min-w-0 font-medium text-white [overflow-wrap:anywhere] sm:truncate">{component.component_name}</h3>
+                          <span className={`shrink-0 whitespace-nowrap px-2 py-0.5 rounded-full text-[10px] font-bold ${COMPONENT_TYPE_COLORS[component.component_type]}`}>
                             {COMPONENT_TYPE_LABELS[component.component_type]}
                           </span>
                         </div>
-                        <div className="flex items-center gap-4 mt-1 text-sm text-white/50">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs sm:text-sm text-white/50">
                           <span>Weight: <span className="text-white font-medium">{component.weightage}%</span></span>
                           {component.is_published && component.scored !== null ? (
                             <>
@@ -576,16 +582,20 @@ export default function MarksPage() {
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-2">
+                      <div className="flex w-full shrink-0 items-center justify-end gap-2 sm:w-auto">
                         <button
+                          type="button"
+                          aria-label={`Edit ${component.component_name}`}
                           onClick={() => editComponent(component)}
-                          className="ink-btn-ghost p-2 hover:bg-white/10"
+                          className="ink-btn-ghost min-w-11 min-h-11 grid place-items-center p-2 hover:bg-white/10"
                         >
                           <PencilIcon className="w-4 h-4" />
                         </button>
                         <button
+                          type="button"
+                          aria-label={`Delete ${component.component_name}`}
                           onClick={() => confirmDeleteComponent(component)}
-                          className="ink-btn-ghost p-2 hover:bg-red-500/10 hover:text-red-400"
+                          className="ink-btn-ghost min-w-11 min-h-11 grid place-items-center p-2 hover:bg-red-500/10 hover:text-red-400"
                         >
                           <TrashIcon className="w-4 h-4" />
                         </button>

@@ -1,7 +1,10 @@
 'use client';
+
+import { LiquidButton } from '@/components/ui/LiquidButton';
 export const dynamic = 'force-dynamic';
 import { useId, useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { differenceInCalendarDays } from 'date-fns/differenceInCalendarDays';
 import { SUBJECTS } from '@/lib/config';
 import { usePlanner } from '@/components/PlannerProvider';
 import Dialog from '@/components/Dialog';
@@ -114,16 +117,18 @@ export default function PlannerPage() {
       </div>
 
       {/* Subject Selector */}
-      <div className="overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+      <div className="overflow-x-auto pb-2 -mx-3 px-3 sm:-mx-4 sm:px-4 scrollbar-hide">
         <div className="flex gap-2 min-w-max">
           {SUBJECTS.map((subject) => (
             <button
               key={subject.code}
+              type="button"
+              aria-pressed={selectedSubject === subject.code}
               onClick={() => setSelectedSubject(subject.code)}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                 selectedSubject === subject.code
-                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.15)]'
-                  : 'bg-white/5 text-zinc-400 border border-white/10 hover:bg-white/10'
+                  ? 'glass-control-active'
+                  : 'glass-control text-zinc-400'
               }`}
             >
               {subject.shortName}
@@ -165,7 +170,7 @@ export default function PlannerPage() {
                 <CalendarIcon className="w-12 h-12 text-zinc-500 mx-auto mb-3" />
                 <h3 className="text-lg font-medium text-white/90 mb-1">No Exams Scheduled</h3>
                 <p className="text-zinc-400 text-sm mb-4">Add your mid-sem, end-sem, or quizzes to start the countdown.</p>
-                <button 
+                <LiquidButton type="button"
                   onClick={() => {
                     setEditingExam(null);
                     setExamFormData({
@@ -180,16 +185,15 @@ export default function PlannerPage() {
                     });
                     setShowAddExam(true);
                   }}
-                  className="px-4 py-2 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-xl text-sm font-medium hover:bg-indigo-500/30 transition-colors"
                 >
                   <PlusIcon className="w-4 h-4 inline-block mr-1" />
                   Add Exam
-                </button>
+                </LiquidButton>
               </div>
             ) : (
               <div className="grid gap-4">
                 {subjectExams.map(exam => {
-                  const daysRemaining = Math.ceil((new Date(exam.exam_date).getTime() - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24));
+                  const daysRemaining = differenceInCalendarDays(new Date(`${exam.exam_date}T00:00:00`), new Date());
                   const isPast = daysRemaining < 0;
                   
                   let colorClass = 'border-indigo-500/20 bg-indigo-500/5 text-indigo-400';
@@ -223,8 +227,10 @@ export default function PlannerPage() {
                         </div>
                       </div>
                       
-                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                      <div className="flex justify-end gap-2 pt-2 border-t border-white/10">
                         <button 
+                          type="button"
+                          aria-label={`Edit ${exam.exam_name || `${exam.exam_type} exam`}`}
                           onClick={() => {
                             setEditingExam(exam);
                             setExamFormData({
@@ -239,13 +245,15 @@ export default function PlannerPage() {
                             });
                             setShowAddExam(true);
                           }}
-                          className="p-1.5 bg-white/10 hover:bg-white/20 rounded text-white/70"
+                          className="min-w-11 min-h-11 grid place-items-center p-1.5 bg-white/10 hover:bg-white/20 rounded text-white/70"
                         >
                           <PencilIcon className="w-4 h-4" />
                         </button>
                         <button 
+                          type="button"
+                          aria-label={`Delete ${exam.exam_name || `${exam.exam_type} exam`}`}
                           onClick={() => deleteExam(exam.id)}
-                          className="p-1.5 bg-red-500/10 hover:bg-red-500/20 rounded text-red-400"
+                          className="min-w-11 min-h-11 grid place-items-center p-1.5 bg-red-500/10 hover:bg-red-500/20 rounded text-red-400"
                         >
                           <TrashIcon className="w-4 h-4" />
                         </button>
@@ -308,13 +316,13 @@ export default function PlannerPage() {
                 <BookOpenIcon className="w-12 h-12 text-zinc-500 mx-auto mb-3" />
                 <h3 className="text-lg font-medium text-white/90 mb-1">No Topics Added</h3>
                 <p className="text-zinc-400 text-sm mb-4">Break down your syllabus into smaller study topics.</p>
-                <button 
+                <LiquidButton variant="starfield"
                   onClick={() => setShowAddTopic(true)}
-                  className="px-4 py-2 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-xl text-sm font-medium hover:bg-indigo-500/30 transition-colors"
+                  className="planner-add-action"
                 >
                   <PlusIcon className="w-4 h-4 inline-block mr-1" />
                   Add Topic
-                </button>
+                </LiquidButton>
               </div>
             ) : (
               <div className="grid gap-3">
@@ -380,8 +388,10 @@ export default function PlannerPage() {
                         </div>
                       </div>
                       
-                      <div className="absolute top-2 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1">
+                      <div className="flex justify-end gap-2 pt-2 border-t border-white/10">
                         <button 
+                          type="button"
+                          aria-label={`Edit ${topic.topic_name}`}
                           onClick={() => {
                             setEditingTopic(topic);
                             setTopicFormData({
@@ -395,13 +405,15 @@ export default function PlannerPage() {
                             });
                             setShowAddTopic(true);
                           }}
-                          className="p-1.5 bg-white/10 hover:bg-white/20 rounded text-white/70"
+                          className="min-w-11 min-h-11 grid place-items-center p-1.5 bg-white/10 hover:bg-white/20 rounded text-white/70"
                         >
                           <PencilIcon className="w-3 h-3" />
                         </button>
                         <button 
+                          type="button"
+                          aria-label={`Delete ${topic.topic_name}`}
                           onClick={() => deleteTopic(topic.id)}
-                          className="p-1.5 bg-red-500/10 hover:bg-red-500/20 rounded text-red-400"
+                          className="min-w-11 min-h-11 grid place-items-center p-1.5 bg-red-500/10 hover:bg-red-500/20 rounded text-red-400"
                         >
                           <TrashIcon className="w-3 h-3" />
                         </button>

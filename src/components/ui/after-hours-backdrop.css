@@ -1,0 +1,26 @@
+.after-hours-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  contain: strict;
+}
+.after-hours-backdrop__wash,
+.after-hours-backdrop__grain,
+.after-hours-backdrop__field { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.after-hours-backdrop__wash {
+  background: radial-gradient(ellipse at 87% 5%, #ae697721, transparent 47%), radial-gradient(ellipse at 8% 74%, #5839511c, transparent 48%), linear-gradient(120deg, #21182000 35%, #35213214 72%, #21182000);
+}
+.after-hours-backdrop__grain {
+  opacity: .12;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.76' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='.3' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.after-hours-backdrop__field { opacity: .88; }
+@media (max-width: 640px) {
+  .after-hours-backdrop__field { opacity: .75; }
+  .after-hours-backdrop__grain { opacity: .09; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .after-hours-backdrop__field { opacity: .65; }
+}

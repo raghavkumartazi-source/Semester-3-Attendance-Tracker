@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { animate, createScope } from 'animejs';
+import { animate as animateNumber, motion, useInView, useMotionValue, useReducedMotion, useTransform } from 'framer-motion';
 import { ArrowUpRightIcon } from '@heroicons/react/24/outline';
 import { useAttendance } from '../AttendanceProvider';
 import { getSubjectAttendance } from '@/lib/calculations';
 import { SUBJECTS } from '@/lib/config';
 import { timeUtils } from '@/lib/timeUtils';
+import { recordedAttendanceHistory } from '../charts/attendance-chart-data';
 import './attendance-snapshot.css';
 
 const SEGMENT_COUNT = 40;
@@ -49,30 +51,18 @@ function percentageLabel(percentage: number) {
 export function AttendanceSnapshot() {
   const { sessions } = useAttendance();
   const root = useRef<HTMLElement>(null);
+  const visible = useInView(root, { amount: .15 });
+  const revealed = useInView(root, { once: true, amount: .15 });
+  const reduced = useReducedMotion();
   const previousPercentage = useRef(0);
+  const gaugeNumber = useMotionValue(0);
+  const displayNumber = useTransform(gaugeNumber, value => percentageLabel(value));
   const componentId = useId().replace(/:/g, '');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const today = timeUtils.getLocalISODate(new Date());
 
   const history = useMemo(() => {
-    const byDate = new Map<string, { present: number; absent: number }>();
-    for (const session of sessions) {
-      if (session.date > today || (session.status !== 'PRESENT' && session.status !== 'ABSENT')) continue;
-      const day = byDate.get(session.date) ?? { present: 0, absent: 0 };
-      if (session.status === 'PRESENT') day.present += 1;
-      else day.absent += 1;
-      byDate.set(session.date, day);
-    }
-
-    const snapshots: { date: string; present: number; absent: number; percentage: number }[] = [];
-    for (const date of [...byDate.keys()].sort()) {
-      const day = byDate.get(date)!;
-      const previous = snapshots.at(-1);
-      const present = (previous?.present ?? 0) + day.present;
-      const absent = (previous?.absent ?? 0) + day.absent;
-      snapshots.push({ date, present, absent, percentage: present / (present + absent) * 100 });
-    }
-    return snapshots.slice(-7);
+    return recordedAttendanceHistory(sessions, today).slice(-7).map(day => ({ ...day, present: day.totalPresent, absent: day.totalAbsent }));
   }, [sessions, today]);
 
   const dateIndex = selectedDate === null ? -1 : history.findIndex(day => day.date === selectedDate);
@@ -97,19 +87,25 @@ export function AttendanceSnapshot() {
 
   useEffect(() => {
     const from = previousPercentage.current;
+    const target = revealed || reduced ? percentage : 0;
     const scope = createScope({
       root,
       mediaQueries: { reduceMotion: '(prefers-reduced-motion: reduce)' },
     }).add(self => {
       animate('.pulse-gauge-fill', {
-        strokeDashoffset: [100 - from, 100 - percentage],
-        duration: self?.matches.reduceMotion ? 0 : 720,
+        strokeDashoffset: [100 - from, 100 - target],
+        duration: self?.matches.reduceMotion || !visible ? 0 : 720,
         ease: 'out(4)',
       });
     });
-    previousPercentage.current = percentage;
+    previousPercentage.current = target;
     return () => scope.revert();
-  }, [percentage]);
+  }, [percentage, reduced, revealed, visible]);
+
+  useEffect(() => {
+    const animation = animateNumber(gaugeNumber, revealed || reduced ? percentage : 0, { duration: reduced || !visible ? 0 : .72, ease: [.22, 1, .36, 1] });
+    return () => animation.stop();
+  }, [gaugeNumber, percentage, reduced, revealed, visible]);
 
   const gaugeLabel = hasData
     ? `${percentageLabel(percentage)} percent attendance through ${formatDate(current.date, true)}. ${current.present} present and ${current.absent} absent.`
@@ -135,6 +131,9 @@ export function AttendanceSnapshot() {
         >
           <svg viewBox="0 0 192 160" aria-hidden="true">
             <defs>
+              <linearGradient id={`${componentId}-gauge-color`} x1="0" y1="1" x2="1" y2="0">
+                <stop offset="0%" stopColor="#a16c87" /><stop offset="55%" stopColor="#d397a2" /><stop offset="100%" stopColor="#f4c4ae" />
+              </linearGradient>
               <mask id={`${componentId}-segments`}>
                 {gaugeSegments.map((path, index) => <path key={index} d={path} fill="none" stroke="white" strokeWidth="12" />)}
               </mask>
@@ -151,11 +150,12 @@ export function AttendanceSnapshot() {
               strokeDasharray="100"
               strokeDashoffset={100 - percentage}
               mask={`url(#${componentId}-segments)`}
+              style={{ stroke: `url(#${componentId}-gauge-color)` }}
             />
             <path className="pulse-gauge-target" d={`M ${targetStart.x} ${targetStart.y} L ${targetEnd.x} ${targetEnd.y}`} strokeWidth="1.5" />
           </svg>
           <div className="pulse-gauge-copy" aria-hidden="true">
-            <strong>{hasData ? percentageLabel(percentage) : '—'}{hasData ? <small>%</small> : null}</strong>
+            <strong>{hasData ? <motion.span>{displayNumber}</motion.span> : '—'}{hasData ? <small>%</small> : null}</strong>
             <span>{hasData ? 'attendance' : 'No records yet'}</span>
           </div>
           <span className="pulse-gauge-target-label" aria-hidden="true">75% target</span>
@@ -175,6 +175,9 @@ export function AttendanceSnapshot() {
 
       {history.length > 1 ? (
         <div className="pulse-history-scrubber">
+          <div className="pulse-history-points" aria-hidden="true">
+            {history.map((day, index) => <span key={day.date} className={index === selectedIndex ? 'is-selected' : ''} style={{ height: `${8 + day.percentage * .17}px` }} />)}
+          </div>
           <label className="pulse-visually-hidden" htmlFor={`${componentId}-history`}>Attendance through a recorded date</label>
           <input
             id={`${componentId}-history`}
@@ -190,7 +193,7 @@ export function AttendanceSnapshot() {
             }}
           />
           <div className="pulse-history-labels" aria-hidden="true">
-            <span>{formatDate(history[0].date)}</span><span>Drag to explore</span><span>{formatDate(history[history.length - 1].date)}</span>
+            <span>{formatDate(history[0].date)}</span><span>Last {history.length} recorded days</span><span>{formatDate(history[history.length - 1].date)}</span>
           </div>
         </div>
       ) : (

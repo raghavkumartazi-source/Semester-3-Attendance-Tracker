@@ -1,38 +1,37 @@
-# Dark mobile redesign — 9 October 2026
+# After Hours interface — 9 October 2026
 
-The dashboard now uses graphite surfaces, cobalt accents, larger Manrope typography, and a layered class card. On a phone, the next class and its attendance actions lead into the weekly schedule; the historical gauge, grades, exams, and tasks follow. Desktop uses two columns.
+The interface uses deep plum surfaces, ivory type, coral controls, DM Sans body text and Space Grotesk headings. It preserves the original home composition: greeting and semester card, three summary cards, timetable, tasks, daily progress, attendance snapshot, marks/exam glances, and expandable attendance insights. The original floating five-page dock remains Today, Attendance, Tasks, Planner and Marks. Existing sync and storage fixes are retained.
 
-## Interaction and references
+## Motion and references
 
-- [Anime.js](https://animejs.com/documentation/getting-started/using-with-react/) powers the heading entrance, dock plate, icon rebound, page fades, attendance gauge, and brief attendance confirmation particles. Scopes are reverted when components unmount.
-- [Kokonut UI navigation](https://kokonutui.com/docs/navigation/morphic-navbar) and [particle buttons](https://kokonutui.com/docs/buttons/particle-button) informed the moving dock and short confirmation feedback.
-- [Bklit's chart collection](https://bklit.com/docs/components) informed the segmented attendance gauge and interactive history.
-- [Thinking Gods' prompt library](https://thinkingods.com/prompts) informed the layered card treatment.
-- [OriginKit](https://www.originkit.dev/) informed the sculptural accent. The rings are original Three.js geometry and materials, with a procedural studio environment.
+- [Anime.js timelines](https://animejs.com/documentation/timeline/) coordinate greeting entrances, safe page elements, spring dock movement and icon rebounds. Animations revert on cleanup; route roots stay still so fixed overlays remain attached to the viewport.
+- [Kokonut Smooth Tab](https://kokonutui.com/docs/navigation/smooth-tab) informed the sliding indicator and coordinated transitions.
+- [Kunal Chaudhary’s liquid buttons](https://kunal-chaudhary-design.github.io/liquid-buttons/) informed the impact, rebound, ripple and rolling visual layer. The app uses native controls with CSS and Web Animations; labels and hit areas stay still. This adaptation does not implement the demo’s transmission shader.
+- [Originkit Cursor Ring Field](https://www.originkit.dev/components/cursor-ring-field) informed the reactive background field. [Starfield Button](https://www.originkit.dev/components/starfield-button) informed deterministic twinkles and lights moving along the rounded outline. These are local adaptations of the public descriptions; gated code is not distributed.
+- [Bklit Heatmap](https://bklit.com/docs/components/heatmap-chart), [Line Chart](https://bklit.com/docs/components/line-chart) and [Ring Chart](https://bklit.com/docs/components/ring-chart) informed local chart primitives: Monday-first animated cells, touch/keyboard details, continuous range morphing and expandable concentric status rings. Tooltips use actual recorded dates and counts.
+- [Thinking Gods](https://thinkingods.com/prompts) informed the warm plum materials and tactile depth.
 
-Anime.js and Three.js are installed dependencies. The other references inspired original app-specific components; their libraries and paid templates were not copied or installed. No signup was needed.
+The semester dial is real Three.js geometry: enamel face, metal rim, raised progress arc and gimbal ring, with a studio environment. Its percentage and day count come from the existing semester configuration. Dragging changes the object while DOM text stays readable. Three.js loads lazily, uses a pixel-ratio cap of 1.5 and a 30fps cap, and pauses while offscreen or hidden. The background and starfield effects also pause appropriately. No new dependencies were added for this revision.
 
-## Usability
+## Usability and correctness
 
-- The five dock labels stay visible, with separate left/right safe-area spacing and at least 44px touch targets. Settings and Schedule do not falsely highlight a main tab.
-- Text input focus hides the phone dock; sliders and checkboxes keep it available.
-- The 3D rings support horizontal dragging while allowing vertical scrolling. Rendering is capped at 30 frames per second and pixel ratio 1.5, pauses offscreen or in a hidden tab, and disposes resources on unmount.
-- Reduced motion uses a static vector sculpture and skips nonessential movement. Unavailable or lost WebGL also shows the vector.
-- The gauge shows actual cumulative attendance through one of the last seven recorded dates. Future and cancelled records are excluded; an empty history stays empty.
-- Planner forms use the existing portal dialog, keeping them within the viewport with Escape dismissal, focus trapping/restoration, associated labels, scrolling, and safe-area padding.
-- Marks forms have associated labels and explicit close controls. Task completion, menus, and editing have labeled 44px targets.
-- Page transitions avoid transforms on the page root because those change the containing block for fixed popups.
+- Phone inputs remain at least 16px to avoid focus zoom. The dock respects safe areas, keeps its five labels visible and hides during text input focus. Its targets are at least 44px.
+- Reduced motion skips decorative movement and uses a static dial. Missing/lost WebGL preserves the vector dial and its data.
+- Attendance charts exclude future, cancelled and unmarked classes from the attendance denominator. Cumulative totals are computed before filtering the visible date range. Empty history has an explicit empty state.
+- The forecast avoids treating no records as 0% attendance and uses remaining unmarked classes from today onward.
+- Task menus render outside animated card ancestors. Delete confirmations, manual planning and smart-plan review preserve focus, Escape dismissal and nested scroll locks.
+- Marks and planner dialogs retain their existing handlers and data flow; escaped symbols in the scorecard were replaced with readable symbols. Populated assessment/scenario rows wrap on small phones, and exam/topic actions are visible on touch screens. Exam countdowns use local calendar days to avoid the previous one-day timezone error.
 
 ## Verification
 
-- 28 existing automated tests passed.
-- Production build and TypeScript passed; lint reported zero errors and the same 23 existing unused-code warnings.
-- Browser checks covered the home, attendance, tasks, planner, marks, schedule, and settings screens at 320px width, iPhone 15 dimensions (393 × 852), and desktop (1440 × 1000).
-- Checked attendance marking and undo, keyboard focus when the class advances, rapid tab navigation, active state and plate positioning, keyboard focus, form dismissal, primary-action contrast, range keyboard/pointer interaction, and populated/empty attendance.
-- Checked genuine WebGL rendering, ring dragging, reduced-motion fallback, and simulated WebGL context loss.
+- All 35 automated tests pass, including seven chart-data tests covering denominators, future/cancelled records, range boundaries, calendar alignment and bounded morph geometry.
+- TypeScript and production build pass. Lint has no errors; existing unused-code warnings remain.
+- Charts were checked in touch-enabled mobile contexts at 393 × 852 and 320 × 740: range morphs, history scrubber, ring selection, heatmap tap previews, keyboard navigation, empty states and reduced motion.
+- Homepage checks cover both phone widths and desktop, real WebGL rendering/drag feedback, static reduced-motion fallback and the original fixed dock. Attendance/register, subject detail, tasks, populated marks, planner, schedule and settings were checked at 320 × 740 and 1440 × 1000; content stays within the viewport and final controls clear the dock.
+- Isolated guest browser flows verify attendance marking/undo, task creation/completion/undo, marks entry and exam entry with saved local records surviving reload. Nested manual-plan dismissal preserves the parent’s scroll lock and restores focus.
 
-Browser checks use isolated anonymous sessions and local fixtures. They do not replace physical iPhone Safari testing or a signed-in cloud sync test.
+Browser checks use isolated guest sessions and temporary local fixtures. Physical iPhone Safari and signed-in cloud synchronization were not retested in this interface-only revision.
 
 ## Data
 
-This release changes the interface and dependencies only. It does not change database tables, auth configuration, sync/storage providers, or existing records. The private application-data backup from 7 October remains outside the repository; its scope and recovery notes are documented in the earlier UI and sync review.
+No database schema, auth configuration, sync/storage providers or production records were changed. The private application-data backup from 7 October remains outside the repository; its scope and recovery notes are recorded in the earlier UI and sync review.
