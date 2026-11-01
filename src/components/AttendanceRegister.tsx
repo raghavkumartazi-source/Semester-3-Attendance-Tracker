@@ -3,11 +3,12 @@
 import { useMemo, useRef, useEffect, useState, useCallback } from 'react';
 import { Session, AttendanceStatus, Subject } from '@/lib/types';
 import { DAY_SHORT, MONTH_SHORT } from '@/lib/config';
-import { getSubjectAttendance, formatPercentage, getStatusColor, getStatusLabel } from '@/lib/calculations';
+import { getSubjectAttendance, formatPercentage, getStatusColor } from '@/lib/calculations';
 import { parseDate, formatDate } from '@/lib/sessions';
 import StatusPopover from './StatusPopover';
 import AddExtraClassModal from './AddExtraClassModal';
-import { getStatusCellClass, STATUS_DISPLAY, TYPE_SHORT } from '@/lib/uiUtils';
+import { STATUS_DISPLAY, TYPE_SHORT } from '@/lib/uiUtils';
+import './attendance-polish.css';
 
 interface Props {
   subject: Subject;
@@ -62,7 +63,7 @@ export default function AttendanceRegister({ subject, sessions, onMarkAttendance
       const todayEl = todayColRef.current;
       container.scrollTo({
         left: Math.max(0, todayEl.offsetLeft - 200),
-        behavior: 'smooth',
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
       });
     }
   }, []);
@@ -71,7 +72,7 @@ export default function AttendanceRegister({ subject, sessions, onMarkAttendance
     if (scrollRef.current) {
       scrollRef.current.scrollBy({
         left: direction * 300,
-        behavior: 'smooth',
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
       });
     }
   }, []);
@@ -80,94 +81,86 @@ export default function AttendanceRegister({ subject, sessions, onMarkAttendance
     if (scrollRef.current) {
       scrollRef.current.scrollTo({
         left: 0,
-        behavior: 'smooth',
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
       });
     }
   }, []);
 
   const handleStatusChange = useCallback((sessionId: string, status: AttendanceStatus) => {
     onMarkAttendance(sessionId, status);
+    popoverAnchor?.focus({ preventScroll: true });
     setActivePopover(null);
     setPopoverAnchor(null);
-  }, [onMarkAttendance]);
+  }, [onMarkAttendance, popoverAnchor]);
 
   // Close popover on Escape — outside click handled by StatusPopover
   useEffect(() => {
     if (!activePopover) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        popoverAnchor?.focus({ preventScroll: true });
         setActivePopover(null);
         setPopoverAnchor(null);
       }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [activePopover]);
+  }, [activePopover, popoverAnchor]);
 
   // Determine first future session for auto-scroll fallback
   const firstFutureSession = sorted.find(s => s.date > todayStr);
   const firstFutureId = firstFutureSession?.id;
   const { percentage, present, absent, totalConducted, canBunk, needToAttend, level } = attendance;
+  const statusLabel = { SAFE: 'On track', WARNING: 'Near target', DANGER: 'Below target', NO_DATA: 'No records' }[level];
   const isUndefinedLTP = subject.lectures === 0 && subject.tutorials === 0 && subject.practicals === 0;
   const ltp = isUndefinedLTP ? '-' : `${subject.lectures}-${subject.tutorials}-${subject.practicals}`;
 
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="glass-surface rounded-[20px] p-6">
-        <p className="text-[10px] font-bold tracking-[0.2em] text-white/50 uppercase">
-          {subject.code}
-        </p>
-        <h1 className="mt-1 text-xl font-extrabold tracking-tight gradient-text">{subject.name}</h1>
-        <p className="mt-2 inline-block rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-[10px] font-medium text-white/60">
-          L-T-P: {ltp}
-        </p>
+      <div className="register-detail-header" data-page-reveal>
+        <div className="register-detail-copy">
+          <p>{subject.code}</p>
+          <h1>{subject.name}</h1>
+          <span className="register-course-meta">Lecture · Tutorial · Practical &nbsp; {ltp}</span>
+        </div>
+        <div className="register-detail-rate">
+          <strong>{formatPercentage(percentage)}</strong>
+          <span className={getStatusColor(level)}>{statusLabel}</span>
+        </div>
       </div>
 
       {/* Compact Stats Bar */}
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-        <StatBox
-          label="Attendance"
-          value={formatPercentage(percentage)}
-          color={getStatusColor(level)}
-        />
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-3">
         <StatBox label="Present" value={String(present)} color="text-emerald-400 drop-shadow-sm" />
         <StatBox label="Absent" value={String(absent)} color="text-red-400 drop-shadow-sm" />
-        <StatBox label="Conducted" value={String(totalConducted)} color="text-zinc-300 drop-shadow-sm" />
-        <StatBox
-          label={needToAttend > 0 ? 'Attend Next' : 'Can Bunk'}
-          value={totalConducted === 0 ? '—' : String(needToAttend > 0 ? needToAttend : canBunk)}
-          color={needToAttend > 0 ? 'text-red-400 drop-shadow-sm' : 'text-emerald-400 drop-shadow-sm'}
-        />
-        <div className="glass-elevated flex flex-col items-center justify-center rounded-[16px] px-2 py-2.5">
-          <span className={`text-[10px] font-bold tracking-[0.15em] uppercase ${getStatusColor(level)}`}>
-            {getStatusLabel(level)}
-          </span>
-          <span className="text-[8px] text-white/40 uppercase tracking-widest mt-0.5">Status</span>
-        </div>
+        <StatBox label="Recorded" value={String(totalConducted)} color="text-zinc-300 drop-shadow-sm" />
       </div>
+      <p className="register-next-step">{totalConducted === 0 ? 'Tap a class below to record attendance. Cancelled classes do not affect your percentage.' : needToAttend > 0 ? `Attend the next ${needToAttend} ${needToAttend === 1 ? 'class' : 'classes'} to reach 75%.` : canBunk > 0 ? `You can miss ${canBunk} ${canBunk === 1 ? 'class' : 'classes'} and stay at or above 75%.` : 'You’re at the threshold. Attend your next class to build a buffer.'}</p>
 
       {/* Register Navigation */}
-      <div className="flex items-center justify-between">
-        <div className="glass-elevated rounded-[14px] flex items-center gap-px p-1">
-          <button onClick={scrollToStart} className="glass-control rounded-[10px] px-3 py-1.5 text-[10px] font-semibold text-white/60 hover:text-white tracking-wide">Start</button>
-          <button onClick={() => scrollBy(-1)} className="glass-control rounded-[10px] px-3 py-1.5 text-[10px] font-semibold text-white/60 hover:text-white">‹</button>
-        </div>
-        <div className="glass-elevated rounded-[14px] flex items-center gap-px p-1">
-          <button onClick={() => setShowExtraModal(true)} className="glass-control rounded-[10px] px-3 py-1.5 text-[10px] font-semibold text-white/60 hover:text-white mr-2 flex items-center gap-1">
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="register-controls">
+          <button type="button" onClick={() => setShowExtraModal(true)} className="register-extra" aria-label={`Add extra class for ${subject.name}`}>
+            <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            EXTRA
+            Extra class
           </button>
-          <button onClick={scrollToToday} className="glass-control-active rounded-[10px] px-4 py-1.5 text-[10px] font-bold text-white tracking-wider">TODAY</button>
-          <button onClick={() => scrollBy(1)} className="glass-control rounded-[10px] px-3 py-1.5 text-[10px] font-semibold text-white/60 hover:text-white">›</button>
-        </div>
+          <button type="button" onClick={scrollToStart} aria-label="Scroll register to semester start">Start</button>
+          <button type="button" onClick={() => scrollBy(-1)} aria-label="Previous classes">‹</button>
+          <button type="button" onClick={scrollToToday} className="register-today">Today</button>
+          <button type="button" onClick={() => scrollBy(1)} aria-label="Next classes">›</button>
+      </div>
+      <div className="register-guide" aria-label="Register legend">
+        <span><i className="attendance-dot present" /><strong>P</strong> Present</span>
+        <span><i className="attendance-dot absent" /><strong>A</strong> Absent</span>
+        <span><i className="attendance-dot cancelled" /><strong>C</strong> Cancelled</span>
+        <span><i className="attendance-dot unmarked" /><strong>—</strong> Unmarked</span>
       </div>
 
       {/* === THE REGISTER === */}
       <div className="glass-surface rounded-[20px] overflow-hidden">
-        <div ref={scrollRef} className="overflow-x-auto scrollbar-thin">
+        <div ref={scrollRef} className="register-scroller overflow-x-auto scrollbar-thin" tabIndex={0} role="region" aria-label={`${subject.name} attendance register, scroll horizontally for more classes`}>
           <div className="flex min-w-max">
             {/* Sticky Left Labels */}
             <div className="sticky left-0 z-20 flex-shrink-0 glass-frozen">
@@ -203,7 +196,7 @@ export default function AttendanceRegister({ subject, sessions, onMarkAttendance
                   className={`flex-shrink-0 border-r border-white/[0.05] ${colBg} ${
                     isToday ? '' : ''
                   }`}
-                  style={{ width: '60px' }}
+                  style={{ width: '68px' }}
                 >
                   {/* Date */}
                   <div className={`flex h-9 items-center justify-center border-b border-white/[0.06] text-[11px] font-semibold ${
@@ -238,7 +231,7 @@ export default function AttendanceRegister({ subject, sessions, onMarkAttendance
                     )}
                   </div>
                   {/* Attendance Cell */}
-                  <div className="relative flex h-11 items-center justify-center">
+                  <div className="relative flex h-14 items-center justify-center">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -250,7 +243,10 @@ export default function AttendanceRegister({ subject, sessions, onMarkAttendance
                           setPopoverAnchor(e.currentTarget);
                         }
                       }}
-                      className={`flex h-9 w-[52px] items-center justify-center rounded-[6px] border text-sm transition-all duration-200 hover:brightness-110 active:scale-90 cursor-pointer ${getStatusCellClass(session.status)}`}
+                      type="button"
+                      className={`register-cell status-${session.status.toLowerCase()} flex h-11 w-[56px] items-center justify-center rounded-[10px] text-sm cursor-pointer`}
+                      aria-label={`${subject.name}, ${session.date}, ${session.startTime}, ${session.classType}, ${session.status.toLowerCase()}. Change attendance.`}
+                      aria-expanded={activePopover === session.id}
                       title={`${subject.code}\n${String(d.getDate()).padStart(2, '0')} ${MONTH_SHORT[d.getMonth()]} ${d.getFullYear()}\n${session.startTime}–${session.endTime}\n${session.classType}`}
                     >
                       {STATUS_DISPLAY[session.status]}
@@ -288,9 +284,9 @@ export default function AttendanceRegister({ subject, sessions, onMarkAttendance
 
 function StatBox({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div className="glass-elevated flex flex-col items-center justify-center rounded-[16px] px-2 py-2.5">
-      <span className={`text-lg font-bold tabular-nums ${color}`}>{value}</span>
-      <span className="text-[8px] text-white/40 uppercase tracking-wider mt-0.5">{label}</span>
+    <div className="register-stat">
+      <strong className={color}>{value}</strong>
+      <span>{label}</span>
     </div>
   );
 }
@@ -299,7 +295,7 @@ function RowLabel({ text, isHeader, isBold, isLast }: { text: string; isHeader?:
   return (
     <div className={`flex items-center justify-end pr-3 pl-3 border-b text-[10px] tracking-widest uppercase ${
       isHeader ? 'h-9 font-bold text-white/60 border-white/[0.06]' :
-      isLast ? 'h-11 border-transparent' :
+      isLast ? 'h-14 border-transparent' : text === 'TYPE' ? 'h-11 border-white/[0.06]' :
       'h-8 border-white/[0.06]'
     } ${isBold ? 'font-bold text-white/80' : 'text-white/40 font-medium'}`}
     style={{ minWidth: '60px' }}>

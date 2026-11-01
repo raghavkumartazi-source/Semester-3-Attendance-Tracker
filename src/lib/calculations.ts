@@ -21,6 +21,8 @@ import {
   ExamSchedule
 } from './types';
 import { MINIMUM_ATTENDANCE, SUBJECTS, SEMESTER_END } from './config';
+import { differenceInCalendarDays } from 'date-fns/differenceInCalendarDays';
+import { formatDate, parseDate } from './sessions';
 
 /**
  * Calculate attendance percentage.
@@ -545,12 +547,14 @@ export function generateReverseCountdownPlan(
   config: PlannerConfig,
   existingSessions: StudySession[] = []
 ): ReverseCountdownPlan {
-  const targetDate = new Date(config.target_exam_date);
+  const targetDate = parseDate(config.target_exam_date);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
-  const daysRemaining = Math.ceil((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  const daysRemaining = differenceInCalendarDays(targetDate, today);
   const studyDaysAvailable = Math.max(0, daysRemaining - config.buffer_days);
+  const studyEnd = new Date(today);
+  studyEnd.setDate(studyEnd.getDate() + studyDaysAvailable);
   
   // Filter topics for this subject
   const subjectTopics = topics.filter(t => t.subject_code === subjectCode);
@@ -577,7 +581,6 @@ export function generateReverseCountdownPlan(
   
   // Add revision time for covered topics
   const revisionHours = coveredTopics.reduce((sum, t) => {
-    const cov = coverageMap.get(t.id);
     const cycles = config.revision_cycles;
     const hoursPerCycle = t.estimated_hours * 0.5; // revision takes ~50% time
     return sum + (hoursPerCycle * cycles);
@@ -604,9 +607,7 @@ export function generateReverseCountdownPlan(
   }
   
   // Simple distribution: fill days with topics in order
-  let currentDate = new Date(today);
-  const topicIndex = 0;
-  const topicProgress = 0; // 0-1 for current topic
+  const currentDate = new Date(today);
   
   // Sort remaining topics by difficulty (harder first) and weightage
   const sortedRemaining = [...remainingTopics].sort((a, b) => {
@@ -643,9 +644,8 @@ export function generateReverseCountdownPlan(
   
   // Generate daily plans
   for (const session of allSessions) {
-    if (currentDate > targetDate) break;
+    if (currentDate >= studyEnd) break;
     
-    const dayStr = currentDate.toISOString().split('T')[0];
     const hoursForTopic = session.type === 'new' 
       ? session.topic.estimated_hours 
       : session.topic.estimated_hours * 0.5;
@@ -655,14 +655,14 @@ export function generateReverseCountdownPlan(
     const numSessions = Math.ceil(hoursForTopic / sessionLengthHours);
     
     for (let s = 0; s < numSessions; s++) {
-      if (currentDate > targetDate) break;
+      if (currentDate >= studyEnd) break;
       
       const sessionHours = Math.min(sessionLengthHours, hoursForTopic - s * sessionLengthHours);
       
       dailyPlan.push({
         id: crypto.randomUUID(),
         user_id: '',
-        plan_date: dayStr,
+        plan_date: formatDate(currentDate),
         subject_code: subjectCode,
         topic_id: session.topic.id,
         planned_hours: Number(sessionHours.toFixed(1)),
@@ -677,20 +677,23 @@ export function generateReverseCountdownPlan(
         updated_at: new Date().toISOString(),
       });
       
-      currentDate = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);
+      currentDate.setDate(currentDate.getDate() + 1);
     }
   }
   
   // Add milestones
-  const midPoint = new Date(today.getTime() + (targetDate.getTime() - today.getTime()) / 2);
+  const midPoint = new Date(today);
+  midPoint.setDate(midPoint.getDate() + Math.floor(daysRemaining / 2));
   milestones.push({
-    date: midPoint.toISOString().split('T')[0],
+    date: formatDate(midPoint),
     label: 'Mid-point Check',
     topics_to_complete: sortedRemaining.slice(0, Math.ceil(sortedRemaining.length / 2)).map(t => t.topic_code),
   });
   
+  const bufferStart = new Date(targetDate);
+  bufferStart.setDate(bufferStart.getDate() - config.buffer_days);
   milestones.push({
-    date: new Date(targetDate.getTime() - config.buffer_days * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    date: formatDate(bufferStart),
     label: 'Buffer Period Starts (No New Topics)',
     topics_to_complete: sortedRemaining.map(t => t.topic_code),
   });

@@ -6,6 +6,12 @@ import { Task } from '@/lib/types';
 import { timeUtils } from '@/lib/timeUtils';
 import { SUBJECTS } from '@/lib/config';
 import { useWorkSessions } from '../WorkSessionProvider';
+import './task-item.css';
+
+const taskTypeLabels = {
+  STUDY: 'Study', ASSIGNMENT: 'Assignment', PRACTICE: 'Practice',
+  REVISION: 'Revision', PROJECT: 'Project', QUIZ_PREP: 'Quiz prep', OTHER: 'Personal',
+};
 
 export function TaskItem({ task, onComplete, onEdit, onDelete }: { task: Task, onComplete: () => void, onEdit: () => void, onDelete: () => void }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -28,7 +34,7 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: { task: Task, o
       window.removeEventListener('scroll', closeForViewportChange, true);
     };
   }, [menuOpen]);
-  const isOverdue = timeUtils.isOverdue(task.due_at);
+  const isOverdue = !task.completed && timeUtils.isOverdue(task.due_at);
   const isToday = timeUtils.isToday(task.due_at);
   const isTomorrow = timeUtils.isTomorrow(task.due_at);
   const subject = SUBJECTS.find(s => s.code === task.subject_id);
@@ -42,7 +48,8 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: { task: Task, o
   }, 0);
 
   let dateLabel = '';
-  if (isOverdue) dateLabel = 'Overdue';
+  if (task.completed && task.completed_at) dateLabel = `Finished ${new Date(task.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+  else if (isOverdue) dateLabel = 'Overdue';
   else if (isToday) dateLabel = 'Today';
   else if (isTomorrow) dateLabel = 'Tomorrow';
   else if (task.due_at) {
@@ -51,9 +58,7 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: { task: Task, o
   }
 
   return (
-    <div className={`relative glass-elevated rounded-2xl p-3 flex items-start gap-2 transition-all duration-300 ${
-      isOverdue ? 'border-red-500/20 bg-red-500/5' : ''
-    }`} onKeyDown={event => {
+    <div className={`task-item${isOverdue ? ' is-overdue' : ''}${task.completed ? ' is-completed' : ''}`} onKeyDown={event => {
       if (event.key === 'Escape' && menuOpen) {
         event.stopPropagation();
         setMenuOpen(false);
@@ -63,66 +68,36 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: { task: Task, o
       <button 
         type="button"
         onClick={onComplete}
-        aria-label={`Mark ${task.title} as complete`}
-        className="group shrink-0 w-11 h-11 rounded-xl flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
+        aria-label={`Mark ${task.title} as ${task.completed ? 'incomplete' : 'complete'}`}
+        aria-pressed={task.completed}
+        className="task-item-check"
       >
-        <span className="w-6 h-6 rounded-md border-2 border-white/20 flex items-center justify-center group-hover:bg-emerald-500/20 group-hover:border-emerald-500/50 transition-colors">
-          <svg aria-hidden="true" className="w-3.5 h-3.5 text-transparent group-hover:text-emerald-400 group-focus-visible:text-emerald-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+        <span>
+          <svg aria-hidden="true" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.7}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </span>
       </button>
       
-      <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-bold text-zinc-100">
-          <button type="button" onClick={onEdit} aria-label={`Edit ${task.title}`} className="block w-full min-h-11 rounded-lg text-left leading-5 [overflow-wrap:anywhere] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]">{task.title}</button>
+      <div className="task-item-content">
+        <h3 className="task-item-heading">
+          <button type="button" onClick={onEdit} aria-label={`Edit ${task.title}`}>{task.title}</button>
         </h3>
-        
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
-          {subject && (
-            <span className="text-[10px] font-medium text-white/50">{subject.code}</span>
-          )}
-          
-          {(subject && (dateLabel || task.priority === 'HIGH')) && (
-            <span className="text-[10px] text-white/20">·</span>
-          )}
-
-          {dateLabel && (
-            <span className={`text-[10px] font-bold ${
-              isOverdue ? 'text-red-400' : 
-              isToday ? 'text-emerald-400' : 'text-white/50'
-            }`}>
-              {dateLabel}
-            </span>
-          )}
-
-          {(dateLabel && task.priority === 'HIGH') && (
-            <span className="text-[10px] text-white/20">·</span>
-          )}
-
-          {task.priority === 'HIGH' && (
-            <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-1.5 rounded-sm">
-              HIGH
-            </span>
-          )}
+        <div className="task-item-meta">
+          <span className="task-item-subject">{subject ? subject.code : taskTypeLabels[task.type] || 'Task'}</span>
+          {dateLabel && <span className={`task-item-date${isOverdue ? ' is-overdue' : !task.completed && isToday ? ' is-today' : ''}`}>{dateLabel}</span>}
+          {task.priority === 'HIGH' && !task.completed && <span className="task-item-priority"><svg aria-hidden="true" width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth={1.3}><path d="M6 2v5m0 2v.5" strokeLinecap="round" /></svg>High priority</span>}
         </div>
 
-        {task.estimated_minutes ? (
-          <div className="mt-2 flex flex-col gap-1.5">
-            <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-              <div 
-                className={`h-full rounded-full transition-all duration-500 ${plannedMinutes >= task.estimated_minutes ? 'bg-emerald-500' : 'bg-indigo-500'}`}
-                style={{ width: `${Math.min(100, (plannedMinutes / task.estimated_minutes) * 100)}%` }}
-              />
-            </div>
-            <span className="text-[11px] leading-4 font-medium text-white/40 [overflow-wrap:anywhere]">
-              {timeUtils.formatDuration(plannedMinutes)} planned for {timeUtils.formatDuration(task.estimated_minutes)} estimate
-            </span>
+        {task.estimated_minutes && !task.completed ? (
+          <div className="task-item-plan">
+            <div className="task-item-plan-track" aria-hidden="true"><span style={{ width: `${Math.min(100, Math.max(0, plannedMinutes / task.estimated_minutes * 100))}%` }} /></div>
+            <span><strong>{timeUtils.formatDuration(plannedMinutes)}</strong> planned <i aria-hidden="true">/</i> {timeUtils.formatDuration(task.estimated_minutes)}</span>
           </div>
         ) : null}
       </div>
 
-      <div className="relative shrink-0">
+      <div className="task-item-actions">
         <button 
           ref={menuButtonRef}
           type="button"
@@ -134,14 +109,19 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: { task: Task, o
             if (!menuOpen) {
               const bounds = e.currentTarget.getBoundingClientRect();
               const menuWidth = Math.min(160, window.innerWidth - 40);
+              const menuHeight = 98;
+              const dock = document.querySelector<HTMLElement>('.bottom-nav-inner');
+              const visibleBottom = dock && window.getComputedStyle(dock).visibility !== 'hidden'
+                ? Math.min(window.innerHeight - 12, dock.getBoundingClientRect().top - 12)
+                : window.innerHeight - 12;
               setMenuPosition({
-                top: bounds.bottom + 94 <= window.innerHeight - 12 ? bounds.bottom + 4 : Math.max(12, bounds.top - 94),
+                top: bounds.bottom + menuHeight + 4 <= visibleBottom ? bounds.bottom + 4 : Math.max(12, bounds.top - menuHeight - 4),
                 right: Math.max(20, Math.min(window.innerWidth - menuWidth - 20, window.innerWidth - bounds.right)),
               });
             }
             setMenuOpen(!menuOpen);
           }}
-          className="w-11 h-11 flex items-center justify-center text-white/50 hover:text-white/80 transition-colors rounded-xl hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
+          className="task-item-menu-toggle"
         >
           <svg aria-hidden="true" className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16">
             <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
@@ -154,7 +134,7 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: { task: Task, o
               setMenuOpen(false);
               menuButtonRef.current?.focus({ preventScroll: true });
             }} />
-            <div ref={menuRef} id={menuId} role="group" aria-label={`Actions for ${task.title}`} className="fixed w-40 max-w-[calc(100vw-40px)] bg-[#1a1d24] border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in-up" style={{ ...menuPosition, animationDuration: '0.15s' }} onBlur={event => {
+            <div ref={menuRef} id={menuId} role="group" aria-label={`Actions for ${task.title}`} className="task-item-menu" style={menuPosition} onBlur={event => {
               if (!event.currentTarget.contains(event.relatedTarget)) setMenuOpen(false);
             }}>
               <button
@@ -165,7 +145,6 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: { task: Task, o
                   setMenuOpen(false);
                   onEdit();
                 }}
-                className="w-full min-h-11 text-left px-4 py-2.5 text-sm font-medium text-white/80 hover:bg-white/5 transition-colors"
               >
                 Edit
               </button>
@@ -177,7 +156,7 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: { task: Task, o
                   setMenuOpen(false);
                   onDelete();
                 }}
-                className="w-full min-h-11 text-left px-4 py-2.5 text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors"
+                className="is-destructive"
               >
                 Delete
               </button>

@@ -5,30 +5,27 @@ export const dynamic = 'force-dynamic';
 
 import { useId, useState } from 'react';
 import Dialog from '@/components/Dialog';
-import { motion } from 'framer-motion';
+import AcademicCalculator from '@/components/AcademicCalculator';
+import { motion, useReducedMotion } from 'framer-motion';
+import '../planning-pages.css';
 import { SUBJECTS } from '@/lib/config';
 import { useMarks } from '@/components/MarksProvider';
 import { 
-  calculateSubjectMarksSummary, 
   calculateTargetRequirements,
   DEFAULT_GRADE_BOUNDARIES,
   simulateGradeScenario,
   getGradePoints
 } from '@/lib/calculations';
-import { MarkComponent, SubjectGradeConfig, GradeScenario, GradeLetter } from '@/lib/types';
+import { MarkComponent, GradeScenario, GradeLetter } from '@/lib/types';
 import { 
   PlusIcon, 
   PencilIcon, 
   TrashIcon, 
-  EyeIcon,
   CalculatorIcon,
-  ArrowPathIcon,
   SparklesIcon,
-  ArrowDownTrayIcon,
-  ArrowUpTrayIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
-import { CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
+import { ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 
 const COMPONENT_TYPE_LABELS = {
   MIDSEM: 'Midsem Exam',
@@ -42,31 +39,26 @@ const COMPONENT_TYPE_LABELS = {
   OTHER: 'Other',
 };
 
-const COMPONENT_TYPE_COLORS = {
-  MIDSEM: 'bg-red-500/10 text-red-400 border-red-500/20',
-  ENDSEM: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-  QUIZ: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  ASSIGNMENT: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  LAB: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  VIVA: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
-  PROJECT: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-  ATTENDANCE: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
-  OTHER: 'bg-white/10 text-white/70 border-white/20',
-};
+const COMPONENT_TYPE_COLORS = Object.fromEntries(
+  Object.keys(COMPONENT_TYPE_LABELS).map(type => [type, 'assessment-type-chip'])
+) as Record<MarkComponent['component_type'], string>;
 
 const GRADE_COLORS = {
-  AA: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  AB: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
-  BB: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  BC: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
-  CC: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-  CD: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-  DD: 'bg-red-500/20 text-red-400 border-red-500/30',
-  F: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30',
+  AA: 'grade-tone grade-tone-success',
+  AB: 'grade-tone grade-tone-success',
+  BB: 'grade-tone grade-tone-accent',
+  BC: 'grade-tone grade-tone-accent',
+  CC: 'grade-tone grade-tone-warning',
+  CD: 'grade-tone grade-tone-warning',
+  DD: 'grade-tone grade-tone-danger',
+  F: 'grade-tone grade-tone-muted',
 };
+
+const readableDate = (date: string) => new Date(`${date}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
 export default function MarksPage() {
   const formId = useId();
+  const reducedMotion = useReducedMotion();
   const { 
     components, 
     gradeConfigs, 
@@ -84,6 +76,7 @@ export default function MarksPage() {
   } = useMarks();
 
   const [selectedSubject, setSelectedSubject] = useState(SUBJECTS[0]?.code || '');
+  const [mode, setMode] = useState<'scorecard' | 'spi' | 'cgpa'>('scorecard');
   const [showAddComponent, setShowAddComponent] = useState(false);
   const [editingComponent, setEditingComponent] = useState<MarkComponent | null>(null);
   const [showGradeConfig, setShowGradeConfig] = useState(false);
@@ -91,8 +84,9 @@ export default function MarksPage() {
   const [editingScenario, setEditingScenario] = useState<GradeScenario | null>(null);
   const [scenarioAssumptions, setScenarioAssumptions] = useState<Record<string, number>>({});
 
-  const subjectComponents = components.filter(c => c.subject_code === selectedSubject);
-  const subjectConfig = gradeConfigs.find(c => c.subject_code === selectedSubject);
+  const subjectComponents = components.filter(c => c.subject_code === selectedSubject && !c.deleted_at);
+  const subjectConfig = gradeConfigs.find(c => c.subject_code === selectedSubject && !c.deleted_at);
+  const subjectScenarios = scenarios.filter(scenario => scenario.subject_code === selectedSubject && !scenario.deleted_at);
   const summary = getSubjectSummary(selectedSubject);
   const overall = getOverallSummary();
 
@@ -167,7 +161,7 @@ export default function MarksPage() {
   const submitGradeConfig = (e: React.FormEvent) => {
     e.preventDefault();
     upsertGradeConfig({
-      user_id: '',
+      user_id: subjectConfig?.user_id || '',
       subject_code: selectedSubject,
       ...gradeConfigData,
     });
@@ -261,39 +255,67 @@ export default function MarksPage() {
 
   if (!isLoaded) {
     return (
-      <div className="max-w-lg mx-auto pb-24 space-y-6">
+      <div className="planning-page space-y-6" role="status" aria-label="Loading marks and grades">
         <div className="paper-elevated rounded-[24px] p-8 text-center animate-pulse">
-          <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
-            <CalculatorIcon className="w-6 h-6 text-emerald-400" />
+          <div className="planning-empty-icon mx-auto">
+            <CalculatorIcon className="w-6 h-6 planning-accent" />
           </div>
-          <h2 className="text-lg font-bold text-white">Loading Semester Scorecard...</h2>
+          <h2 className="text-lg font-medium text-white">Loading your scorecard…</h2>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-lg mx-auto pb-24 space-y-6 animate-fade-in">
+    <div className="marks-page planning-page space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="marks-page-heading flex flex-wrap items-center justify-between gap-4">
         <div className="page-header" style={{ marginBottom: 0 }}>
-          <h1>Semester Scorecard</h1>
-          <p className="page-subtitle">Marks & Grade Tracker</p>
+          <p className="planning-eyebrow">Your semester, in numbers</p>
+          <h1>Marks & grades</h1>
+          <p className="page-subtitle">Track your results. See what’s within reach.</p>
         </div>
-        <div className="flex items-center gap-2">
+        {mode === 'scorecard' && <div className="marks-settings-actions flex items-center gap-2">
           <button
-            onClick={() => setShowGradeConfig(true)}
-            className="ink-btn px-4 py-2 text-sm font-medium flex items-center gap-2"
+            onClick={() => {
+              if (subjectConfig) {
+                setGradeConfigData({
+                  grade_aa_min: subjectConfig.grade_aa_min,
+                  grade_ab_min: subjectConfig.grade_ab_min,
+                  grade_bb_min: subjectConfig.grade_bb_min,
+                  grade_bc_min: subjectConfig.grade_bc_min,
+                  grade_cc_min: subjectConfig.grade_cc_min,
+                  grade_cd_min: subjectConfig.grade_cd_min,
+                  grade_dd_min: subjectConfig.grade_dd_min,
+                  credits: subjectConfig.credits,
+                });
+              } else {
+                setGradeConfigData({ grade_aa_min: 80, grade_ab_min: 70, grade_bb_min: 60, grade_bc_min: 50, grade_cc_min: 40, grade_cd_min: 35, grade_dd_min: 30, credits: 4 });
+              }
+              setShowGradeConfig(true);
+            }}
+            type="button"
+            aria-label="Grade settings"
+            title="Grade settings"
+            className="glass-control planning-secondary-action px-4 py-2 text-sm font-medium flex items-center gap-2"
           >
-            <PencilIcon className="w-4 h-4" /> Grade Config
+            <PencilIcon className="w-4 h-4" aria-hidden="true" /><span className="marks-settings-label">Grade settings</span>
           </button>
-        </div>
+        </div>}
       </div>
 
+      <div className="planner-view-switch" role="group" aria-label="Marks mode">
+        {(['scorecard', 'spi', 'cgpa'] as const).map(value => <button key={value} type="button" aria-pressed={mode === value} className={`planner-view-option ${mode === value ? 'is-active' : ''}`} onClick={() => setMode(value)}>
+          {mode === value && <motion.span layoutId="marks-mode" className="planner-view-highlight" transition={{ duration: reducedMotion ? 0 : .2 }} />}
+          {value === 'scorecard' ? 'Scorecard' : `${value.toUpperCase()} calculator`}
+        </button>)}
+      </div>
+      {mode !== 'scorecard' && <AcademicCalculator mode={mode} savedCredits={Object.fromEntries(gradeConfigs.filter(config => !config.deleted_at).map(config => [config.subject_code, config.credits]))} />}
+      {mode === 'scorecard' && <>
       {/* Subject Selector */}
-      <div className="paper-elevated rounded-[20px] p-4">
-        <p id={`${formId}-subject-selector`} className="text-[11px] font-bold text-white/40 uppercase tracking-widest block mb-3">Select Subject</p>
-        <div role="group" aria-labelledby={`${formId}-subject-selector`} className="flex gap-2 overflow-x-auto pb-1">
+      <div className="planning-subject-block">
+        <p id={`${formId}-subject-selector`} className="planning-section-kicker">Subject</p>
+        <div role="group" aria-labelledby={`${formId}-subject-selector`} className="planning-subject-rail">
           {SUBJECTS.map(subj => {
             const subjSummary = getSubjectSummary(subj.code);
             const isActive = selectedSubject === subj.code;
@@ -303,14 +325,10 @@ export default function MarksPage() {
                 type="button"
                 aria-pressed={isActive}
                 onClick={() => setSelectedSubject(subj.code)}
-                className={`shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-300 ${
-                  isActive 
-                    ? 'bg-white/10 text-white border border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.05)]'
-                    : 'text-white/60 hover:text-white hover:bg-white/5'
-                }`}
+                className={`planning-subject ${isActive ? 'is-active' : ''}`}
               >
-                <span className="font-medium">{subj.code}</span>
-                <span className="text-[11px] text-white/40">{subj.shortName}</span>
+                <span className="planning-subject-name">{subj.shortName}</span>
+                <span className="planning-subject-code">{subj.code}</span>
                 {subjSummary?.current_grade && (
                   <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${GRADE_COLORS[subjSummary.current_grade]}`}>
                     {subjSummary.current_grade}
@@ -325,32 +343,31 @@ export default function MarksPage() {
       {/* Overall SGPA Card */}
       {overall.sgpa !== null && (
         <motion.div 
-          className="paper-elevated rounded-[24px] p-6 relative overflow-hidden"
-          initial={{ opacity: 0, y: 20 }}
+          className="marks-overall paper-elevated rounded-[24px] p-6 relative overflow-hidden"
+          initial={reducedMotion ? false : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 200, damping: 24 }}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-blue-500/10 pointer-events-none" />
           <div className="relative z-10 flex items-center justify-between">
             <div>
               <p className="text-[11px] font-bold text-white/50 uppercase tracking-widest mb-1">Current SGPA</p>
-              <p className="text-4xl font-bold text-white tracking-tight">{overall.sgpa.toFixed(2)}</p>
+              <p className="marks-sgpa-value">{overall.sgpa.toFixed(2)}<span>/ 10</span></p>
               <p className="text-sm text-white/50 mt-1">{overall.earned_credits}/{overall.total_credits} credits earned</p>
             </div>
             <div className="text-right">
               <p className="text-[11px] font-bold text-white/50 uppercase tracking-widest mb-1">Subjects</p>
-              <p className="text-2xl font-bold text-emerald-400">{overall.subjects.filter(s => s.current_grade).length}/{SUBJECTS.length}</p>
+              <p className="text-2xl font-bold text-white tabular-nums">{overall.subjects.filter(s => s.current_grade).length}<span className="text-sm text-white/50"> / {SUBJECTS.length}</span></p>
             </div>
           </div>
         </motion.div>
       )}
 
       {!summary && (
-        <div className="empty-state">
-          <CalculatorIcon aria-hidden="true" />
+        <div className="planning-empty empty-state">
+          <span className="planning-empty-icon"><CalculatorIcon aria-hidden="true" /></span>
           <h2 className="text-lg text-white">Start your scorecard</h2>
           <p>Add a quiz, assignment or exam for {SUBJECTS.find(s => s.code === selectedSubject)?.shortName}.</p>
-          <LiquidButton type="button" onClick={() => { resetForm(); setShowAddComponent(true); }} className="mt-5">Add first component</LiquidButton>
+          <LiquidButton type="button" onClick={() => { resetForm(); setShowAddComponent(true); }} className="mt-5">Add first assessment</LiquidButton>
         </div>
       )}
 
@@ -359,26 +376,26 @@ export default function MarksPage() {
         <>
           {/* Current Status */}
           <motion.div 
-            className="paper-elevated rounded-[24px] p-6 relative overflow-hidden"
-            initial={{ opacity: 0, y: 20 }}
+            className="marks-summary paper-elevated rounded-[24px] p-6 relative overflow-hidden"
+            initial={reducedMotion ? false : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: 'spring', stiffness: 200, damping: 24, delay: 0.1 }}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-transparent pointer-events-none" />
             <div className="relative z-10">
-              <div className="flex items-start justify-between mb-6">
+              <div className="marks-summary-heading">
                 <div>
-                  <h2 className="text-lg font-bold text-white">{summary.subject_code} — {summary.subject_name}</h2>
-                  <p className="text-sm text-white/50 mt-1">Weightage: {summary.total_weightage.toFixed(1)}% total</p>
+                  <p className="planning-section-kicker">{summary.subject_code}</p>
+                  <h2 className="text-lg font-semibold text-white">{summary.subject_name}</h2>
+                  <p className="text-sm text-white/50 mt-1">{summary.total_weightage.toFixed(1)}% of assessments added</p>
                 </div>
                 {summary.current_grade && (
-                  <div className="text-right">
-                    <p className="text-[11px] font-bold text-white/50 uppercase tracking-widest mb-1">Current Grade</p>
+                  <div className="marks-current-grade">
+                    <p className="planning-section-kicker">Current grade</p>
                     <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl ${GRADE_COLORS[summary.current_grade]}`}>
                       <span className="text-2xl font-bold">{summary.current_grade}</span>
                       <span className="text-sm font-medium">({summary.current_percentage?.toFixed(1)}%)</span>
                     </span>
-                    <p className="text-xs text-white/40 mt-1">{getGradePoints(summary.current_grade)} grade points × {summary.credits} credits</p>
+                    <p className="text-xs text-white/40 mt-2">{getGradePoints(summary.current_grade)} points · {summary.credits} credits</p>
                   </div>
                 )}
               </div>
@@ -386,38 +403,38 @@ export default function MarksPage() {
               {/* Progress Bar */}
               <div className="mb-6">
                 <div className="flex items-center justify-between text-sm mb-2">
-                  <span className="text-white/60">Progress</span>
-                  <span className="text-white font-medium">
-                    {publishedComponents.length}/{subjectComponents.length} components published
+                  <span className="text-white/60">Weighted marks earned</span>
+                  <span className="text-white font-medium tabular-nums">
+                    {summary.earned_weightage.toFixed(1)}%
                   </span>
                 </div>
-                <div className="h-3 bg-white/5 rounded-full overflow-hidden">
+                <div className="h-2 bg-white/5 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
+                    className="marks-progress-fill h-full rounded-full transition-all duration-500"
                     style={{ width: `${totalWeightage > 0 ? (summary.earned_weightage / summary.total_weightage) * 100 : 0}%` }}
                   />
                 </div>
                 <div className="flex justify-between text-[11px] text-white/40 mt-1">
-                  <span>Earned: {summary.earned_weightage.toFixed(1)}%</span>
-                  <span>Pending: {summary.pending_weightage.toFixed(1)}%</span>
+                  <span>{publishedComponents.length} of {subjectComponents.length} results recorded</span>
+                  <span>{summary.pending_weightage.toFixed(1)}% pending</span>
                 </div>
               </div>
 
               {/* Projection Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="paper-surface rounded-xl p-4 text-center">
+              <div className="marks-projections">
+                <div className="marks-projection">
                   <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-1">Best Case</p>
-                  <p className="text-2xl font-bold text-emerald-400">{summary.best_case_percentage.toFixed(1)}%</p>
+                  <p className="marks-projection-value">{summary.best_case_percentage.toFixed(1)}<span>%</span></p>
                   <p className="text-[11px] text-white/50 mt-1">{getGradeFromPercentage(summary.best_case_percentage)}</p>
                 </div>
-                <div className="paper-surface rounded-xl p-4 text-center">
+                <div className="marks-projection is-primary">
                   <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-1">Projected</p>
-                  <p className="text-2xl font-bold text-blue-400">{summary.projected_percentage?.toFixed(1) ?? '--'}%</p>
+                  <p className="marks-projection-value">{summary.projected_percentage?.toFixed(1) ?? '—'}{summary.projected_percentage != null && <span>%</span>}</p>
                   <p className="text-[11px] text-white/50 mt-1">{summary.projected_grade ?? '--'}</p>
                 </div>
-                <div className="paper-surface rounded-xl p-4 text-center">
+                <div className="marks-projection">
                   <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-1">Worst Case</p>
-                  <p className="text-2xl font-bold text-red-400">{summary.worst_case_percentage.toFixed(1)}%</p>
+                  <p className="marks-projection-value">{summary.worst_case_percentage.toFixed(1)}<span>%</span></p>
                   <p className="text-[11px] text-white/50 mt-1">{getGradeFromPercentage(summary.worst_case_percentage)}</p>
                 </div>
               </div>
@@ -426,34 +443,37 @@ export default function MarksPage() {
 
           {/* What-If Simulator */}
           <motion.div 
-            className="paper-elevated rounded-[24px] p-6 relative overflow-hidden"
-            initial={{ opacity: 0, y: 20 }}
+            className="marks-simulator paper-elevated rounded-[24px] p-6 relative overflow-hidden"
+            initial={reducedMotion ? false : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: 'spring', stiffness: 200, damping: 24, delay: 0.2 }}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-transparent pointer-events-none" />
             <div className="relative z-10">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <SparklesIcon className="w-5 h-5 text-purple-400" />
-                  What-If Simulator
-                </h2>
+                <div>
+                  <h2 className="planning-card-title flex items-center gap-2">
+                    <SparklesIcon className="w-5 h-5 planning-accent" />
+                    What if?
+                  </h2>
+                  <p className="planning-card-caption">Explore the scores you’re aiming for.</p>
+                </div>
                 <button
-                  onClick={() => { setEditingScenario(null); setScenarioName(''); setScenarioAssumptions({}); setShowScenario(true); }}
-                  className="ink-btn px-4 py-2 text-sm font-medium flex items-center gap-2"
+                  type="button"
+                  onClick={() => { setEditingScenario(null); setScenarioName(''); setScenarioAssumptions(Object.fromEntries(pendingComponents.map(component => [component.id, 50]))); setShowScenario(true); }}
+                  className="glass-control planning-secondary-action px-3 py-2 text-sm font-medium flex items-center gap-2"
                 >
-                  <PlusIcon className="w-4 h-4" /> New Scenario
+                  <PlusIcon className="w-4 h-4" /> New scenario
                 </button>
               </div>
 
               {/* Scenario Results */}
-              {scenarios.filter(s => s.subject_code === selectedSubject).length > 0 && (
+              {subjectScenarios.length > 0 && (
                 <div className="space-y-3 mb-4">
-                  {scenarios.filter(s => s.subject_code === selectedSubject).map(scenario => (
+                  {subjectScenarios.map(scenario => (
                     <motion.div
                       key={scenario.id}
                       className="paper-surface rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 sm:flex-nowrap group"
-                      initial={{ opacity: 0, x: -20 }}
+                      initial={reducedMotion ? false : { opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.1 }}
                     >
@@ -491,49 +511,49 @@ export default function MarksPage() {
 
               {/* Target Grade Calculator */}
               {pendingComponents.length > 0 && summary.current_percentage !== null && (
-                <div className="border-t border-white/10 pt-4">
-                  <h3 className="text-sm font-bold text-white/60 uppercase tracking-wider mb-3">Target Grade Requirements</h3>
+                <details className="marks-targets border-t border-white/10 pt-3">
+                  <summary><span>Target grade requirements</span><span aria-hidden="true">+</span></summary>
                   <div className="space-y-2">
                     {(['AA', 'AB', 'BB', 'BC', 'CC', 'CD', 'DD'] as GradeLetter[]).map(grade => {
                       const requirements = calculateTargetRequirements(subjectComponents, grade, subjectConfig || null);
                       if (requirements.length === 0) return null;
                       const avgRequired = requirements.reduce((sum, r) => sum + r.required_percentage, 0) / requirements.length;
                       return (
-                        <div key={grade} className="flex items-center justify-between paper-recessed rounded-xl p-3">
+                        <div key={grade} className="marks-target-row paper-recessed rounded-xl p-3">
                           <span className={`font-medium px-3 py-1 rounded-full text-sm ${GRADE_COLORS[grade]}`}>
                             Target {grade}
                           </span>
-                          <div className="flex items-center gap-4 text-sm">
-                            <span className="text-white/60">Avg needed: <span className="text-white font-bold">{avgRequired.toFixed(0)}%</span></span>
-                            <span className="text-white/40">({requirements.length} components)</span>
+                          <div className="marks-target-requirement">
+                            <span className="text-white/60">Need <strong className="text-white tabular-nums">{avgRequired.toFixed(0)}%</strong> on average</span>
+                            <span className="text-white/40">across {requirements.length} assessment{requirements.length === 1 ? '' : 's'}</span>
                           </div>
                         </div>
                       );
                     })}
                   </div>
-                </div>
+                </details>
               )}
             </div>
           </motion.div>
 
           {/* Components List */}
           <motion.div 
-            className="paper-elevated rounded-[24px] p-6 relative overflow-hidden"
-            initial={{ opacity: 0, y: 20 }}
+            className="marks-assessments paper-elevated rounded-[24px] p-6 relative overflow-hidden"
+            initial={reducedMotion ? false : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: 'spring', stiffness: 200, damping: 24, delay: 0.3 }}
           >
             <div className="relative z-10">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <CalculatorIcon className="w-5 h-5 text-blue-400" />
-                  Assessment Components
+                <h2 className="planning-card-title flex items-center gap-2">
+                  <CalculatorIcon className="w-5 h-5 planning-accent" />
+                  Assessments
                 </h2>
                 <LiquidButton
                   onClick={() => { resetForm(); setEditingComponent(null); setShowAddComponent(true); }}
                   className="assessment-add-action"
                 >
-                  <PlusIcon className="w-4 h-4" /> Add Component
+                  <PlusIcon className="w-4 h-4" /> Add assessment
                 </LiquidButton>
               </div>
 
@@ -548,16 +568,12 @@ export default function MarksPage() {
                   {subjectComponents.map((component, index) => (
                     <motion.div
                       key={component.id}
-                      className="paper-surface rounded-xl p-4 flex flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4 group"
-                      initial={{ opacity: 0, y: 10 }}
+                      className="assessment-row paper-surface rounded-xl p-4 flex flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4 group"
+                      initial={reducedMotion ? false : { opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
                     >
-                      <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center ${COMPONENT_TYPE_COLORS[component.component_type]}`}>
-                        <span className="text-sm font-bold">{component.component_type.charAt(0)}</span>
-                      </div>
-                      
-                      <div className="flex-1 min-w-0 basis-[calc(100%-56px)] sm:basis-auto">
+                      <div className="flex-1 min-w-0 basis-full sm:basis-auto">
                         <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
                           <h3 className="min-w-0 font-medium text-white [overflow-wrap:anywhere] sm:truncate">{component.component_name}</h3>
                           <span className={`shrink-0 whitespace-nowrap px-2 py-0.5 rounded-full text-[10px] font-bold ${COMPONENT_TYPE_COLORS[component.component_type]}`}>
@@ -577,7 +593,7 @@ export default function MarksPage() {
                             <span className="text-amber-400">Not published</span>
                           )}
                           {component.date && (
-                            <span>Date: <span className="text-white">{component.date}</span></span>
+                            <span><time dateTime={component.date}>{readableDate(component.date)}</time></span>
                           )}
                         </div>
                       </div>
@@ -609,7 +625,7 @@ export default function MarksPage() {
               {totalWeightage !== 100 && (
                 <motion.div 
                   className="mt-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-3"
-                  initial={{ opacity: 0, scale: 0.95 }}
+                  initial={reducedMotion ? false : { opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                 >
                   <ExclamationTriangleIcon className="w-5 h-5 text-amber-400 flex-shrink-0" />
@@ -624,19 +640,20 @@ export default function MarksPage() {
         </>
       )}
 
+      </>}
       {/* Add/Edit Component Modal */}
       {(showAddComponent || editingComponent) && (
-        <Dialog label={editingComponent ? 'Edit component' : 'Add component'} onClose={() => { setShowAddComponent(false); setEditingComponent(null); resetForm(); }}>
-          <div className="relative w-full max-w-md bg-[#111320] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] border-t border-white/15 slide-up">
+        <Dialog label={editingComponent ? 'Edit assessment' : 'Add assessment'} onClose={() => { setShowAddComponent(false); setEditingComponent(null); resetForm(); }}>
+          <div className="planning-form relative w-full max-w-md bg-[#111320] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] border-t border-white/15 slide-up">
             <div className="flex items-center justify-between gap-3 mb-6">
-              <h3 className="text-lg font-bold text-white">{editingComponent ? 'Edit Component' : 'Add Component'}</h3>
+              <h3 className="text-lg font-bold text-white">{editingComponent ? 'Edit assessment' : 'Add assessment'}</h3>
               <button type="button" aria-label="Close component form" onClick={() => { setShowAddComponent(false); setEditingComponent(null); resetForm(); }} className="ink-btn-ghost flex items-center justify-center shrink-0 w-11 h-11">
                 <XMarkIcon aria-hidden="true" className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={submitComponent} className="space-y-4 max-h-[60dvh] overflow-y-auto">
               <div>
-                <label htmlFor={`${formId}-component-type`} className="text-sm font-medium text-white/70 block mb-2">Component Type</label>
+                <label htmlFor={`${formId}-component-type`} className="text-sm font-medium text-white/70 block mb-2">Assessment type</label>
                 <select
                   id={`${formId}-component-type`}
                   name="component_type"
@@ -651,7 +668,7 @@ export default function MarksPage() {
               </div>
               
               <div>
-                <label htmlFor={`${formId}-component-name`} className="text-sm font-medium text-white/70 block mb-2">Component Name</label>
+                <label htmlFor={`${formId}-component-name`} className="text-sm font-medium text-white/70 block mb-2">Assessment name</label>
                 <input
                   id={`${formId}-component-name`}
                   name="component_name"
@@ -763,7 +780,7 @@ export default function MarksPage() {
                   type="submit"
                   className="flex-1 py-3 rounded-xl font-bold text-sm bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30 transition-colors"
                 >
-                  {editingComponent ? 'Save Changes' : 'Add Component'}
+                  {editingComponent ? 'Save changes' : 'Add assessment'}
                 </button>
               </div>
             </form>
@@ -774,7 +791,7 @@ export default function MarksPage() {
       {/* Grade Config Modal */}
       {showGradeConfig && (
         <Dialog label={'Grade configuration'} onClose={() => { setShowGradeConfig(false); }}>
-          <div className="relative w-full max-w-md bg-[#111320] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] border-t border-white/15 slide-up max-h-[80vh] overflow-y-auto">
+          <div className="planning-form relative w-full max-w-md bg-[#111320] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] border-t border-white/15 slide-up max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between gap-3 mb-6">
               <h3 className="text-lg font-bold text-white">Grade Boundaries for {selectedSubject}</h3>
               <button type="button" aria-label="Close grade configuration" onClick={() => setShowGradeConfig(false)} className="ink-btn-ghost flex items-center justify-center shrink-0 w-11 h-11">
@@ -791,7 +808,7 @@ export default function MarksPage() {
                 { key: 'grade_cc_min', label: 'CC (6 pts)', default: 40 },
                 { key: 'grade_cd_min', label: 'CD (5 pts)', default: 35 },
                 { key: 'grade_dd_min', label: 'DD (4 pts)', default: 30 },
-              ].map(({ key, label, default: def }) => (
+              ].map(({ key, label }) => (
                 <div key={key}>
                   <label htmlFor={`${formId}-${key}`} className="text-sm font-medium text-white/70 block mb-2">{label} minimum %</label>
                   <input
@@ -843,7 +860,7 @@ export default function MarksPage() {
       {/* Scenario Modal */}
       {showScenario && (
         <Dialog label={editingScenario ? 'Edit scenario' : 'New scenario'} onClose={() => { setShowScenario(false); setEditingScenario(null); setScenarioName(''); setScenarioAssumptions({}); }}>
-          <div className="relative w-full max-w-md bg-[#111320] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] border-t border-white/15 slide-up max-h-[80vh] overflow-y-auto">
+          <div className="planning-form relative w-full max-w-md bg-[#111320] sm:rounded-[28px] rounded-t-[28px] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] border-t border-white/15 slide-up max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between gap-3 mb-4">
               <h3 className="text-lg font-bold text-white">{editingScenario ? 'Edit Scenario' : 'New What-If Scenario'}</h3>
               <button type="button" aria-label="Close scenario form" onClick={() => { setShowScenario(false); setEditingScenario(null); setScenarioName(''); setScenarioAssumptions({}); }} className="ink-btn-ghost flex items-center justify-center shrink-0 w-11 h-11">
@@ -884,12 +901,12 @@ export default function MarksPage() {
                           min="0"
                           max="100"
                           step="1"
-                          value={scenarioAssumptions[comp.id] || 50}
+                          value={scenarioAssumptions[comp.id] ?? 0}
                           onChange={(e) => handleScenarioAssumptionChange(comp.id, parseInt(e.target.value))}
                           className="flex-1 h-2 bg-white/10 rounded-lg appearance-none accent-emerald-500"
                         />
                         <span className="w-12 text-right font-mono text-white">
-                          {scenarioAssumptions[comp.id] || 50}%
+                          {scenarioAssumptions[comp.id] ?? 0}%
                         </span>
                       </div>
                     </div>

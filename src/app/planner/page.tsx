@@ -5,14 +5,13 @@ export const dynamic = 'force-dynamic';
 import { useId, useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { differenceInCalendarDays } from 'date-fns/differenceInCalendarDays';
+import '../planning-pages.css';
 import { SUBJECTS } from '@/lib/config';
 import { usePlanner } from '@/components/PlannerProvider';
 import Dialog from '@/components/Dialog';
 import { 
   SyllabusTopic, 
-  TopicCoverage, 
   ExamSchedule, 
-  PlannerConfig,
   CoverageStatus,
   ExamType
 } from '@/lib/types';
@@ -23,27 +22,48 @@ import {
   CalendarIcon,
   CheckCircleIcon as CheckCircleIconOutline,
   ClockIcon,
-  PlayIcon,
   BookOpenIcon,
   ChartBarIcon
 } from '@heroicons/react/24/outline';
-import { CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
+import { XCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 
 const COVERAGE_STATUS_COLORS: Record<CoverageStatus, string> = {
-  NOT_STARTED: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
-  IN_PROGRESS: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  COVERED: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  REVISING: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  MASTERED: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+  NOT_STARTED: 'coverage-tone coverage-not-started',
+  IN_PROGRESS: 'coverage-tone coverage-in-progress',
+  COVERED: 'coverage-tone coverage-covered',
+  REVISING: 'coverage-tone coverage-revising',
+  MASTERED: 'coverage-tone coverage-mastered',
+};
+
+const COVERAGE_STATUS_LABELS: Record<CoverageStatus, string> = {
+  NOT_STARTED: 'Not started',
+  IN_PROGRESS: 'In progress',
+  COVERED: 'Covered',
+  REVISING: 'Revising',
+  MASTERED: 'Mastered',
+};
+
+const EXAM_TYPE_LABELS: Record<ExamType, string> = {
+  MIDSEM: 'Midsem', ENDSEM: 'Endsem', QUIZ: 'Quiz',
+  LAB_EXAM: 'Lab exam', VIVA: 'Viva', ASSIGNMENT_DUE: 'Assignment',
 };
 
 const EXAM_TYPE_COLORS: Record<ExamType, string> = {
-  MIDSEM: 'bg-red-500/10 text-red-400 border-red-500/20',
-  ENDSEM: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-  QUIZ: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  LAB_EXAM: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  VIVA: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
-  ASSIGNMENT_DUE: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  MIDSEM: 'assessment-type-chip', ENDSEM: 'assessment-type-chip',
+  QUIZ: 'assessment-type-chip', LAB_EXAM: 'assessment-type-chip',
+  VIVA: 'assessment-type-chip', ASSIGNMENT_DUE: 'assessment-type-chip',
+};
+
+const readableDate = (date: string) => new Date(`${date}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+const DEFAULT_PLAN_PREFERENCES = {
+  target_exam_date: '',
+  daily_study_hours: 2,
+  buffer_days: 2,
+  revision_cycles: 1,
+  preferred_session_length_minutes: 45,
+  break_between_sessions_minutes: 10,
+  weak_topic_extra_time_multiplier: 1.5,
 };
 
 export default function PlannerPage() {
@@ -53,6 +73,7 @@ export default function PlannerPage() {
     topics, 
     coverage, 
     exams, 
+    plannerConfigs,
     addTopic, 
     updateTopic, 
     deleteTopic,
@@ -60,12 +81,15 @@ export default function PlannerPage() {
     addExam,
     updateExam,
     deleteExam,
+    upsertPlannerConfig,
     getReverseCountdownPlan,
     isLoaded 
   } = usePlanner();
 
   const [selectedSubject, setSelectedSubject] = useState(SUBJECTS[0]?.code || '');
   const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'SYLLABUS' | 'PLAN'>('DASHBOARD');
+  const [showPlanSettings, setShowPlanSettings] = useState(false);
+  const [planPreferences, setPlanPreferences] = useState(DEFAULT_PLAN_PREFERENCES);
 
   // Exam state
   const [showAddExam, setShowAddExam] = useState(false);
@@ -94,8 +118,30 @@ export default function PlannerPage() {
     is_core: true
   });
 
-  const subjectTopics = topics.filter(t => t.subject_code === selectedSubject).sort((a, b) => a.order_in_subject - b.order_in_subject);
-  const subjectExams = exams.filter(e => e.subject_code === selectedSubject).sort((a, b) => a.exam_date.localeCompare(b.exam_date));
+  const subjectTopics = topics.filter(t => t.subject_code === selectedSubject && !t.deleted_at).sort((a, b) => a.order_in_subject - b.order_in_subject);
+  const subjectExams = exams.filter(e => e.subject_code === selectedSubject && !e.deleted_at).sort((a, b) => a.exam_date.localeCompare(b.exam_date));
+  const subjectPlanConfig = plannerConfigs.find(config => config.subject_code === selectedSubject && !config.deleted_at);
+  const upcomingEndsemExams = subjectExams.filter(exam => exam.exam_type === 'ENDSEM' && differenceInCalendarDays(new Date(`${exam.exam_date}T00:00:00`), new Date()) >= 0);
+
+  const openPlanSettings = () => {
+    const savedTarget = subjectPlanConfig?.target_exam_date;
+    setPlanPreferences({
+      target_exam_date: savedTarget && upcomingEndsemExams.some(exam => exam.exam_date === savedTarget) ? savedTarget : upcomingEndsemExams[0]?.exam_date || '',
+      daily_study_hours: subjectPlanConfig?.daily_study_hours ?? DEFAULT_PLAN_PREFERENCES.daily_study_hours,
+      buffer_days: subjectPlanConfig?.buffer_days ?? DEFAULT_PLAN_PREFERENCES.buffer_days,
+      revision_cycles: subjectPlanConfig?.revision_cycles ?? DEFAULT_PLAN_PREFERENCES.revision_cycles,
+      preferred_session_length_minutes: subjectPlanConfig?.preferred_session_length_minutes ?? DEFAULT_PLAN_PREFERENCES.preferred_session_length_minutes,
+      break_between_sessions_minutes: subjectPlanConfig?.break_between_sessions_minutes ?? DEFAULT_PLAN_PREFERENCES.break_between_sessions_minutes,
+      weak_topic_extra_time_multiplier: subjectPlanConfig?.weak_topic_extra_time_multiplier ?? DEFAULT_PLAN_PREFERENCES.weak_topic_extra_time_multiplier,
+    });
+    setShowPlanSettings(true);
+  };
+
+  const openEndsemForm = () => {
+    setEditingExam(null);
+    setExamFormData({ exam_type: 'ENDSEM', exam_name: '', exam_date: '', start_time: '', end_time: '', venue: '', max_marks: 100, weightage: 20 });
+    setShowAddExam(true);
+  };
   
   // Calculate topic coverages
   const topicCoverages = new Map(coverage.filter(c => subjectTopics.some(t => t.id === c.topic_id)).map(c => [c.topic_id, c]));
@@ -109,36 +155,35 @@ export default function PlannerPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in duration-500 relative">
+    <div className="planner-page planning-page flex flex-col gap-6 animate-in fade-in duration-500 relative">
       {/* Header */}
       <div className="page-header" style={{ marginBottom: 0 }}>
-        <h1>Exam Planner</h1>
+        <p className="planning-eyebrow">A little preparation, every day</p>
+        <h1>Exam planner</h1>
         <p className="page-subtitle">Make time for revision, one subject at a time.</p>
       </div>
 
       {/* Subject Selector */}
-      <div className="overflow-x-auto pb-2 -mx-3 px-3 sm:-mx-4 sm:px-4 scrollbar-hide">
-        <div className="flex gap-2 min-w-max">
+      <div className="planning-subject-block">
+        <p id={`${formId}-subject-selector`} className="planning-section-kicker">Subject</p>
+        <div role="group" aria-labelledby={`${formId}-subject-selector`} className="planning-subject-rail">
           {SUBJECTS.map((subject) => (
             <button
               key={subject.code}
               type="button"
               aria-pressed={selectedSubject === subject.code}
               onClick={() => setSelectedSubject(subject.code)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                selectedSubject === subject.code
-                  ? 'glass-control-active'
-                  : 'glass-control text-zinc-400'
-              }`}
+              className={`planning-subject ${selectedSubject === subject.code ? 'is-active' : ''}`}
             >
-              {subject.shortName}
+              <span className="planning-subject-name">{subject.shortName}</span>
+              <span className="planning-subject-code">{subject.code}</span>
             </button>
           ))}
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
+      <div className="planner-view-switch" role="group" aria-label="Planner view">
         {[
           { id: 'DASHBOARD', label: 'Countdown', icon: ClockIcon },
           { id: 'SYLLABUS', label: 'Syllabus', icon: BookOpenIcon },
@@ -146,30 +191,33 @@ export default function PlannerPage() {
         ].map(tab => (
           <button
             key={tab.id}
+            type="button"
+            aria-pressed={activeTab === tab.id}
+            aria-controls={`${formId}-view-panel`}
             onClick={() => setActiveTab(tab.id as 'DASHBOARD' | 'SYLLABUS' | 'PLAN')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
-              activeTab === tab.id
-                ? 'bg-white/10 text-white shadow-sm'
-                : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
-            }`}
+            className={`planner-view-option ${activeTab === tab.id ? 'is-active' : ''}`}
           >
-            <tab.icon className="w-4 h-4" />
-            {tab.label}
+            {activeTab === tab.id && <motion.span className="planner-view-highlight" layoutId={`${formId}-planner-view`} transition={reducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 450, damping: 34 }} />}
+            <tab.icon className="w-4 h-4" aria-hidden="true" />
+            <span>{tab.label}</span>
           </button>
         ))}
       </div>
 
       {/* Main Content */}
-      <div className="min-h-[50vh]">
+      <motion.div id={`${formId}-view-panel`} key={activeTab} className="planner-view-panel min-h-[40vh]" initial={reducedMotion ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reducedMotion ? 0 : .22 }}>
         {activeTab === 'DASHBOARD' && (
           <div className="space-y-6">
-            <h2 className="text-xl font-bold text-white/90">Upcoming Exams</h2>
+            <div className="planning-section-heading">
+              <h2>Upcoming exams</h2>
+              {subjectExams.length > 0 && <span>{subjectExams.length} scheduled</span>}
+            </div>
             {/* Countdown Cards will go here */}
             {subjectExams.length === 0 ? (
-              <div className="glass-panel p-8 text-center border-dashed border-white/20">
-                <CalendarIcon className="w-12 h-12 text-zinc-500 mx-auto mb-3" />
-                <h3 className="text-lg font-medium text-white/90 mb-1">No Exams Scheduled</h3>
-                <p className="text-zinc-400 text-sm mb-4">Add your mid-sem, end-sem, or quizzes to start the countdown.</p>
+              <div className="planning-empty glass-panel p-8 text-center">
+                <span className="planning-empty-icon"><CalendarIcon aria-hidden="true" /></span>
+                <h3>Your next milestone starts here</h3>
+                <p>Add an exam for {SUBJECTS.find(subject => subject.code === selectedSubject)?.shortName} to see how much time you have.</p>
                 <LiquidButton type="button"
                   onClick={() => {
                     setEditingExam(null);
@@ -187,47 +235,44 @@ export default function PlannerPage() {
                   }}
                 >
                   <PlusIcon className="w-4 h-4 inline-block mr-1" />
-                  Add Exam
+                  Add an exam
                 </LiquidButton>
               </div>
             ) : (
-              <div className="grid gap-4">
+              <div className="planner-exam-grid">
                 {subjectExams.map(exam => {
                   const daysRemaining = differenceInCalendarDays(new Date(`${exam.exam_date}T00:00:00`), new Date());
                   const isPast = daysRemaining < 0;
                   
-                  let colorClass = 'border-indigo-500/20 bg-indigo-500/5 text-indigo-400';
-                  if (isPast) colorClass = 'border-zinc-500/20 bg-zinc-500/5 text-zinc-400';
-                  else if (daysRemaining <= 7) colorClass = 'border-red-500/20 bg-red-500/5 text-red-400';
-                  else if (daysRemaining <= 14) colorClass = 'border-amber-500/20 bg-amber-500/5 text-amber-400';
+                  const urgency = isPast ? 'past' : daysRemaining <= 7 ? 'soon' : daysRemaining <= 14 ? 'near' : 'later';
 
                   return (
-                    <div key={exam.id} className={`glass-panel p-4 border ${colorClass} flex flex-col gap-3 relative overflow-hidden group`}>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
+                    <div key={exam.id} data-urgency={urgency} className="planner-exam-card glass-panel flex flex-col gap-3 relative overflow-hidden group">
+                      <div className="planner-exam-heading">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
                             <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${EXAM_TYPE_COLORS[exam.exam_type]}`}>
-                              {exam.exam_type.replace('_', ' ')}
+                              {EXAM_TYPE_LABELS[exam.exam_type]}
                             </span>
-                            <span className="text-sm text-white/50">{exam.exam_date}</span>
+                            <time dateTime={exam.exam_date} className="text-xs text-white/50">{readableDate(exam.exam_date)}</time>
                           </div>
-                          <h3 className="font-bold text-white/90">{exam.exam_name || `${exam.exam_type} Exam`}</h3>
+                          <h3>{exam.exam_name || `${EXAM_TYPE_LABELS[exam.exam_type]} exam`}</h3>
                           {(exam.venue || exam.start_time) && (
-                            <p className="text-xs text-zinc-400 mt-1 flex items-center gap-2">
+                            <p className="text-xs text-zinc-400 mt-2 flex flex-wrap items-center gap-2">
                               {exam.start_time && <span><ClockIcon className="w-3 h-3 inline mr-1" />{exam.start_time}{exam.end_time ? ` - ${exam.end_time}` : ''}</span>}
-                              {exam.venue && <span>📍 {exam.venue}</span>}
+                              {exam.venue && <span>{exam.venue}</span>}
                             </p>
                           )}
                         </div>
-                        <div className="text-right">
-                          <div className={`text-3xl font-black ${isPast ? 'text-zinc-500' : ''}`}>
-                            {isPast ? 'Done' : daysRemaining}
+                        <div className="planner-countdown">
+                          <div className="planner-countdown-value">
+                            {isPast ? 'Done' : daysRemaining === 0 ? 'Today' : daysRemaining}
                           </div>
-                          {!isPast && <div className="text-xs text-white/50 uppercase tracking-wider font-semibold">Days Left</div>}
+                          {!isPast && daysRemaining > 0 && <div className="planner-countdown-caption">day{daysRemaining === 1 ? '' : 's'} left</div>}
                         </div>
                       </div>
                       
-                      <div className="flex justify-end gap-2 pt-2 border-t border-white/10">
+                      <div className="planner-card-actions">
                         <button 
                           type="button"
                           aria-label={`Edit ${exam.exam_name || `${exam.exam_type} exam`}`}
@@ -245,7 +290,7 @@ export default function PlannerPage() {
                             });
                             setShowAddExam(true);
                           }}
-                          className="min-w-11 min-h-11 grid place-items-center p-1.5 bg-white/10 hover:bg-white/20 rounded text-white/70"
+                          className="planning-icon-action"
                         >
                           <PencilIcon className="w-4 h-4" />
                         </button>
@@ -253,7 +298,7 @@ export default function PlannerPage() {
                           type="button"
                           aria-label={`Delete ${exam.exam_name || `${exam.exam_type} exam`}`}
                           onClick={() => deleteExam(exam.id)}
-                          className="min-w-11 min-h-11 grid place-items-center p-1.5 bg-red-500/10 hover:bg-red-500/20 rounded text-red-400"
+                          className="planning-icon-action is-danger"
                         >
                           <TrashIcon className="w-4 h-4" />
                         </button>
@@ -277,7 +322,8 @@ export default function PlannerPage() {
                     });
                     setShowAddExam(true);
                   }}
-                  className="mt-2 flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-white/20 text-zinc-400 hover:text-white/90 hover:bg-white/5 transition-all"
+                  type="button"
+                  className="planner-add-another"
                 >
                   <PlusIcon className="w-5 h-5" />
                   Add Exam
@@ -289,9 +335,14 @@ export default function PlannerPage() {
 
         {activeTab === 'SYLLABUS' && (
           <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold text-white/90">Syllabus Topics</h2>
+            <div className="planning-section-heading">
+              <div>
+                <h2>Syllabus topics</h2>
+                {subjectTopics.length > 0 && <p className="planning-card-caption">{subjectTopics.filter(topic => ['COVERED', 'REVISING', 'MASTERED'].includes(topicCoverages.get(topic.id)?.status || '')).length} of {subjectTopics.length} covered</p>}
+              </div>
               <button 
+                type="button"
+                aria-label="Add syllabus topic"
                 onClick={() => {
                   setEditingTopic(null);
                   setTopicFormData({
@@ -305,39 +356,39 @@ export default function PlannerPage() {
                   });
                   setShowAddTopic(true);
                 }}
-                className="p-2 bg-white/5 hover:bg-white/10 text-white/90 rounded-lg border border-white/10 transition-colors"
+                className="planning-icon-action glass-control"
               >
                 <PlusIcon className="w-5 h-5" />
               </button>
             </div>
             
             {subjectTopics.length === 0 ? (
-              <div className="glass-panel p-8 text-center border-dashed border-white/20">
-                <BookOpenIcon className="w-12 h-12 text-zinc-500 mx-auto mb-3" />
-                <h3 className="text-lg font-medium text-white/90 mb-1">No Topics Added</h3>
-                <p className="text-zinc-400 text-sm mb-4">Break down your syllabus into smaller study topics.</p>
+              <div className="planning-empty glass-panel p-8 text-center">
+                <span className="planning-empty-icon"><BookOpenIcon aria-hidden="true" /></span>
+                <h3>One topic at a time</h3>
+                <p>Break your syllabus into smaller topics, then track your progress through each one.</p>
                 <LiquidButton variant="starfield"
                   onClick={() => setShowAddTopic(true)}
                   className="planner-add-action"
                 >
                   <PlusIcon className="w-4 h-4 inline-block mr-1" />
-                  Add Topic
+                  Add a topic
                 </LiquidButton>
               </div>
             ) : (
               <div className="grid gap-3">
-                {subjectTopics.map((topic, index) => {
+                {subjectTopics.map(topic => {
                   const topicCoverage = topicCoverages.get(topic.id);
                   const status = topicCoverage?.status || 'NOT_STARTED';
                   const colorClass = COVERAGE_STATUS_COLORS[status];
                   
                   return (
-                    <div key={topic.id} className="glass-panel p-3 border border-white/5 flex flex-col gap-2 relative overflow-hidden group">
-                      <div className="flex gap-3">
-                        <div className={`w-2 rounded-full ${colorClass.split(' ')[0]} ${colorClass.split(' ')[2]}`} />
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between">
-                            <div>
+                    <div key={topic.id} className="planner-topic-card glass-panel flex flex-col gap-2 relative overflow-hidden group">
+                      <div className="flex gap-3 min-w-0">
+                        <div aria-hidden="true" className={`planner-topic-marker ${colorClass}`} />
+                        <div className="flex-1 min-w-0">
+                          <div className="planner-topic-heading">
+                            <div className="min-w-0">
                               <h4 className="font-bold text-white/90 text-sm">
                                 {topic.unit_number && <span className="text-zinc-500 font-normal mr-2">Unit {topic.unit_number}</span>}
                                 {topic.topic_name}
@@ -347,6 +398,7 @@ export default function PlannerPage() {
                             
                             <div className="flex items-center gap-2">
                               <select 
+                                aria-label={`Coverage status for ${topic.topic_name}`}
                                 value={status}
                                 onChange={(e) => {
                                   upsertCoverage({
@@ -360,24 +412,23 @@ export default function PlannerPage() {
                                     notes: topicCoverage?.notes || null
                                   });
                                 }}
-                                className={`text-xs px-2 py-1 rounded border ${colorClass} appearance-none pr-6 bg-no-repeat bg-[right_0.5rem_center] bg-[length:0.75rem] font-medium outline-none focus:ring-1`}
+                                className={`planner-coverage-select text-xs px-3 py-2 rounded-xl border ${colorClass} appearance-none pr-7 bg-no-repeat bg-[right_0.5rem_center] bg-[length:0.75rem] font-medium`}
                                 style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")` }}
                               >
                                 {Object.keys(COVERAGE_STATUS_COLORS).map(s => (
-                                  <option key={s} value={s} className="bg-[#12141a] text-white">{s.replace('_', ' ')}</option>
+                                  <option key={s} value={s} className="bg-[#12141a] text-white">{COVERAGE_STATUS_LABELS[s as CoverageStatus]}</option>
                                 ))}
                               </select>
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-4 mt-2 text-xs text-zinc-400">
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-xs text-zinc-400">
                             <span className="flex items-center gap-1" title="Estimated Hours">
                               <ClockIcon className="w-3.5 h-3.5" />
                               {topic.estimated_hours}h
                             </span>
                             <span className="flex items-center gap-1" title="Difficulty (1-5)">
-                              <span>🎯</span>
-                              {topic.difficulty}/5
+                              Level {topic.difficulty}/5
                             </span>
                             {topic.is_core && (
                               <span className="flex items-center gap-1 text-amber-400/80" title="Core Topic">
@@ -388,7 +439,7 @@ export default function PlannerPage() {
                         </div>
                       </div>
                       
-                      <div className="flex justify-end gap-2 pt-2 border-t border-white/10">
+                      <div className="planner-card-actions">
                         <button 
                           type="button"
                           aria-label={`Edit ${topic.topic_name}`}
@@ -405,7 +456,7 @@ export default function PlannerPage() {
                             });
                             setShowAddTopic(true);
                           }}
-                          className="min-w-11 min-h-11 grid place-items-center p-1.5 bg-white/10 hover:bg-white/20 rounded text-white/70"
+                          className="planning-icon-action"
                         >
                           <PencilIcon className="w-3 h-3" />
                         </button>
@@ -413,7 +464,7 @@ export default function PlannerPage() {
                           type="button"
                           aria-label={`Delete ${topic.topic_name}`}
                           onClick={() => deleteTopic(topic.id)}
-                          className="min-w-11 min-h-11 grid place-items-center p-1.5 bg-red-500/10 hover:bg-red-500/20 rounded text-red-400"
+                          className="planning-icon-action is-danger"
                         >
                           <TrashIcon className="w-3 h-3" />
                         </button>
@@ -428,17 +479,25 @@ export default function PlannerPage() {
 
         {activeTab === 'PLAN' && (
           <div className="space-y-6">
-            <h2 className="text-xl font-bold text-white/90">Reverse Countdown Plan</h2>
+            <div className="planning-section-heading">
+              <div><h2>Your study plan</h2><p className="planning-card-caption">Working back from your endsem.</p></div>
+              {subjectPlanConfig && upcomingEndsemExams.length > 0 && subjectTopics.length > 0 && <button type="button" onClick={openPlanSettings} className="glass-control planning-secondary-action px-3 py-2">Study plan settings</button>}
+            </div>
             
             {(() => {
               const plan = getReverseCountdownPlan(selectedSubject);
               
-              if (!plan) {
+              if (!plan || subjectTopics.length === 0) {
                 return (
-                  <div className="glass-panel p-8 text-center border-dashed border-white/20">
-                    <ChartBarIcon className="w-12 h-12 text-zinc-500 mx-auto mb-3" />
-                    <h3 className="text-lg font-medium text-white/90 mb-1">No Plan Available</h3>
-                    <p className="text-zinc-400 text-sm mb-4">You need to add a target exam (like Midsem or Endsem) and some syllabus topics first.</p>
+                  <div className="planning-empty glass-panel p-8 text-center">
+                    <span className="planning-empty-icon"><ChartBarIcon aria-hidden="true" /></span>
+                    <h3>Give your revision a plan</h3>
+                    <p>{upcomingEndsemExams.length === 0 ? 'Start with your endsem date, then add the topics you need to cover.' : subjectTopics.length === 0 ? 'Add a few syllabus topics, then choose how much time you can study each day.' : 'Choose your exam and daily study time. We’ll spread your topics and revision across the days ahead.'}</p>
+                    <div className="planning-empty-actions">
+                      {upcomingEndsemExams.length === 0 && <LiquidButton type="button" onClick={openEndsemForm}>Add endsem exam</LiquidButton>}
+                      {subjectTopics.length === 0 && <button type="button" className="glass-control planning-secondary-action" onClick={() => setActiveTab('SYLLABUS')}>Add topics</button>}
+                      {upcomingEndsemExams.length > 0 && subjectTopics.length > 0 && <LiquidButton type="button" onClick={openPlanSettings}>Create study plan</LiquidButton>}
+                    </div>
                   </div>
                 );
               }
@@ -446,7 +505,7 @@ export default function PlannerPage() {
               return (
                 <div className="space-y-6">
                   {/* Plan Overview */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="planner-plan-metrics grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="glass-panel p-4 border border-indigo-500/20 text-center">
                       <div className="text-2xl font-bold text-indigo-400">{plan.days_remaining}</div>
                       <div className="text-xs text-white/60 uppercase mt-1 tracking-wider font-semibold">Days to Exam</div>
@@ -479,7 +538,7 @@ export default function PlannerPage() {
 
                   {/* Milestones */}
                   {plan.milestones.length > 0 && (
-                    <div className="glass-panel p-5 border border-white/10">
+                    <div className="planner-milestones glass-panel p-5 border border-white/10">
                       <h3 className="font-bold text-white/90 mb-4 flex items-center gap-2">
                         <CheckCircleIconOutline className="w-5 h-5 text-indigo-400" />
                         Key Milestones
@@ -489,9 +548,9 @@ export default function PlannerPage() {
                           <div key={i} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                             <div className="flex items-center justify-center w-5 h-5 rounded-full border border-white/50 bg-[#12141a] text-white/50 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2" />
                             <div className="w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl glass-panel border border-white/5 shadow">
-                              <div className="flex items-center justify-between mb-1">
+                              <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
                                 <h4 className="font-bold text-white/90 text-sm">{milestone.label}</h4>
-                                <span className="text-xs text-indigo-400 font-medium">{milestone.date}</span>
+                                <time dateTime={milestone.date} className="text-xs planning-accent font-medium">{readableDate(milestone.date)}</time>
                               </div>
                               <p className="text-xs text-zinc-400">Complete {milestone.topics_to_complete.length} topics by this date to stay on track.</p>
                             </div>
@@ -515,24 +574,24 @@ export default function PlannerPage() {
                         plan.daily_plan.map(dp => {
                           const topic = topics.find(t => t.id === dp.topic_id);
                           const isRevision = dp.session_type === 'REVISION';
+                          const plannedDate = new Date(`${dp.plan_date}T00:00:00`);
                           
                           return (
-                            <div key={dp.id} className="p-4 flex gap-4 hover:bg-white/[0.02] transition-colors">
+                            <div key={dp.id} className="planner-daily-row p-4 flex gap-4 hover:bg-white/[0.02] transition-colors">
                               <div className="w-16 shrink-0 text-center">
-                                <div className="text-xs text-zinc-500 font-medium uppercase tracking-wider">{new Date(dp.plan_date).toLocaleDateString('en-US', { weekday: 'short' })}</div>
-                                <div className="text-xl font-bold text-white/90">{new Date(dp.plan_date).getDate()}</div>
-                                <div className="text-xs text-zinc-600">{new Date(dp.plan_date).toLocaleDateString('en-US', { month: 'short' })}</div>
+                                <div className="text-xs text-zinc-500 font-medium uppercase tracking-wider">{plannedDate.toLocaleDateString('en-IN', { weekday: 'short' })}</div>
+                                <div className="text-xl font-bold text-white/90">{plannedDate.getDate()}</div>
+                                <div className="text-xs text-zinc-600">{plannedDate.toLocaleDateString('en-IN', { month: 'short' })}</div>
                               </div>
-                              <div className="flex-1">
-                                <div className="flex items-start justify-between">
-                                  <div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="min-w-0">
                                     <h4 className="font-medium text-sm text-white/90">
-                                      {isRevision ? <span className="text-blue-400 mr-2">↻ Revision</span> : ''}
                                       {topic?.topic_name || 'Unknown Topic'}
                                     </h4>
-                                    <p className="text-xs text-zinc-500 mt-0.5">{dp.notes}</p>
+                                    <p className="text-xs text-zinc-500 mt-1">{isRevision ? 'Revision session' : 'First pass'}{topic?.unit_number ? ` · Unit ${topic.unit_number}` : ''}</p>
                                   </div>
-                                  <div className="text-xs font-medium text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded-md border border-indigo-500/20">
+                                  <div className="shrink-0 text-xs font-medium planning-accent px-2 py-1 rounded-md assessment-type-chip">
                                     {dp.planned_hours}h
                                   </div>
                                 </div>
@@ -548,7 +607,63 @@ export default function PlannerPage() {
             })()}
           </div>
         )}
-      </div>
+      </motion.div>
+
+      {showPlanSettings && (
+        <Dialog label="Study plan settings" onClose={() => setShowPlanSettings(false)}>
+          <motion.div
+            initial={reducedMotion ? false : { opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: reducedMotion ? 0 : .2 }}
+            className="planning-form w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-white/10 p-6 max-h-[88dvh] overflow-y-auto"
+            style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}
+          >
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <h3 className="text-xl font-medium text-white">Study plan settings</h3>
+              <button type="button" aria-label="Close study plan settings" onClick={() => setShowPlanSettings(false)} className="planning-icon-action glass-control"><XCircleIcon aria-hidden="true" /></button>
+            </div>
+            <p className="planning-card-caption mb-6">A realistic pace for {SUBJECTS.find(subject => subject.code === selectedSubject)?.shortName}, with time left to revise.</p>
+            <form className="space-y-5" onSubmit={event => {
+              event.preventDefault();
+              if (!upcomingEndsemExams.some(exam => exam.exam_date === planPreferences.target_exam_date)) return;
+              upsertPlannerConfig({
+                user_id: subjectPlanConfig?.user_id,
+                subject_code: selectedSubject,
+                ...planPreferences,
+              });
+              setShowPlanSettings(false);
+            }}>
+              <div>
+                <label htmlFor={`${formId}-plan-target`} className="block text-sm text-zinc-400 mb-2">Target endsem exam</label>
+                <select id={`${formId}-plan-target`} required value={planPreferences.target_exam_date} onChange={event => setPlanPreferences(previous => ({ ...previous, target_exam_date: event.target.value }))} className="glass-input w-full px-3 py-3 rounded-xl">
+                  {upcomingEndsemExams.map(exam => <option key={exam.id} value={exam.exam_date}>{exam.exam_name || 'Endsem exam'} · {readableDate(exam.exam_date)}</option>)}
+                </select>
+              </div>
+              <div>
+                <label htmlFor={`${formId}-plan-hours`} className="block text-sm text-zinc-400 mb-2">Daily study time (hours)</label>
+                <input id={`${formId}-plan-hours`} type="number" inputMode="decimal" required min="0.25" max="12" step="0.25" value={planPreferences.daily_study_hours} onChange={event => setPlanPreferences(previous => ({ ...previous, daily_study_hours: Number(event.target.value) }))} className="glass-input w-full px-3 py-3 rounded-xl" />
+                <p className="planning-card-caption">The time you can comfortably give this subject.</p>
+              </div>
+              <div className="grid grid-cols-2 items-start gap-3">
+                <div>
+                  <label htmlFor={`${formId}-plan-buffer`} className="block text-sm text-zinc-400 mb-2">Buffer days</label>
+                  <input id={`${formId}-plan-buffer`} type="number" inputMode="numeric" required min="0" max="30" step="1" value={planPreferences.buffer_days} onChange={event => setPlanPreferences(previous => ({ ...previous, buffer_days: Number(event.target.value) }))} className="glass-input w-full px-3 py-3 rounded-xl" />
+                  <p className="planning-card-caption">Keep these days free before the exam.</p>
+                </div>
+                <div>
+                  <label htmlFor={`${formId}-plan-revisions`} className="block text-sm text-zinc-400 mb-2">Revision rounds</label>
+                  <input id={`${formId}-plan-revisions`} type="number" inputMode="numeric" required min="0" max="5" step="1" value={planPreferences.revision_cycles} onChange={event => setPlanPreferences(previous => ({ ...previous, revision_cycles: Number(event.target.value) }))} className="glass-input w-full px-3 py-3 rounded-xl" />
+                  <p className="planning-card-caption">Revisit the topics you’ve covered.</p>
+                </div>
+              </div>
+              <div className="flex gap-3 pt-4 border-t border-white/10">
+                <button type="button" onClick={() => setShowPlanSettings(false)} className="glass-control flex-1 py-3 text-sm text-zinc-400">Cancel</button>
+                <button type="submit" className="ink-btn flex-1 py-3 text-sm font-semibold">{subjectPlanConfig ? 'Update plan' : 'Create plan'}</button>
+              </div>
+            </form>
+          </motion.div>
+        </Dialog>
+      )}
 
       {/* Add Exam Modal */}
       <AnimatePresence>
@@ -559,7 +674,7 @@ export default function PlannerPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: reducedMotion ? 0 : '100%' }}
               transition={reducedMotion ? { duration: 0 } : { type: 'spring', damping: 25, stiffness: 200 }}
-              className="relative w-full bg-[#12141a] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-white/10 flex flex-col max-h-[90dvh] overflow-hidden"
+              className="planning-form relative w-full bg-[#12141a] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-white/10 flex flex-col max-h-[90dvh] overflow-hidden"
             >
               <div className="p-6 border-b border-white/5 shrink-0 flex justify-between items-center">
                 <h3 className="text-xl font-bold text-white/90">{editingExam ? 'Edit Exam' : 'Add Exam'}</h3>
@@ -601,7 +716,7 @@ export default function PlannerPage() {
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500/50"
                     >
                       {Object.keys(EXAM_TYPE_COLORS).map(type => (
-                        <option key={type} value={type} className="bg-[#12141a]">{type.replace('_', ' ')}</option>
+                        <option key={type} value={type} className="bg-[#12141a]">{EXAM_TYPE_LABELS[type as ExamType]}</option>
                       ))}
                     </select>
                   </div>
@@ -712,7 +827,7 @@ export default function PlannerPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: reducedMotion ? 0 : '100%' }}
               transition={reducedMotion ? { duration: 0 } : { type: 'spring', damping: 25, stiffness: 200 }}
-              className="relative w-full bg-[#12141a] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-white/10 flex flex-col max-h-[90dvh] overflow-hidden"
+              className="planning-form relative w-full bg-[#12141a] rounded-t-3xl sm:rounded-3xl shadow-2xl border border-white/10 flex flex-col max-h-[90dvh] overflow-hidden"
             >
               <div className="p-6 border-b border-white/5 shrink-0 flex justify-between items-center">
                 <h3 className="text-xl font-bold text-white/90">{editingTopic ? 'Edit Topic' : 'Add Topic'}</h3>

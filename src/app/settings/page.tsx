@@ -5,6 +5,7 @@ import { useAttendance } from '@/components/AttendanceProvider';
 import AuthScreen from '@/components/AuthScreen';
 import { loadPlannerPreferences, savePlannerPreferences, validatePlannerPreferences, DEFAULT_PLANNER_PREFERENCES, PlannerPreferences } from '@/lib/plannerPreferences';
 import { ExportReportButton } from '@/components/ExportReportButton';
+import '../utility-pages.css';
 
 export default function SettingsPage() {
   const { resetAll, exportData, importData, user, syncStatus, lastSynced, signOut, syncNow } = useAttendance();
@@ -66,9 +67,10 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="max-w-lg mx-auto space-y-6 pb-24 animate-fade-in-up">
+    <div className="settings-page space-y-7">
       <div className="page-header mb-2">
         <h1>Settings</h1>
+        <p className="page-subtitle">Your account, study preferences and backups.</p>
       </div>
 
       {/* Authentication & Cloud Sync */}
@@ -88,6 +90,9 @@ export default function SettingsPage() {
         
         <div className="glass-elevated rounded-[18px] overflow-hidden transition-all duration-300">
           <button
+            type="button"
+            aria-expanded={plannerExpanded}
+            aria-controls="planner-preferences"
             onClick={() => setPlannerExpanded(!plannerExpanded)}
             className="w-full flex items-center justify-between px-5 py-4 text-left"
           >
@@ -105,19 +110,19 @@ export default function SettingsPage() {
           </button>
           
           {plannerExpanded && (
-            <div className="px-5 pb-5 pt-1 space-y-6 border-t border-white/5 animate-fade-in-up">
+            <div id="planner-preferences" className="px-5 pb-5 pt-4 space-y-6 border-t border-white/5">
               
               <div className="space-y-4">
                 <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Weekdays</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] text-white/50 mb-1.5">Available from</label>
-                    <input type="time" value={plannerPrefs.weekdayWorkStart} onChange={(e) => handlePlannerChange('weekdayWorkStart', e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500/50 text-sm" />
+                    <label htmlFor="weekday-start" className="block text-[10px] text-white/50 mb-1.5">Available from</label>
+                    <input id="weekday-start" type="time" value={plannerPrefs.weekdayWorkStart} onChange={(e) => handlePlannerChange('weekdayWorkStart', e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500/50 text-sm" />
                     {plannerErrors.weekdayWorkStart && <p className="text-[10px] text-red-400 mt-1">{plannerErrors.weekdayWorkStart}</p>}
                   </div>
                   <div>
-                    <label className="block text-[10px] text-white/50 mb-1.5">Available until</label>
-                    <input type="time" value={plannerPrefs.weekdayWorkEnd} onChange={(e) => handlePlannerChange('weekdayWorkEnd', e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500/50 text-sm" />
+                    <label htmlFor="weekday-end" className="block text-[10px] text-white/50 mb-1.5">Available until</label>
+                    <input id="weekday-end" type="time" value={plannerPrefs.weekdayWorkEnd} onChange={(e) => handlePlannerChange('weekdayWorkEnd', e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500/50 text-sm" />
                   </div>
                 </div>
               </div>
@@ -126,13 +131,13 @@ export default function SettingsPage() {
                 <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Weekends</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] text-white/50 mb-1.5">Available from</label>
-                    <input type="time" value={plannerPrefs.weekendWorkStart} onChange={(e) => handlePlannerChange('weekendWorkStart', e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500/50 text-sm" />
+                    <label htmlFor="weekend-start" className="block text-[10px] text-white/50 mb-1.5">Available from</label>
+                    <input id="weekend-start" type="time" value={plannerPrefs.weekendWorkStart} onChange={(e) => handlePlannerChange('weekendWorkStart', e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500/50 text-sm" />
                     {plannerErrors.weekendWorkStart && <p className="text-[10px] text-red-400 mt-1">{plannerErrors.weekendWorkStart}</p>}
                   </div>
                   <div>
-                    <label className="block text-[10px] text-white/50 mb-1.5">Available until</label>
-                    <input type="time" value={plannerPrefs.weekendWorkEnd} onChange={(e) => handlePlannerChange('weekendWorkEnd', e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500/50 text-sm" />
+                    <label htmlFor="weekend-end" className="block text-[10px] text-white/50 mb-1.5">Available until</label>
+                    <input id="weekend-end" type="time" value={plannerPrefs.weekendWorkEnd} onChange={(e) => handlePlannerChange('weekendWorkEnd', e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500/50 text-sm" />
                   </div>
                 </div>
               </div>
@@ -141,13 +146,13 @@ export default function SettingsPage() {
                 <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Session Length</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] text-white/50 mb-1.5">Minimum (min)</label>
-                    <input type="number" min="10" max="180" value={plannerPrefs.minSessionDuration} onChange={(e) => handlePlannerChange('minSessionDuration', parseInt(e.target.value) || 10)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500/50 text-sm" />
+                    <label htmlFor="minimum-session" className="block text-[10px] text-white/50 mb-1.5">Minimum (min)</label>
+                    <input id="minimum-session" type="number" min="10" max="180" value={plannerPrefs.minSessionDuration} onChange={(e) => handlePlannerChange('minSessionDuration', parseInt(e.target.value) || 10)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500/50 text-sm" />
                     {plannerErrors.minSessionDuration && <p className="text-[10px] text-red-400 mt-1">{plannerErrors.minSessionDuration}</p>}
                   </div>
                   <div>
-                    <label className="block text-[10px] text-white/50 mb-1.5">Preferred (min)</label>
-                    <input type="number" min="10" max="240" value={plannerPrefs.prefSessionDuration} onChange={(e) => handlePlannerChange('prefSessionDuration', parseInt(e.target.value) || 60)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500/50 text-sm" />
+                    <label htmlFor="preferred-session" className="block text-[10px] text-white/50 mb-1.5">Preferred (min)</label>
+                    <input id="preferred-session" type="number" min="10" max="240" value={plannerPrefs.prefSessionDuration} onChange={(e) => handlePlannerChange('prefSessionDuration', parseInt(e.target.value) || 60)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500/50 text-sm" />
                     {plannerErrors.prefSessionDuration && <p className="text-[10px] text-red-400 mt-1">{plannerErrors.prefSessionDuration}</p>}
                   </div>
                 </div>
@@ -156,8 +161,8 @@ export default function SettingsPage() {
               <div className="space-y-4">
                 <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Buffer</h3>
                 <div>
-                  <label className="block text-[10px] text-white/50 mb-1.5">Between commitments (min)</label>
-                  <input type="number" min="0" max="60" value={plannerPrefs.bufferDuration} onChange={(e) => handlePlannerChange('bufferDuration', parseInt(e.target.value) || 0)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500/50 text-sm" />
+                  <label htmlFor="session-buffer" className="block text-[10px] text-white/50 mb-1.5">Between commitments (min)</label>
+                  <input id="session-buffer" type="number" min="0" max="60" value={plannerPrefs.bufferDuration} onChange={(e) => handlePlannerChange('bufferDuration', parseInt(e.target.value) || 0)} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500/50 text-sm" />
                   {plannerErrors.bufferDuration && <p className="text-[10px] text-red-400 mt-1">{plannerErrors.bufferDuration}</p>}
                 </div>
               </div>
@@ -213,7 +218,7 @@ export default function SettingsPage() {
           </svg>
         </button>
 
-        <label className="w-full glass-elevated rounded-[18px] flex items-center justify-between px-5 py-4 cursor-pointer">
+        <label className="settings-import w-full glass-elevated rounded-[18px] flex items-center justify-between px-5 py-4 cursor-pointer">
           <div>
             <p className="text-sm font-bold tracking-wide text-white drop-shadow-sm">Import Data</p>
             <p className="text-[11px] text-white/50 mt-0.5">
@@ -232,7 +237,8 @@ export default function SettingsPage() {
             type="file"
             accept=".json"
             onChange={handleImport}
-            className="hidden"
+            className="sr-only"
+            aria-label="Import attendance backup"
           />
         </label>
       </div>

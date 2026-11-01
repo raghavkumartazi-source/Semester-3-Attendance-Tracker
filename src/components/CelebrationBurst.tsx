@@ -18,7 +18,7 @@ export function triggerCelebration(status: AttendanceStatus, x: number, y: numbe
 }
 
 const colors: Record<AttendanceStatus, string> = {
-  PRESENT: '#3159f5', ABSENT: '#bc344f', CANCELLED: '#90601d', UNMARKED: '#70737c',
+  PRESENT: '#b4dfca', ABSENT: '#ffa8b8', CANCELLED: '#f0c39e', UNMARKED: '#b8a0af',
 };
 
 function Burst({ event, onDone }: { event: CelebrationEvent; onDone: (id: number) => void }) {

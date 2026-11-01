@@ -22,7 +22,7 @@ export default function AttendanceButtons({ status, onMark, compact }: Props) {
   return (
     <div className={`attendance-actions${compact ? ' is-compact' : ''}`} role="group" aria-label="Mark attendance">
       {buttons.map(({ label, value, icon: Icon }) => (
-        <motion.button whileTap={reduced ? undefined : { scale: .86 }} transition={{ type: 'spring', stiffness: 480, damping: 20 }} type="button" key={value} className={`attendance-action status-${value.toLowerCase()}`} aria-label={status === value ? `Unmark ${label}` : `Mark ${label}`} aria-pressed={status === value} title={label}
+        <motion.button whileTap={reduced ? undefined : { scale: .96 }} transition={{ type: 'spring', stiffness: 480, damping: 26 }} type="button" key={value} className={`attendance-action status-${value.toLowerCase()}`} aria-label={status === value ? `Unmark ${label}` : `Mark ${label}`} aria-pressed={status === value} title={label}
           onClick={(event) => {
             event.stopPropagation();
             const nextStatus = status === value ? 'UNMARKED' : value;

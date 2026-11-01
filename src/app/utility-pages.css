@@ -1,0 +1,54 @@
+.utility-eyebrow { display: block; margin-bottom: 8px; color: var(--accent); font-size: 12px; letter-spacing: .025em; }
+.schedule-page, .settings-page { max-width: 960px; margin-inline: auto; }
+.schedule-page .page-header { margin-bottom: 25px; }
+.schedule-day-nav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 6px; border-radius: 19px; border: 1px solid var(--surface-border); background: #2b202b; margin-bottom: 28px; }
+.schedule-day-nav a { min-height: 58px; min-width: 0; padding: 6px 3px; border-radius: 13px; text-align: center; color: var(--fg-muted); display: flex; flex-direction: column; justify-content: center; font-size: 14px; transition: background 180ms ease, color 180ms ease; }
+.schedule-day-nav a small { font-size: 11px; margin-top: 3px; color: var(--fg-subtle); }
+.schedule-day-nav a:hover { background: #edbbad0c; }
+.schedule-day-nav a[aria-current="date"] { background: linear-gradient(140deg, #f0c4b1, #d5a0ad); color: var(--accent-ink); }
+.schedule-day-nav a[aria-current="date"] small { color: var(--accent-ink); }
+.schedule-week-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start; }
+.schedule-day-panel { min-width: 0; scroll-margin-top: 24px; }
+.schedule-day-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 10px; }
+.schedule-day-heading h2 { font-size: 20px; font-weight: 500; letter-spacing: -.5px; }
+.schedule-day-heading > span { color: var(--fg-subtle); font-size: 12px; }
+.schedule-class-list { list-style: none; padding: 0; margin: 0; border: 1px solid var(--surface-border); border-top-color: var(--surface-highlight); border-radius: 22px; background: linear-gradient(145deg, #332633, #2b212c); overflow: hidden; }
+.schedule-class { display: grid; grid-template-columns: 49px minmax(0, 1fr); gap: 17px; padding: 18px; }
+.schedule-class + .schedule-class { border-top: 1px solid #d5b5c516; }
+.schedule-class.is-now { background: #edbbad0e; box-shadow: inset 3px 0 var(--accent); }
+.schedule-class-time { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--fg-muted); }
+.schedule-class-time > span { font-size: 11px; color: var(--fg-subtle); }
+.schedule-class-copy { min-width: 0; }
+.schedule-class-copy > div { display: flex; align-items: center; gap: 7px; }
+.schedule-class-code { color: var(--accent); font-size: 11px; letter-spacing: .03em; }
+.schedule-class-copy h3 { font-size: 15px; font-weight: 500; line-height: 1.4; margin-top: 5px; letter-spacing: -.3px; }
+.schedule-class-copy p { font-size: 12px; margin-top: 5px; color: var(--fg-subtle); }
+.schedule-now { border-radius: 6px; background: #edbbad16; color: var(--accent); font-size: 10px; padding: 1px 6px; }
+.settings-page { max-width: 760px; }
+.settings-page > div > h2[class] { text-transform: none; letter-spacing: -.3px; color: var(--fg); font-size: 18px; font-weight: 500; margin-bottom: 14px; }
+.settings-page [class~="text-[11px]"], .settings-page [class~="text-[10px]"] { font-size: 12px; line-height: 1.55; }
+.settings-page button { min-height: 44px; }
+.settings-page label { color: var(--fg-muted); }
+.settings-page input, .settings-page select { min-width: 0; min-height: 46px; border-radius: 12px; }
+.settings-page .grid > div { min-width: 0; }
+.settings-page [type="file"].sr-only { min-height: 1px; }
+.settings-import:focus-within { outline: 2px solid var(--accent); outline-offset: 4px; }
+.auth-card { padding: 24px; }
+.auth-heading { font-size: 19px; font-weight: 500; letter-spacing: -.5px; line-height: 1.4; }
+.auth-label { display: block; font-size: 12px; color: var(--fg-muted); margin-bottom: 7px; }
+.auth-password-field { position: relative; }
+.auth-password-toggle { position: absolute; right: 5px; top: 4px; display: grid; place-items: center; width: 44px; height: 44px; color: var(--fg-subtle); border-radius: 11px; }
+.auth-password-toggle:hover { color: var(--fg); background: #edbbad0c; }
+.auth-password-toggle svg { width: 19px; height: 19px; }
+.auth-actions > button { min-width: 0; min-height: 46px; font-size: 13px; font-weight: 500; letter-spacing: -.1px; }
+.auth-account-row { gap: 15px; flex-wrap: wrap; }
+.auth-account-row > div:first-child { min-width: 0; flex: 1 1 170px; }
+.auth-email { overflow-wrap: anywhere; }
+@media (max-width: 767px) {
+  .schedule-week-grid { grid-template-columns: minmax(0, 1fr); gap: 27px; }
+  .schedule-day-nav { gap: 3px; padding: 4px; margin-bottom: 25px; }
+  .schedule-day-nav a { font-size: 13px; }
+  .schedule-day-nav a small { font-size: 10px; }
+  .settings-page .grid { gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) { .schedule-day-nav a { transition: none; } }

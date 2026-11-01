@@ -9,8 +9,10 @@ export default function SubjectsPage() {
 
   if (!isLoaded) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-white" />
+      <div className="space-y-4" role="status" aria-label="Loading attendance" aria-busy="true">
+        <div className="page-header"><h1>Attendance</h1><p className="page-subtitle">Getting your semester ready…</p></div>
+        <div className="h-48 rounded-[25px] glass-surface" />
+        {[0, 1, 2].map(index => <div key={index} className="h-44 rounded-[23px] glass-surface" />)}
       </div>
     );
   }

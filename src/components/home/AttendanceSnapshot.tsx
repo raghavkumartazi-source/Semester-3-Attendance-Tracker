@@ -169,7 +169,7 @@ export function AttendanceSnapshot() {
             <div><dt><i className="pulse-present-dot" aria-hidden="true" />Present</dt><dd>{current?.present ?? '—'}</dd></div>
             <div><dt><i className="pulse-absent-dot" aria-hidden="true" />Absent</dt><dd>{current?.absent ?? '—'}</dd></div>
           </dl>
-          <p className="pulse-attendance-through">{date ? `Through ${formatDate(date)}` : 'Your history starts here'}</p>
+          {date && <p className="pulse-attendance-through">Through {formatDate(date)}</p>}
         </div>
       </div>
 
@@ -197,7 +197,7 @@ export function AttendanceSnapshot() {
           </div>
         </div>
       ) : (
-        <p className="pulse-history-empty">{hasData ? 'A little history, one class at a time.' : 'Mark a class to see your attendance grow.'}</p>
+        hasData && <p className="pulse-history-empty">A little history, one class at a time.</p>
       )}
 
       <div className="pulse-attendance-footer">
@@ -207,7 +207,7 @@ export function AttendanceSnapshot() {
             <ArrowUpRightIcon aria-hidden="true" />
           </Link>
         ) : (
-          <p>{hasData ? 'Every recorded subject is at 75% or above.' : 'Build your streak from today.'}</p>
+          <p>{hasData ? 'Every recorded subject is at 75% or above.' : 'Mark a class to start your attendance history.'}</p>
         )}
       </div>
       <p className="pulse-visually-hidden" aria-live="polite" aria-atomic="true">{gaugeLabel}</p>

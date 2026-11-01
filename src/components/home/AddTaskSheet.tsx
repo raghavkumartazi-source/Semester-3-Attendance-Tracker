@@ -7,6 +7,8 @@ import { TaskType, TaskPriority, Task } from '@/lib/types';
 import { timeUtils } from '@/lib/timeUtils';
 import { useTasks } from '../TaskProvider';
 import { ManualPlanTaskSheet } from './ManualPlanTaskSheet';
+import { LiquidButton } from '../ui/LiquidButton';
+import './task-sheet.css';
 
 export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, taskToEdit?: Task }) {
   const { addTask, updateTask } = useTasks();
@@ -141,7 +143,7 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
       />
       
       {/* Modal / Bottom Sheet */}
-      <div ref={panel} role="dialog" aria-modal="true" aria-labelledby={`${formId}-heading`} className="relative w-full max-w-lg bg-[#111320] sm:rounded-[28px] rounded-t-[28px] shadow-2xl sm:border border-t border-white/10 slide-up flex flex-col max-h-[90dvh] sm:max-h-[min(760px,85dvh)] min-w-0">
+      <div ref={panel} role="dialog" aria-modal="true" aria-labelledby={`${formId}-heading`} className="task-editor relative w-full max-w-lg bg-[#111320] sm:rounded-[28px] rounded-t-[28px] shadow-2xl sm:border border-t border-white/10 slide-up flex flex-col max-h-[90dvh] sm:max-h-[min(760px,85dvh)] min-w-0">
         
         {/* Mobile Drag Handle */}
         <div className="sm:hidden absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-white/20 rounded-full" />
@@ -149,8 +151,8 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden min-h-0">
           
           {/* Header (Sticky) */}
-          <div className="shrink-0 pt-8 sm:pt-6 px-6 pb-4 flex items-center justify-between border-b border-white/5">
-            <h2 id={`${formId}-heading`} className="text-xl font-bold text-white tracking-tight">{taskToEdit ? 'Edit Task' : 'New Task'}</h2>
+          <div className="task-editor-header shrink-0 pt-8 sm:pt-6 px-6 pb-4 flex items-center justify-between border-b border-white/5">
+            <div><p>Your next small win</p><h2 id={`${formId}-heading`}>{taskToEdit ? 'Edit task' : 'New task'}</h2></div>
             <button type="button" onClick={onClose} aria-label="Close dialog" className="text-white/40 hover:text-white/80 transition-colors p-2.5 rounded-lg hover:bg-white/5">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -174,9 +176,10 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
             </div>
 
             {/* Quick Controls */}
-            <div className="flex flex-wrap gap-2">
+            <div className="task-editor-chips flex flex-wrap gap-2" aria-label="Quick task settings">
               <button 
                 type="button"
+                aria-pressed={dueAtMode === 'today'}
                 onClick={() => setDueAtMode(dueAtMode === 'today' ? '' : 'today')}
                 className={`px-4 py-2 rounded-lg text-xs font-bold tracking-wide transition-colors ${
                   dueAtMode === 'today' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-white/5 text-white/60 border border-white/5 hover:bg-white/10'
@@ -186,6 +189,7 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
               </button>
               <button 
                 type="button"
+                aria-pressed={dueAtMode === 'tomorrow'}
                 onClick={() => setDueAtMode(dueAtMode === 'tomorrow' ? '' : 'tomorrow')}
                 className={`px-4 py-2 rounded-lg text-xs font-bold tracking-wide transition-colors ${
                   dueAtMode === 'tomorrow' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-white/5 text-white/60 border border-white/5 hover:bg-white/10'
@@ -195,6 +199,7 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
               </button>
               <button 
                 type="button"
+                aria-pressed={priority === 'HIGH'}
                 onClick={() => setPriority(priority === 'HIGH' ? 'MEDIUM' : 'HIGH')}
                 className={`px-4 py-2 rounded-lg text-xs font-bold tracking-wide transition-colors flex items-center gap-1.5 ${
                   priority === 'HIGH' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-white/5 text-white/60 border border-white/5 hover:bg-white/10'
@@ -205,7 +210,7 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
                     <path fillRule="evenodd" d="M3 14a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0-4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0-4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
                   </svg>
                 )}
-                High Priority
+                High priority
               </button>
             </div>
 
@@ -232,17 +237,19 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
 
             <button 
               type="button"
+              aria-expanded={isAdvanced}
+              aria-controls={`${formId}-options`}
               onClick={() => setIsAdvanced(!isAdvanced)}
-              className="w-full py-2 flex items-center justify-between text-xs font-bold text-white/40 hover:text-white/70 transition-colors uppercase tracking-widest"
+              className="task-editor-options-toggle"
             >
-              <span>{isAdvanced ? 'Hide Options' : 'More Options'}</span>
+              <span>{isAdvanced ? 'Fewer details' : 'Add more details'}</span>
               <svg className={`w-4 h-4 transition-transform duration-300 ${isAdvanced ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
             {isAdvanced && (
-              <div className="space-y-5 animate-fade-in-up">
+              <div id={`${formId}-options`} className="task-editor-details space-y-5 animate-fade-in-up">
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -344,13 +351,14 @@ export function AddTaskSheet({ onClose, taskToEdit }: { onClose: () => void, tas
 
           {/* Footer (Sticky) */}
           <div className="shrink-0 p-6 pt-4 bg-[#111320] sm:rounded-b-[28px] border-t border-white/5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
-            <button
+            <LiquidButton
               type="submit"
               disabled={!title.trim()}
-              className="w-full bg-emerald-500 text-[#040406] font-bold text-sm tracking-wide py-4 rounded-xl disabled:opacity-50 transition-opacity active:scale-[0.98] shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+              fullWidth
+              className="task-editor-submit"
             >
-              {taskToEdit ? 'Save Changes' : 'Add Task'}
-            </button>
+              {taskToEdit ? 'Save changes' : 'Add task'}
+            </LiquidButton>
           </div>
           
         </form>

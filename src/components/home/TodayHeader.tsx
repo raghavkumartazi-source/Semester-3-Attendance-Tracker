@@ -5,7 +5,6 @@ import { createScope, createTimeline, stagger } from 'animejs';
 import { timeUtils } from '@/lib/timeUtils';
 import { SemesterInstrument } from '../ui/SemesterInstrument';
 import { LiquidButton } from '../ui/LiquidButton';
-import { SparklesIcon } from '@heroicons/react/24/outline';
 
 export function TodayHeader({ now }: { now: Date }) {
   const root = useRef<HTMLElement>(null);
@@ -29,13 +28,18 @@ export function TodayHeader({ now }: { now: Date }) {
       <section className="semester-hero" aria-label={`Semester ${Math.round(progress.percentage)} percent complete`}>
         <div className="hero-grain" aria-hidden="true" />
         <div className="hero-copy">
-          <span className="hero-kicker"><span /> SEMESTER IN PROGRESS</span>
+          <span className="hero-kicker"><span /> Your semester, in motion</span>
           <h2>One day closer.<br /><span>You’ve got this.</span></h2>
-          <p>Day {progress.currentDay} <span>of {progress.totalDays}</span></p>
           <LiquidButton href="/planner" variant="quiet" className="hero-link" aria-label="Plan what’s next">Plan what’s next <span aria-hidden="true">↗</span></LiquidButton>
         </div>
         <SemesterInstrument percentage={progress.percentage} currentDay={progress.currentDay} totalDays={progress.totalDays} className="semester-instrument" />
-        <div className="hero-footer"><SparklesIcon aria-hidden="true" /><span>Small steps. Every day.</span><span className="hero-footer-line" /></div>
+        <div className="hero-footer">
+          <span>Day {progress.currentDay} of {progress.totalDays}</span>
+          <span>{Math.max(0, progress.totalDays - progress.currentDay)} days to go</span>
+        </div>
+        <div className="hero-term-track" role="progressbar" aria-label="Semester progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress.percentage)}>
+          <span style={{ width: `${progress.percentage}%` }} />
+        </div>
       </section>
     </header>
   );

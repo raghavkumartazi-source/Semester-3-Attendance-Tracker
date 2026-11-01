@@ -21,6 +21,7 @@ import { MarksGlanceWidget } from './home/MarksGlanceWidget';
 import { PlannerGlanceWidget } from './home/PlannerGlanceWidget';
 import { TodayProgress } from './home/TodayProgress';
 import { getOverallAttendance } from '@/lib/calculations';
+import './home/home-polish.css';
 
 export default function Dashboard() {
   const { isLoaded, sessions } = useAttendance();
@@ -43,12 +44,12 @@ export default function Dashboard() {
       <TodayHeader now={clock} />
       <Reveal className="summary-grid" delay={.08}>
         <Link href="/subjects" className="summary-card summary-peach" data-page-reveal>
-          <span className="summary-label"><BookOpenIcon aria-hidden="true" /> Today’s classes</span>
+          <span className="summary-label"><BookOpenIcon aria-hidden="true" /> Classes</span>
           <strong className="summary-value"><AnimatedNumber value={classes.length} /><small>today</small></strong>
           <span className="summary-caption">{marked} of {classes.length} marked</span>
         </Link>
         <Link href="/tasks" className="summary-card summary-lilac" data-page-reveal>
-          <span className="summary-label"><CheckCircleIcon aria-hidden="true" /> Open tasks</span>
+          <span className="summary-label"><CheckCircleIcon aria-hidden="true" /> Tasks</span>
           <strong className="summary-value"><AnimatedNumber value={remaining} /><small>to do</small></strong>
           <span className="summary-caption">{remaining ? 'Keep things moving' : 'All caught up'}</span>
         </Link>

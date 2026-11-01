@@ -26,16 +26,19 @@ export default function SubjectDetailPage() {
 
   if (!isLoaded) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-white" />
+      <div className="space-y-4" role="status" aria-label="Loading subject register" aria-busy="true">
+        <div className="h-36 rounded-[25px] glass-surface" />
+        <div className="h-24 rounded-[16px] glass-surface" />
+        <div className="h-56 rounded-[20px] glass-surface" />
       </div>
     );
   }
 
   if (!subject) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-zinc-500">Subject not found</p>
+      <div className="empty-state">
+        <p>Subject not found</p>
+        <button type="button" onClick={() => router.push('/subjects')} className="attendance-back">Back to attendance</button>
       </div>
     );
   }
@@ -54,15 +57,16 @@ export default function SubjectDetailPage() {
   return (
     <div className="pb-24">
       {/* Back button */}
-      <div className="mb-4">
+      <div className="mb-3">
         <button
+          type="button"
           onClick={() => router.back()}
-          className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+          className="attendance-back"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
-          Back
+          Back to attendance
         </button>
       </div>
 
@@ -76,40 +80,44 @@ export default function SubjectDetailPage() {
       {/* Add Class */}
       <div className="mt-5">
         <button
+          type="button"
           onClick={() => setShowAddForm(!showAddForm)}
-          className="w-full glass-card rounded-[20px] py-4 text-sm font-semibold text-white/50 hover:text-white transition-all shadow-none hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] border-dashed"
+          className="attendance-extra-toggle"
+          aria-expanded={showAddForm}
+          aria-controls="extra-class-form"
         >
-          + Add Extra Class
+          <span>Add an extra class</span>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d={showAddForm ? 'M5 12h14' : 'M12 5v14M5 12h14'} /></svg>
         </button>
 
         {showAddForm && (
-          <div className="mt-3 glass-panel rounded-[24px] p-6 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-[10px] text-white/50 uppercase tracking-widest font-bold">Date</label>
+          <div id="extra-class-form" className="mt-3 attendance-inline-form space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="min-w-0">
+                <label htmlFor="extra-class-date">Date</label>
                 <input
+                  id="extra-class-date"
                   type="date"
                   value={addDate}
                   onChange={(e) => setAddDate(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-sm text-white outline-none focus:border-white/20 focus:bg-white/[0.04] transition-colors"
                 />
               </div>
-              <div>
-                <label className="text-[10px] text-white/50 uppercase tracking-widest font-bold">Time</label>
+              <div className="min-w-0">
+                <label htmlFor="extra-class-time">Time</label>
                 <input
+                  id="extra-class-time"
                   type="time"
                   value={addTime}
                   onChange={(e) => setAddTime(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-sm text-white outline-none focus:border-white/20 focus:bg-white/[0.04] transition-colors"
                 />
               </div>
             </div>
             <div>
-              <label className="text-[10px] text-white/50 uppercase tracking-widest font-bold">Type</label>
+              <label htmlFor="extra-class-type">Class type</label>
               <select
+                id="extra-class-type"
                 value={addType}
                 onChange={(e) => setAddType(e.target.value as ClassType)}
-                className="mt-1.5 w-full rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-sm text-white outline-none focus:border-white/20 focus:bg-white/[0.04] transition-colors appearance-none"
               >
                 <option value="Lecture" className="bg-zinc-900">Lecture</option>
                 <option value="Tutorial" className="bg-zinc-900">Tutorial</option>
@@ -117,9 +125,9 @@ export default function SubjectDetailPage() {
               </select>
             </div>
             <button
+              type="button"
               onClick={handleAddClass}
               disabled={!addDate}
-              className="w-full rounded-[14px] glass-floating border border-white/20 py-3 text-sm font-bold text-white hover:bg-white/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(255,255,255,0.05)] mt-2"
             >
               Add Class
             </button>

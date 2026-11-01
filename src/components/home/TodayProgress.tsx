@@ -43,14 +43,12 @@ export function TodayProgress() {
   const percentage = totalItems === 0 ? 0 : (completedItems / totalItems) * 100;
 
   return (
-    <div className="mb-6">
-      <div className="flex items-center justify-between mb-4 px-1">
-        <h2 className="text-[11px] font-bold text-white/60 uppercase tracking-widest">
-          Today&apos;s Progress
-        </h2>
+    <section className="daily-progress">
+      <div className="section-heading">
+        <h2>Today&apos;s progress</h2>
         {totalItems > 0 && (
-          <span className="text-[10px] font-bold text-white/40 tracking-wider uppercase tabular-nums">
-            {completedItems} / {totalItems} completed
+          <span className="progress-count">
+            {completedItems} <span>/ {totalItems} done</span>
           </span>
         )}
       </div>
@@ -58,10 +56,10 @@ export function TodayProgress() {
       <motion.div 
         initial={reduced ? false : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-surface rounded-[22px] p-5"
+        className="daily-progress-card"
       >
         {activityFeed.length === 0 ? (
-          <p className="text-sm font-medium text-white/40 text-center py-2">No progress yet today.</p>
+          <div className="progress-empty"><span className="progress-empty-icon" aria-hidden="true">✓</span><div><strong>Your first win is waiting.</strong><p>Mark a class or finish a task to start.</p></div></div>
         ) : (
           <ul className="space-y-2.5 mb-4">
             {activityFeed.slice(0, 5).map((item, i) => (
@@ -70,7 +68,7 @@ export function TodayProgress() {
                 initial={reduced ? false : { opacity: 0, x: -15 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: reduced ? 0 : 0.08 * i, duration: reduced ? 0 : 0.3 }}
-                className="flex items-center gap-3 min-h-11"
+                className="progress-activity"
               >
                 <motion.span 
                   className="text-emerald-400 shrink-0"
@@ -84,16 +82,16 @@ export function TodayProgress() {
                   </svg>
                 </motion.span>
                 {item.type === 'task' && item.task ? (
-                  <button
+                  <><span className="progress-activity-text">{item.text}</span><button
                     type="button"
-                    className="flex-1 min-h-11 text-left text-sm font-medium text-zinc-200 line-through decoration-emerald-500/30 hover:opacity-80"
+                    className="progress-undo"
                     aria-label={`Undo completion of ${item.task.title}`}
                     onClick={() => updateTask(item.task!.id, { completed: false, completed_at: null })}
                   >
-                    {item.text}
-                  </button>
+                    Undo
+                  </button></>
                 ) : (
-                  <span className="text-sm font-medium text-zinc-200">{item.text}</span>
+                  <span className="progress-activity-text">{item.text}</span>
                 )}
               </motion.li>
             ))}
@@ -105,7 +103,7 @@ export function TodayProgress() {
           </ul>
         )}
 
-        <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden mt-4 shadow-inner">
+        <div className="daily-progress-track" role="progressbar" aria-label="Today’s completed classes and tasks" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(percentage)}>
           <motion.div 
             className="h-full rounded-full relative progress-glow"
             style={{
@@ -117,6 +115,6 @@ export function TodayProgress() {
           />
         </div>
       </motion.div>
-    </div>
+    </section>
   );
 }

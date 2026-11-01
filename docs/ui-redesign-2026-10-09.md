@@ -15,6 +15,13 @@ The semester dial is real Three.js geometry: enamel face, metal rim, raised prog
 
 ## Usability and correctness
 
+- The polish pass uses quieter surface borders, more readable secondary text, sentence-case headings, consistent page widths and larger native controls. It retains the original home sections, five-page dock, liquid interactions, animated graphs and 3D semester dial.
+- Home attendance actions display Present, Absent and Cancelled in full. Completed tasks have an explicit Undo action, and task creation remains available beside the next task. Loading placeholders now match the final dashboard layout.
+- Attendance cards show full subject names, actual percentages, the 75% target and clear next-step guidance. Register cells and status menus support touch and keyboard navigation, preserve focus after edits and retain saved records after reload.
+- Task lists share the same materials and typography as home. Open/completed views, due-date groups, quick date choices, editing completed tasks and nested work-session dialogs keep their existing data flow.
+- Marks and planner pages use readable projections, wrapping subject rails and touch-sized actions. Saved grade boundaries preload correctly, zero-percent scenarios remain zero, and soft-deleted entries are excluded from visible lists.
+- Study-plan setup exposes the existing planner configuration through an upcoming endsem selector, daily study time, buffer days and revision rounds. Saving generates the existing plan and persists the settings. Reverse-countdown dates use local calendar days, including split sessions.
+- The weekly schedule shows the real start/end times and uses the timetable's actual end time for the current-class indicator. Account inputs have visible associated labels and a password visibility control; sign-in and signup handlers are unchanged.
 - Phone inputs remain at least 16px to avoid focus zoom. The dock respects safe areas, keeps its five labels visible and hides during text input focus. Its targets are at least 44px.
 - Reduced motion skips decorative movement and uses a static dial. Missing/lost WebGL preserves the vector dial and its data.
 - Attendance charts exclude future, cancelled and unmarked classes from the attendance denominator. Cumulative totals are computed before filtering the visible date range. Empty history has an explicit empty state.
@@ -28,7 +35,8 @@ The semester dial is real Three.js geometry: enamel face, metal rim, raised prog
 - TypeScript and production build pass. Lint has no errors; existing unused-code warnings remain.
 - Charts were checked in touch-enabled mobile contexts at 393 × 852 and 320 × 740: range morphs, history scrubber, ring selection, heatmap tap previews, keyboard navigation, empty states and reduced motion.
 - Homepage checks cover both phone widths and desktop, real WebGL rendering/drag feedback, static reduced-motion fallback and the original fixed dock. Attendance/register, subject detail, tasks, populated marks, planner, schedule and settings were checked at 320 × 740 and 1440 × 1000; content stays within the viewport and final controls clear the dock.
-- Isolated guest browser flows verify attendance marking/undo, task creation/completion/undo, marks entry and exam entry with saved local records surviving reload. Nested manual-plan dismissal preserves the parent’s scroll lock and restores focus.
+- Isolated guest browser flows verify attendance marking/undo, task creation/completion/undo, marks entry and exam entry with saved local records surviving reload. Nested manual-plan dismissal preserves the parent's scroll lock and restores focus.
+- The final polish was checked at 320 × 852, iPhone 15's 393 × 852 viewport and 1440 × 1000. Home, attendance, tasks, marks, planner, schedule and settings fit without page-level horizontal overflow. Account labels, 16px fields, password visibility and blank-form disabled actions were checked without signing in. Study-plan settings and generated schedules survive reload in an isolated guest session.
 
 Browser checks use isolated guest sessions and temporary local fixtures. Physical iPhone Safari and signed-in cloud synchronization were not retested in this interface-only revision.
 

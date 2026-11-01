@@ -1,0 +1,64 @@
+.home-tasks, .daily-progress { min-width: 0; }
+.home-task-actions { display: flex; align-items: center; gap: 10px; flex: none; }
+.home-quick-add { display: grid; place-items: center; width: 44px; height: 44px; color: var(--accent); background: #edbbad0a; border: 1px solid var(--surface-border); border-radius: 13px; transition: background 180ms ease, transform 180ms ease; }
+.home-quick-add svg { width: 19px; height: 19px; }
+.home-quick-add:hover { background: #edbbad1c; }
+.home-quick-add:active { transform: scale(.94); }
+.home-task-empty > svg { width: 34px; height: 34px; margin-bottom: 14px; color: var(--accent); stroke-width: 1.4; }
+.home-task-empty h3 { font-size: 18px; font-weight: 500; letter-spacing: -.4px; color: var(--fg); }
+.home-task-empty p { font-size: 13px; margin-top: 5px; max-width: 260px; margin-inline: auto; }
+.timeline-class-marking { display: block; border-top-color: var(--surface-border); padding-top: 13px; margin-top: 13px; }
+.timeline-class-marking > span { display: block; font-size: 12px; margin-bottom: 8px; }
+.timeline-class-marking .attendance-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+.timeline-class-marking .attendance-action { min-width: 0; width: 100%; padding-inline: 6px; font-size: 12px; background: #21182033; border-color: #c9a7b526; }
+.timeline-class-marking .attendance-action.status-present { color: var(--success); border-color: #b4dfca35; background: #b4dfca09; }
+.timeline-class-marking .attendance-action.status-absent { color: var(--danger); }
+.timeline-class-marking .attendance-action.status-cancelled { color: var(--fg-muted); }
+.timeline-class-marking .attendance-action:hover { background: #edbbad13; border-color: #d5b5c55c; }
+.timeline-class-marking .attendance-action svg { width: 16px; height: 16px; }
+.daily-progress-card { padding: 20px; border-radius: 22px; background: linear-gradient(145deg, #342734, #2b202b); border: 1px solid var(--surface-border); border-top-color: var(--surface-highlight); }
+.progress-count { flex: none; font-size: 13px; color: var(--fg); font-variant-numeric: tabular-nums; }
+.progress-count > span { color: var(--fg-subtle); font-size: 12px; }
+.progress-empty { display: flex; align-items: center; gap: 13px; padding: 3px 0 5px; }
+.progress-empty-icon { display: grid; place-items: center; width: 38px; height: 38px; flex: none; border: 1px solid #b4dfca24; background: #b4dfca09; border-radius: 12px; color: var(--success); font-size: 20px; }
+.progress-empty strong { display: block; color: var(--fg); font-size: 14px; font-weight: 500; }
+.progress-empty p { color: var(--fg-subtle); font-size: 12px; margin-top: 3px; }
+.progress-activity { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.progress-activity-text { flex: 1; min-width: 0; font-size: 13px; color: var(--fg-muted); overflow-wrap: anywhere; }
+.progress-undo { min-width: 44px; min-height: 44px; flex: none; font-size: 12px; color: var(--accent); border-radius: 10px; }
+.progress-undo:hover { background: #edbbad0c; }
+.daily-progress-track { height: 5px; border-radius: 8px; overflow: hidden; margin-top: 18px; background: #edbbad13; }
+.glance-value { font-variant-numeric: tabular-nums; }
+.glance-caption { line-height: 1.5; overflow-wrap: anywhere; }
+.semester-hero .semester-instrument__day { display: none; }
+.dashboard-skeleton { display: flex; flex-direction: column; gap: 22px; }
+.dashboard-skeleton .skeleton-intro { display: flex; flex-direction: column; gap: 13px; }
+.dashboard-skeleton .skeleton-hero { height: 245px; border-radius: 28px; margin-top: 8px; }
+.dashboard-skeleton .skeleton-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.dashboard-skeleton .skeleton-metric { height: 125px; border-radius: 21px; }
+.dashboard-skeleton .skeleton-home-columns { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 28px; }
+.dashboard-skeleton .skeleton-home-column { display: flex; flex-direction: column; gap: 15px; }
+.dashboard-skeleton .skeleton-week { height: 76px; border-radius: 18px; }
+.dashboard-skeleton .skeleton-class { height: 154px; border-radius: 20px; }
+.dashboard-skeleton .skeleton-snapshot { height: 295px; border-radius: 24px; }
+@media (max-width: 767px) {
+  .home-task-actions { gap: 6px; }
+  .home-tasks .section-heading { gap: 8px; }
+  .home-tasks .section-heading h2, .daily-progress .section-heading h2 { font-size: 19px; }
+  .daily-progress-card { padding: 18px; }
+  .dashboard-skeleton { gap: 18px; }
+  .dashboard-skeleton .skeleton-hero { height: 219px; border-radius: 24px; }
+  .dashboard-skeleton .skeleton-metrics { gap: 8px; }
+  .dashboard-skeleton .skeleton-metric { height: 107px; border-radius: 16px; }
+  .dashboard-skeleton .skeleton-home-columns { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 359px) {
+  .summary-rose .summary-value small { display: inline; font-size: 12px; }
+  .timeline-class-marking .attendance-actions { gap: 5px; }
+  .timeline-class-marking .attendance-action { gap: 4px; padding-inline: 3px; font-size: 11px; }
+  .home-task-actions { gap: 2px; }
+  .home-tasks .section-heading h2 { font-size: 18px; }
+  .home-tasks .section-link { font-size: 11px; }
+  .daily-progress .section-heading { flex-wrap: wrap; gap: 2px; }
+}
+@media (prefers-reduced-motion: reduce) { .home-quick-add { transition: none; } }

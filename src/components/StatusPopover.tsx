@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { AttendanceStatus } from '@/lib/types';
 import { triggerCelebration } from './CelebrationBurst';
 
@@ -13,11 +13,11 @@ interface StatusPopoverProps {
   onClose: () => void;
 }
 
-const STATUS_OPTIONS: { value: AttendanceStatus; label: string; emoji: string }[] = [
-  { value: 'PRESENT', label: 'Present', emoji: '✅' },
-  { value: 'ABSENT', label: 'Absent', emoji: '❌' },
-  { value: 'CANCELLED', label: 'Cancelled', emoji: '🚫' },
-  { value: 'UNMARKED', label: 'Unmarked', emoji: '↩️' },
+const STATUS_OPTIONS: { value: AttendanceStatus; label: string }[] = [
+  { value: 'PRESENT', label: 'Present' },
+  { value: 'ABSENT', label: 'Absent' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+  { value: 'UNMARKED', label: 'Unmarked' },
 ];
 
 const STATUS_STYLES: Record<AttendanceStatus, { color: string; background: string }> = {
@@ -27,20 +27,8 @@ const STATUS_STYLES: Record<AttendanceStatus, { color: string; background: strin
   UNMARKED: { color: 'var(--fg)', background: 'var(--glass-bg-hover)' },
 };
 
-function getIndicatorClass(status: AttendanceStatus, isSelected: boolean): string {
-  switch (status) {
-    case 'PRESENT':
-      return isSelected ? 'bg-emerald-700' : 'bg-emerald-600/70';
-    case 'ABSENT':
-      return isSelected ? 'bg-red-700' : 'bg-red-600/70';
-    case 'CANCELLED':
-      return isSelected ? 'bg-zinc-600' : 'bg-zinc-500/70';
-    case 'UNMARKED':
-      return 'bg-transparent border border-current opacity-60';
-  }
-}
-
 export default function StatusPopover({ anchorEl, currentStatus, onSelect, onClose }: StatusPopoverProps) {
+  const reducedMotion = useReducedMotion();
   const popoverRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number; openAbove: boolean } | null>(null);
   const [visible, setVisible] = useState(false);
@@ -74,8 +62,14 @@ export default function StatusPopover({ anchorEl, currentStatus, onSelect, onClo
     // eslint-disable-next-line react-hooks/set-state-in-effect
     calculate();
     // Trigger enter animation on next frame
-    requestAnimationFrame(() => setVisible(true));
+    const frame = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(frame);
   }, [calculate]);
+
+  useEffect(() => {
+    if (!visible) return;
+    popoverRef.current?.querySelector<HTMLButtonElement>(`[data-status="${currentStatus}"]`)?.focus({ preventScroll: true });
+  }, [visible, currentStatus]);
 
   // Close on scroll/resize
   useEffect(() => {
@@ -89,14 +83,27 @@ export default function StatusPopover({ anchorEl, currentStatus, onSelect, onClo
     }
     scrollParents.push(window);
 
-    const handleDismiss = () => onClose();
+    const initialRect = anchorEl.getBoundingClientRect();
+    const handleScroll = () => {
+      const rect = anchorEl.getBoundingClientRect();
+      // A scroll event can arrive after focus has already brought the cell into view.
+      // Dismiss only when the anchor actually moves after the picker opens.
+      if (Math.abs(rect.top - initialRect.top) > 1 || Math.abs(rect.left - initialRect.left) > 1) {
+        if (popoverRef.current?.contains(document.activeElement)) anchorEl.focus({ preventScroll: true });
+        onClose();
+      }
+    };
 
-    scrollParents.forEach(p => p.addEventListener('scroll', handleDismiss, { passive: true }));
-    window.addEventListener('resize', handleDismiss);
+    scrollParents.forEach(p => p.addEventListener('scroll', handleScroll, { passive: true }));
+    const handleResize = () => {
+      if (popoverRef.current?.contains(document.activeElement)) anchorEl.focus({ preventScroll: true });
+      onClose();
+    };
+    window.addEventListener('resize', handleResize);
 
     return () => {
-      scrollParents.forEach(p => p.removeEventListener('scroll', handleDismiss));
-      window.removeEventListener('resize', handleDismiss);
+      scrollParents.forEach(p => p.removeEventListener('scroll', handleScroll));
+      window.removeEventListener('resize', handleResize);
     };
   }, [anchorEl, onClose]);
 
@@ -139,22 +146,32 @@ export default function StatusPopover({ anchorEl, currentStatus, onSelect, onClo
         zIndex: 9999,
         transformOrigin,
         opacity: visible ? 1 : 0,
-        transform: visible
+        transform: reducedMotion ? 'none' : visible
           ? 'scale(1) translateY(0)'
           : pos.openAbove
             ? 'scale(0.92) translateY(6px)'
             : 'scale(0.92) translateY(-6px)',
-        transition: 'opacity 150ms cubic-bezier(0.16, 1, 0.3, 1), transform 150ms cubic-bezier(0.16, 1, 0.3, 1)',
+        transition: reducedMotion ? 'none' : 'opacity 150ms cubic-bezier(0.16, 1, 0.3, 1), transform 150ms cubic-bezier(0.16, 1, 0.3, 1)',
         width: 180,
       }}
     >
       <motion.div
         className="rounded-[14px] p-[5px] flex flex-col gap-[3px]"
-        initial="hidden"
+        role="group"
+        aria-label="Attendance status"
+        initial={reducedMotion ? false : 'hidden'}
         animate="visible"
+        onKeyDown={(event) => {
+          if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+          event.preventDefault();
+          const options = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('button'));
+          const current = options.indexOf(document.activeElement as HTMLButtonElement);
+          const next = event.key === 'Home' ? 0 : event.key === 'End' ? options.length - 1 : (current + (event.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length;
+          options[next]?.focus({ preventScroll: true });
+        }}
         variants={{
           hidden: {},
-          visible: { transition: { staggerChildren: 0.04, delayChildren: 0.05 } },
+          visible: { transition: { staggerChildren: reducedMotion ? 0 : 0.04, delayChildren: reducedMotion ? 0 : 0.05 } },
         }}
         style={{
           background: 'var(--bg-elevated)',
@@ -163,11 +180,14 @@ export default function StatusPopover({ anchorEl, currentStatus, onSelect, onClo
           boxShadow: '0 8px 32px #1e202616, 0 2px 8px #1e20260a',
         }}
       >
-        {STATUS_OPTIONS.map(({ value, label, emoji }) => {
+        {STATUS_OPTIONS.map(({ value, label }) => {
           const isSelected = currentStatus === value;
           return (
             <motion.button
               key={value}
+              type="button"
+              data-status={value}
+              aria-pressed={isSelected}
               variants={{
                 hidden: { opacity: 0, x: -8 },
                 visible: { opacity: 1, x: 0 },
@@ -179,8 +199,7 @@ export default function StatusPopover({ anchorEl, currentStatus, onSelect, onClo
                 }
                 onSelect(value);
               }}
-              whileTap={{ scale: 0.94 }}
-              whileHover={{ scale: 1.02 }}
+              whileTap={reducedMotion ? undefined : { scale: 0.97 }}
               transition={{ type: 'spring', stiffness: 500, damping: 25 }}
               className="group flex items-center gap-[10px] rounded-[10px] px-[12px] min-h-11 py-[8px] text-[13px] font-semibold transition-colors duration-100"
               style={{
@@ -204,13 +223,11 @@ export default function StatusPopover({ anchorEl, currentStatus, onSelect, onClo
                 }
               }}
             >
-              {/* Status emoji */}
-              <span className="flex-shrink-0 text-[13px] leading-none select-none">
-                {emoji}
-              </span>
               {/* Status dot indicator */}
               <span
-                className={`inline-block h-[7px] w-[7px] rounded-full flex-shrink-0 transition-shadow duration-100 ${getIndicatorClass(value, isSelected)}`}
+                aria-hidden="true"
+                className="inline-block h-[7px] w-[7px] rounded-full flex-shrink-0"
+                style={{ background: value === 'UNMARKED' ? 'transparent' : STATUS_STYLES[value].color, border: value === 'UNMARKED' ? '1px solid currentColor' : undefined }}
               />
               <span className="flex-1 text-left">{label}</span>
               {/* Check mark for selected item */}

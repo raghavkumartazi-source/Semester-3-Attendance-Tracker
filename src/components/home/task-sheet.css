@@ -1,0 +1,19 @@
+.task-editor { background: var(--bg-elevated); box-shadow: 0 20px 100px #1009176b, inset 0 1px 0 #f4d5df16; border-color: #d5afbf2e; }
+.task-editor-header p { color: var(--fg-subtle); font-size: 11px; margin-bottom: 5px; }
+.task-editor-header h2 { font-family: var(--font-heading), sans-serif; font-size: 25px; letter-spacing: -.055em; line-height: 1.2; font-weight: 500; color: var(--fg); }
+.task-editor-header > button { width: 44px; height: 44px; display: grid; place-items: center; flex: none; }
+.task-editor input, .task-editor select, .task-editor textarea { min-height: 48px; font-size: 16px; border-color: #c297ac35; background-color: #21182040; color: var(--fg); }
+.task-editor input[aria-label="Task title"] { min-height: 54px; background: transparent; font-size: 20px; font-family: var(--font-heading), sans-serif; letter-spacing: -.03em; padding-bottom: 13px; border-width: 0 0 1px; border-color: #c297ac4a; }
+.task-editor input:focus, .task-editor select:focus, .task-editor textarea:focus { border-color: var(--accent); }
+.task-editor label { color: var(--fg-muted); font-size: 11px; font-weight: 500; letter-spacing: .03em; text-transform: none; }
+.task-editor-chips > button { min-height: 44px; padding: 9px 14px; font-size: 12px; font-weight: 500; letter-spacing: 0; border-radius: 11px; border: 1px solid #c297ac28; background: #c297ac0c; color: var(--fg-muted); }
+.task-editor-chips > button[aria-pressed="true"] { border-color: #edbbad4a; background: #edbbad14; color: var(--accent); }
+.task-editor-options-toggle { width: 100%; min-height: 44px; padding: 8px 0; display: flex; align-items: center; justify-content: space-between; color: var(--fg-muted); font-size: 13px; font-weight: 500; border-top: 1px solid #c297ac1d; }
+.task-editor-details select { padding-right: 28px; padding-left: 12px; }
+.task-editor-submit { min-height: 50px; }
+@media (max-width: 350px) {
+  .task-editor .task-editor-header, .task-editor form > div { padding-left: 20px; padding-right: 20px; }
+  .task-editor-chips { gap: 6px; }
+  .task-editor-chips > button { padding-inline: 10px; font-size: 11px; }
+  .task-editor-details .grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+}

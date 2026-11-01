@@ -1,115 +1,58 @@
 'use client';
-export const dynamic = 'force-dynamic';
+
 import { useState, useEffect } from 'react';
 import { TIMETABLE, SUBJECTS, DAY_NAMES } from '@/lib/config';
+import '../utility-pages.css';
 
-const WEEKDAYS = [1, 2, 3, 4, 5]; // Mon-Fri
+const WEEKDAYS = [1, 2, 3, 4, 5];
+const minutes = (time: string) => { const [hours, minute] = time.split(':').map(Number); return hours * 60 + minute; };
 
 export default function SchedulePage() {
-  const [currentMinutes, setCurrentMinutes] = useState(0);
-  const today = new Date().getDay();
-
+  const [clock, setClock] = useState<Date | null>(null);
   useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setCurrentMinutes(now.getHours() * 60 + now.getMinutes());
-    };
+    const updateTime = () => setClock(new Date());
     updateTime();
     const interval = setInterval(updateTime, 60000);
     return () => clearInterval(interval);
   }, []);
+  const today = clock?.getDay();
+  const currentMinutes = clock ? clock.getHours() * 60 + clock.getMinutes() : -1;
 
   return (
-    <div className="max-w-lg mx-auto space-y-8 pb-24">
-      <div className="page-header animate-fade-in-up stagger-1 px-1">
-        <h1>Weekly Schedule</h1>
+    <div className="schedule-page">
+      <div className="page-header" data-page-reveal>
+        <span className="utility-eyebrow">Your week at a glance</span>
+        <h1>Weekly schedule</h1>
+        <p className="page-subtitle">Find your next class and make room for study.</p>
       </div>
-
-      {WEEKDAYS.map(day => {
-        const daySlots = TIMETABLE
-          .filter(s => s.day === day)
-          .sort((a, b) => a.startTime.localeCompare(b.startTime));
-        const isToday = day === today;
-
-        if (daySlots.length === 0) return null;
-
-        return (
-          <div key={day} className={`animate-fade-in-up stagger-${Math.min(day, 8)}`}>
-            <div className="flex items-center gap-2.5 mb-4 px-1">
-              <h2 className={`text-[11px] font-bold tracking-widest uppercase ${
-                isToday ? 'text-white' : 'text-white/40'
-              }`}>
-                {DAY_NAMES[day]}
-              </h2>
-              {isToday && (
-                <span className="glass-control-active rounded-full px-2.5 py-0.5 text-[9px] font-bold text-white tracking-wider shadow-[0_0_10px_rgba(255,255,255,0.1)]">
-                  TODAY
-                </span>
-              )}
-            </div>
-
-            <div className={`relative pl-4 ml-2 border-l-2 ${isToday ? 'border-white/20' : 'border-white/5'} py-2`}>
-              <div className="space-y-6">
-                {daySlots.map((slot) => {
-                  const subject = SUBJECTS.find(s => s.code === slot.subjectCode);
-                  const [h, m] = slot.startTime.split(':').map(Number);
-                  const startMins = h * 60 + m;
-                  const endMins = startMins + (slot.classType === 'Lab' ? 120 : 60);
-                  
-                  const isNow = isToday && currentMinutes >= startMins && currentMinutes <= endMins;
-                  const isPast = isToday && currentMinutes > endMins;
-
+      <nav className="schedule-day-nav" aria-label="Jump to a weekday">
+        {WEEKDAYS.map(day => <a key={day} href={`#schedule-day-${day}`} aria-current={day === today ? 'date' : undefined}><span>{DAY_NAMES[day].slice(0, 3)}</span><small>{TIMETABLE.filter(slot => slot.day === day).length} classes</small></a>)}
+      </nav>
+      <div className="schedule-week-grid">
+        {WEEKDAYS.map(day => {
+          const slots = TIMETABLE.filter(slot => slot.day === day).sort((a, b) => a.startTime.localeCompare(b.startTime));
+          const isToday = day === today;
+          if (!slots.length) return null;
+          return (
+            <section key={day} id={`schedule-day-${day}`} className="schedule-day-panel" aria-labelledby={`weekday-${day}`}>
+              <div className="schedule-day-heading"><h2 id={`weekday-${day}`}>{DAY_NAMES[day]}</h2><span>{isToday ? 'Today' : `${slots.length} classes`}</span></div>
+              <ol className="schedule-class-list">
+                {slots.map(slot => {
+                  const subject = SUBJECTS.find(item => item.code === slot.subjectCode);
+                  const isNow = isToday && currentMinutes >= minutes(slot.startTime) && currentMinutes < minutes(slot.endTime);
+                  const isPast = isToday && currentMinutes >= minutes(slot.endTime);
                   return (
-                    <div
-                      key={`${slot.subjectCode}-${slot.startTime}`}
-                      className={`relative flex items-start gap-4 transition-all duration-300 ${isPast ? 'opacity-40 grayscale-[50%]' : ''}`}
-                    >
-                      {/* Timeline Dot */}
-                      <div className={`absolute -left-[21px] mt-1.5 w-2.5 h-2.5 rounded-full border-2 ${
-                        isNow ? 'bg-red-500 border-red-500 now-pulse' :
-                        isToday && !isPast ? 'bg-white border-white' :
-                        'bg-[#040406] border-white/20'
-                      }`} />
-
-                      <div className="w-12 pt-0.5 shrink-0">
-                        <span className={`text-[11px] font-semibold tabular-nums ${isNow ? 'text-red-400' : 'text-white/60'}`}>
-                          {slot.startTime}
-                        </span>
-                      </div>
-
-                      <div className={`flex-1 glass-elevated rounded-[16px] p-4 relative overflow-hidden ${
-                        isNow ? 'border-red-500/30 bg-red-500/[0.03]' : ''
-                      }`}>
-                        {isNow && (
-                          <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent pointer-events-none" />
-                        )}
-                        
-                        <div className="flex items-start justify-between relative z-10">
-                          <div>
-                            <p className={`text-[13px] font-bold ${isNow ? 'text-white' : 'text-white/90'}`}>
-                              {slot.subjectCode}
-                            </p>
-                            <p className="text-[11px] text-white/50 mt-0.5 leading-tight pr-2">
-                              {subject?.name}
-                            </p>
-                          </div>
-                          <span className={`rounded-full px-2.5 py-1 text-[9px] font-bold tracking-wider border shrink-0 ${
-                            slot.classType === 'Lab' ? 'bg-purple-400/10 text-purple-300/80 border-purple-500/15' :
-                            slot.classType === 'Tutorial' ? 'bg-blue-400/10 text-blue-300/80 border-blue-500/15' :
-                            'bg-white/[0.06] text-white/50 border-white/[0.08]'
-                          }`}>
-                            {slot.classType}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                    <li key={`${slot.subjectCode}-${slot.startTime}`} className={`schedule-class${isNow ? ' is-now' : ''}`}>
+                      <div className="schedule-class-time"><time>{slot.startTime}</time><span>{slot.endTime}</span></div>
+                      <div className="schedule-class-copy"><div><span className="schedule-class-code">{slot.subjectCode}</span>{isNow && <span className="schedule-now">Now</span>}</div><h3>{subject?.name ?? slot.subjectCode}</h3><p>{slot.classType}{isPast ? ' · Finished' : ''}</p></div>
+                    </li>
                   );
                 })}
-              </div>
-            </div>
-          </div>
-        );
-      })}
+              </ol>
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }

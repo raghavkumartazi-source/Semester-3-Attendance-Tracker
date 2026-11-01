@@ -7,8 +7,9 @@ import { getSubjectAttendance, formatPercentage } from '@/lib/calculations';
 import { parseDate, formatDate } from '@/lib/sessions';
 import Link from 'next/link';
 import StatusPopover from './StatusPopover';
-import { getStatusCellClass, STATUS_DISPLAY } from '@/lib/uiUtils';
-import { SUBJECT_COLORS } from '@/lib/theme';
+import { STATUS_DISPLAY } from '@/lib/uiUtils';
+import SubjectCard from './SubjectCard';
+import './attendance-polish.css';
 
 interface Props {
   subjects: Subject[];
@@ -71,7 +72,7 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
     if (todayColRef.current && scrollRef.current) {
       scrollRef.current.scrollTo({
         left: Math.max(0, todayColRef.current.offsetLeft - 300),
-        behavior: 'smooth',
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
       });
     }
   }, []);
@@ -80,7 +81,7 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
     if (scrollRef.current) {
       scrollRef.current.scrollTo({
         left: 0,
-        behavior: 'smooth',
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
       });
     }
   }, []);
@@ -89,7 +90,7 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
     if (scrollRef.current) {
       scrollRef.current.scrollBy({
         left: direction * 400,
-        behavior: 'smooth',
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
       });
     }
   }, []);
@@ -99,16 +100,18 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
     if (!activePopover) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        popoverAnchor?.focus({ preventScroll: true });
         setActivePopover(null);
         setPopoverAnchor(null);
       }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [activePopover]);
+  }, [activePopover, popoverAnchor]);
 
   const handleStatusChange = (sessionId: string, status: AttendanceStatus) => {
     onMarkAttendance(sessionId, status);
+    popoverAnchor?.focus({ preventScroll: true });
     setActivePopover(null);
     setPopoverAnchor(null);
   };
@@ -128,55 +131,53 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
           <h1>Attendance</h1>
           <p className="page-subtitle">Your subjects, attendance and room to miss a class.</p>
         </div>
-        <div className="glass-floating rounded-[18px] hidden md:flex items-center justify-between w-full sm:w-auto gap-1 p-1.5 overflow-hidden flex-nowrap">
-          <button onClick={scrollToStart} className="glass-control rounded-[12px] px-3 py-2 text-[10px] font-bold text-white/70 hover:text-white tracking-wide truncate flex-1 sm:flex-none">
+        <div className="register-controls register-controls-desktop">
+          <button type="button" onClick={scrollToStart} aria-label="Scroll register to semester start">
             Start
           </button>
-          <button onClick={() => scrollBy(-1)} className="glass-control rounded-[12px] px-3 py-2 text-[11px] font-bold text-white/70 hover:text-white">
+          <button type="button" onClick={() => scrollBy(-1)} aria-label="Previous dates">
             ‹
           </button>
-          <button onClick={scrollToToday} className="glass-control-active rounded-[12px] px-3 sm:px-5 py-2 text-[10px] font-bold text-white tracking-wider flex-1 sm:flex-none">
-            TODAY
+          <button type="button" onClick={scrollToToday} className="register-today">
+            Today
           </button>
-          <button onClick={() => scrollBy(1)} className="glass-control rounded-[12px] px-3 py-2 text-[11px] font-bold text-white/70 hover:text-white">
+          <button type="button" onClick={() => scrollBy(1)} aria-label="Next dates">
             ›
           </button>
         </div>
       </div>
 
       {/* Semester Status Bar */}
-      <div className="glass-elevated rounded-[16px] px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between sm:justify-start gap-x-4 sm:gap-x-6 gap-y-3">
-        <span className="hidden sm:inline-block text-[10px] font-bold uppercase tracking-widest text-white/40">Semester III</span>
-        {overallConducted === 0 ? (
-          <span className="text-xs font-bold text-white/50">No attendance recorded yet. Open a subject to get started.</span>
-        ) : (
-          <>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-wider text-white/40">Overall</span>
-              <span className="text-sm font-bold text-white">{overallPercentage}</span>
-            </div>
-            <div className="flex flex-col sm:flex-row sm:items-center items-center gap-1 sm:gap-2">
-              <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-white/40">Present</span>
-              <span className="text-sm font-bold text-emerald-400">{overallPresent}</span>
-            </div>
-            <div className="flex flex-col sm:flex-row sm:items-center items-center gap-1 sm:gap-2 border-l border-white/[0.05] sm:border-none pl-4 sm:pl-0">
-              <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-white/40">Absent</span>
-              <span className="text-sm font-bold text-red-400">{overallAbsent}</span>
-            </div>
-            <div className="flex flex-col sm:flex-row sm:items-center items-center gap-1 sm:gap-2 border-l border-white/[0.05] sm:border-none pl-4 sm:pl-0">
-              <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-white/40">Classes</span>
-              <span className="text-sm font-bold text-white/80">{overallConducted}</span>
-            </div>
-            <div className="hidden sm:flex flex-1 justify-end">
-              <span className="text-[10px] uppercase tracking-wider text-white/30">75% Required</span>
-            </div>
-          </>
-        )}
+      <section className="attendance-overview" aria-label="Semester attendance summary" data-page-reveal>
+        <div className="attendance-overview-top">
+          <div>
+            <p className="attendance-overview-eyebrow">Semester III · Overall attendance</p>
+            <p className="attendance-overview-number">{overallConducted === 0 ? '—' : overallPercentage}</p>
+          </div>
+          <span className="attendance-target-badge"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="4" /><circle cx="12" cy="12" r="1" /></svg>75% target</span>
+        </div>
+        <p className="attendance-overview-caption">{overallConducted === 0 ? 'Open a subject to record your first class.' : `${rowData.filter(row => row.stats.needToAttend > 0).length} of ${subjects.length} subjects below the required attendance.`}</p>
+        <div className="attendance-overview-stats">
+          <div><strong style={{ color: 'var(--success)' }}>{overallPresent}</strong><span>Present</span></div>
+          <div><strong style={{ color: 'var(--danger)' }}>{overallAbsent}</strong><span>Absent</span></div>
+          <div><strong>{overallConducted}</strong><span>Recorded classes</span></div>
+        </div>
+      </section>
+
+      <div className="attendance-section-heading">
+        <h2>Your subjects</h2>
+        <p>{subjects.length} subjects · tap to open</p>
+      </div>
+      <div className="register-guide register-guide-desktop" aria-label="Register legend">
+        <span><i className="attendance-dot present" /><strong>P</strong> Present</span>
+        <span><i className="attendance-dot absent" /><strong>A</strong> Absent</span>
+        <span><i className="attendance-dot cancelled" /><strong>C</strong> Cancelled</span>
+        <span><i className="attendance-dot unmarked" /><strong>—</strong> Unmarked</span>
       </div>
 
       {/* Glass Slab Container (Desktop Only) */}
       <div className="hidden md:block relative glass-surface rounded-[20px] overflow-hidden text-sm">
-        <div ref={scrollRef} className="overflow-x-auto scrollbar-thin max-h-[75vh]">
+        <div ref={scrollRef} className="register-scroller overflow-x-auto scrollbar-thin max-h-[75vh]" tabIndex={0} role="region" aria-label="Semester attendance register, scroll horizontally for more dates">
           <div className="inline-block min-w-max">
             
             {/* Frosted Header Row */}
@@ -200,7 +201,7 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
                     key={date}
                     ref={isToday ? todayColRef : undefined}
                     data-future={isFirstFuture ? 'first' : undefined}
-                    className={`flex w-12 flex-col items-center justify-center border-r border-white/[0.06] py-1 ${
+                    className={`flex w-[60px] flex-col items-center justify-center border-r border-white/[0.06] py-1 ${
                       isToday 
                         ? 'text-white' 
                         : isFuture ? 'text-white/40' : 'text-white/80'
@@ -219,10 +220,10 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
               {/* Sticky Top-Right Corner (Stats Headers) */}
               <div className="sticky right-0 z-40 flex glass-frozen-right">
                 <StatHeader label="Total" sub="Class" width="w-12" />
-                <StatHeader label="Pres" sub="ent" width="w-12" />
-                <StatHeader label="Abs" sub="ent" width="w-12" />
-                <StatHeader label="%" sub="Attnd" width="w-14" />
-                <StatHeader label="Bunk" sub="/Next" width="w-12" />
+                <StatHeader label="Present" sub="" width="w-12" />
+                <StatHeader label="Absent" sub="" width="w-12" />
+                <StatHeader label="%" sub="Rate" width="w-14" />
+                <StatHeader label="Buffer" sub="/ Attend" width="w-12" />
               </div>
             </div>
 
@@ -237,8 +238,10 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
                   
                   {/* Sticky Left Column (Subject Info) */}
                   <div className="sticky left-0 z-20 glass-frozen flex w-[210px] flex-col justify-center px-4 py-2">
-                    <span className="truncate text-[12px] font-bold text-white/95">{row.subject.code}</span>
-                    <span className="truncate text-[10px] text-white/60 font-medium" title={row.subject.name}>{row.subject.name}</span>
+                    <Link href={`/subjects/${encodeURIComponent(row.subject.code)}`} className="flex min-h-11 flex-col justify-center" aria-label={`Open ${row.subject.name} register`}>
+                      <span className="text-[12px] font-semibold text-white/95">{row.subject.code}</span>
+                      <span className="text-[11px] text-white/60 font-medium leading-snug" title={row.subject.name}>{row.subject.name}</span>
+                    </Link>
                   </div>
 
                   {/* Date Cells */}
@@ -249,7 +252,7 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
                     return (
                       <div 
                         key={date} 
-                        className={`flex w-12 flex-col items-center justify-center gap-1 border-r border-white/[0.05] p-1 ${
+                        className={`flex w-[60px] flex-col items-center justify-center gap-1 border-r border-white/[0.05] p-1.5 ${
                           isToday ? 'bg-white/[0.06]' : ''
                         }`}
                       >
@@ -266,7 +269,10 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
                                   setPopoverAnchor(e.currentTarget);
                                 }
                               }}
-                              className={`flex h-6 w-full items-center justify-center rounded-[5px] text-[10px] transition-all duration-200 hover:brightness-110 active:scale-90 border ${getStatusCellClass(session.status)}`}
+                              type="button"
+                              className={`register-cell status-${session.status.toLowerCase()} flex h-11 w-full items-center justify-center rounded-[8px] text-[12px]`}
+                              aria-label={`${row.subject.name}, ${date}, ${session.startTime}, ${session.classType}, ${session.status.toLowerCase()}. Change attendance.`}
+                              aria-expanded={activePopover === session.id}
                               title={`${row.subject.code}\n${String(parseDate(date).getDate()).padStart(2, '0')} ${MONTH_SHORT[parseDate(date).getMonth()]} ${parseDate(date).getFullYear()}\n${session.startTime}–${session.endTime}\n${session.classType}`}
                             >
                               {STATUS_DISPLAY[session.status]}
@@ -311,76 +317,8 @@ export default function MasterRegister({ subjects, sessions, onMarkAttendance }:
       </div>
 
       {/* Mobile Register (< 768px) */}
-      <div className="md:hidden flex flex-col space-y-3">
-        {rowData.map((row) => {
-          let statusClass = 'text-white border-white/10 bg-white/5';
-          if (row.stats.percentage !== null) {
-            if (row.stats.percentage >= 75) statusClass = 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400 shadow-[inset_0_1px_1px_rgba(16,185,129,0.15)]';
-            else if (row.stats.percentage >= 65) statusClass = 'border-amber-500/20 bg-amber-500/10 text-amber-400 shadow-[inset_0_1px_1px_rgba(245,158,11,0.15)]';
-            else statusClass = 'border-red-500/20 bg-red-500/10 text-red-400 shadow-[inset_0_1px_1px_rgba(239,68,68,0.15)]';
-          }
-
-          const accentColor = SUBJECT_COLORS[row.subject.code] || '#a8aabf';
-
-          return (
-            <Link 
-              key={row.subject.code}
-              href={`/subjects/${encodeURIComponent(row.subject.code)}`}
-              className="block glass-elevated rounded-[22px] p-4 sm:p-5 active:scale-[0.98] transition-transform relative overflow-hidden"
-              style={{ '--subject-accent': accentColor } as React.CSSProperties}
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex-1 min-w-0 pr-4">
-                  <h3 className="text-sm sm:text-base font-bold text-white truncate">{row.subject.code}</h3>
-                  <p className="text-[10px] sm:text-[11px] text-white/50 font-medium truncate mt-0.5">{row.subject.name}</p>
-                </div>
-                <div className={`px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-[14px] border ${statusClass} flex items-center justify-center min-w-[64px] sm:min-w-[72px]`}>
-                  <span className="text-base sm:text-lg font-bold tracking-tight">
-                    {formatPercentage(row.stats.percentage)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-4 gap-1 sm:gap-2 border-t border-white/[0.06] pt-3 sm:pt-4">
-                <div className="flex flex-col items-center">
-                  <span className="text-[9px] sm:text-[10px] text-white/40 font-bold uppercase tracking-widest mb-1">Present</span>
-                  <span className="text-sm font-bold text-emerald-400">{row.stats.present}</span>
-                </div>
-                <div className="flex flex-col items-center border-l border-white/[0.04]">
-                  <span className="text-[9px] sm:text-[10px] text-white/40 font-bold uppercase tracking-widest mb-1">Absent</span>
-                  <span className="text-sm font-bold text-red-400">{row.stats.absent}</span>
-                </div>
-                <div className="flex flex-col items-center border-l border-white/[0.04]">
-                  <span className="text-[9px] sm:text-[10px] text-white/40 font-bold uppercase tracking-widest mb-1">Classes</span>
-                  <span className="text-sm font-bold text-white/80">{row.stats.totalConducted}</span>
-                </div>
-                <div className="flex flex-col items-center border-l border-white/[0.04]">
-                  <span className="text-[9px] sm:text-[10px] text-white/40 font-bold uppercase tracking-widest mb-1">{row.stats.needToAttend > 0 ? 'Attend' : 'Can miss'}</span>
-                  <span className={`text-sm font-bold ${row.stats.needToAttend > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-                    {row.stats.totalConducted === 0 ? '—' : (row.stats.needToAttend > 0 ? row.stats.needToAttend : row.stats.canBunk)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Subject color progress bar */}
-              {row.stats.percentage !== null && (
-                <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-white/[0.03]">
-                  <div 
-                    className="h-full progress-bar-fill transition-all duration-500 ease-out"
-                    style={{ 
-                      width: `${row.stats.percentage}%`,
-                      backgroundColor: row.stats.level === 'SAFE' ? accentColor : 
-                        row.stats.level === 'WARNING' ? '#f59e0bb3' : 
-                        row.stats.level === 'DANGER' ? '#ef4444b3' : accentColor,
-                      boxShadow: `0 0 10px ${row.stats.level === 'SAFE' ? accentColor : row.stats.level === 'WARNING' ? 'rgba(245,158,11,0.5)' : 'rgba(239,68,68,0.5)'}`,
-                      opacity: 0.8,
-                    }}
-                  />
-                </div>
-              )}
-            </Link>
-          );
-        })}
+      <div className="attendance-subject-grid md:hidden">
+        {rowData.map((row) => <SubjectCard key={row.subject.code} subject={row.subject} attendance={row.stats} />)}
       </div>
     </div>
   );

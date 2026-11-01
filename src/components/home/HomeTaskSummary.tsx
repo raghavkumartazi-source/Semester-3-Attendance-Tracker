@@ -8,6 +8,8 @@ import { useState } from 'react';
 import { AddTaskSheet } from './AddTaskSheet';
 import { Task } from '@/lib/types';
 import Dialog from '../Dialog';
+import { PlusIcon, ArrowUpRightIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { LiquidButton } from '../ui/LiquidButton';
 
 export function HomeTaskSummary() {
   const { tasks, updateTask, deleteTask } = useTasks();
@@ -20,10 +22,10 @@ export function HomeTaskSummary() {
 
   if (incompleteTasks.length === 0) {
     return (
-      <section>
-        <div className="section-heading"><h2>Tasks</h2><Link href="/tasks" className="section-link">View all →</Link></div>
-        <div className="empty-state"><p>A little room to focus.</p><p>Add an assignment or a study goal for today.</p>
-          <button type="button" onClick={() => setIsAddSheetOpen(true)} className="ink-btn px-4 py-2 mt-4">Add a task</button>
+      <section className="home-tasks">
+        <div className="section-heading"><h2>Your next task</h2><Link href="/tasks" className="section-link">View all<ArrowUpRightIcon aria-hidden="true" /></Link></div>
+        <div className="empty-state home-task-empty"><CheckCircleIcon aria-hidden="true" /><h3>A little room to focus.</h3><p>Add an assignment or a study goal for today.</p>
+          <LiquidButton onClick={() => setIsAddSheetOpen(true)} className="mt-4"><PlusIcon className="w-4 h-4" aria-hidden="true" /> Add a task</LiquidButton>
         </div>
         {isAddSheetOpen && <AddTaskSheet onClose={() => setIsAddSheetOpen(false)} />}
       </section>
@@ -60,17 +62,13 @@ export function HomeTaskSummary() {
   }
 
   return (
-    <div className="mb-6 animate-fade-in-up stagger-3">
-      <div className="flex items-center justify-between mb-3 px-1">
-        <h2 className="text-[11px] font-bold text-white/60 uppercase tracking-widest">
-          {subtitle}
-        </h2>
-        <Link 
-          href="/tasks"
-          className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full uppercase tracking-wider active:scale-95 transition-transform"
-        >
-          View Tasks →
-        </Link>
+    <section className="home-tasks">
+      <div className="section-heading">
+        <div><h2>Your next task</h2><p className="schedule-caption">{subtitle}</p></div>
+        <div className="home-task-actions">
+          <button type="button" className="home-quick-add" aria-label="Add a task" onClick={() => { setTaskToEdit(undefined); setIsAddSheetOpen(true); }}><PlusIcon aria-hidden="true" /></button>
+          <Link href="/tasks" className="section-link">View all<ArrowUpRightIcon aria-hidden="true" /></Link>
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -120,6 +118,6 @@ export function HomeTaskSummary() {
           </div>
         </Dialog>
       )}
-    </div>
+    </section>
   );
 }
