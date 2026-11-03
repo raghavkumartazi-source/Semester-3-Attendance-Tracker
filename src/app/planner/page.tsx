@@ -9,6 +9,7 @@ import '../planning-pages.css';
 import { SUBJECTS } from '@/lib/config';
 import { usePlanner } from '@/components/PlannerProvider';
 import Dialog from '@/components/Dialog';
+import StudyImages from '@/components/StudyImages';
 import { 
   SyllabusTopic, 
   ExamSchedule, 
@@ -483,6 +484,8 @@ export default function PlannerPage() {
               <div><h2>Your study plan</h2><p className="planning-card-caption">Working back from your endsem.</p></div>
               {subjectPlanConfig && upcomingEndsemExams.length > 0 && subjectTopics.length > 0 && <button type="button" onClick={openPlanSettings} className="glass-control planning-secondary-action px-3 py-2">Study plan settings</button>}
             </div>
+
+            <StudyImages subjectCode={selectedSubject} />
             
             {(() => {
               const plan = getReverseCountdownPlan(selectedSubject);
